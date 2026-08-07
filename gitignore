@@ -1,0 +1,37 @@
+# ============================================================================
+#  NEVER COMMIT THESE. They live only on the NAS.
+#  Secrets + per-install state. If any of these is ever pushed, treat the
+#  secret_key as compromised and rotate it (see RUNBOOK.md).
+# ============================================================================
+
+# Secrets / auth
+credentials.json          # password hashes
+config.json               # contains secret_key, webapp_url
+sessions.json             # live session tokens
+login_fails.json          # lockout state
+
+# Runtime state / generated data (NAS is the source of truth, not git)
+stats.json
+analytics.json
+analytics_view.json
+pending_writes.json
+dead_letters.json
+roles.json                # admins edit roles in the UI; server seeds defaults
+
+# Kit/ticket data (managed via the app + Google Sheet, not git)
+kits.json
+troubleshooting.json
+data/
+
+# Per-install runtime dirs
+backups/
+drafts/
+logs/
+**/kit_history/
+
+# Atomic-write temp files + misc
+*.tmp.*
+*.bak
+*.pyc
+__pycache__/
+.DS_Store

@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+  <link rel="icon" type="image/jpeg" href="/images/favicon.jpg">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>/* zz2 theme: apply saved choice before paint; default stays light */(function(){try{var t=localStorage.getItem('zz2-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+<title>ZZ2 Tech Support · Tickets</title>
+<style>
+  :root{
+    --ink:#22262c; --bg:#eef0f3; --card:#fff; --line:#e5e7eb; --line-soft:#eef1f4;
+    --muted:#6b7280; --muted-2:#9ca3af; --brand:#ffcd00; --accent:#0ea5e9; --accent-soft:#e0f2fe;
+    --green:#16a34a; --amber:#f59e0b; --red:#dc2626;
+    --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.05);
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --row-h:32px; --head-h:36px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:13px;
+    display:flex;flex-direction:column;height:100vh;-webkit-font-smoothing:antialiased}
+
+  .topbar{flex:0 0 auto;background:var(--ink);color:#fff;display:flex;align-items:center;gap:12px;
+    padding:0 16px;height:56px;border-bottom:3px solid var(--brand)}
+  .brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:#fff}
+  .brand .logo{height:30px;width:auto;display:block}
+  .brand .t{font-weight:600;font-size:15px;letter-spacing:.02em;color:var(--brand)}
+  .topbar .spacer{flex:1}
+  .topbar .meta{font-size:12px;color:#c7cbd1;text-align:right;line-height:1.3}
+  .topbar .meta b{color:#fff}
+  .tb-btn{appearance:none;border:1px solid #3a4049;background:#2b3037;color:#e5e7eb;font:inherit;
+    font-size:13px;padding:7px 12px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .tb-btn:hover{background:#343a42}
+  .tb-btn.primary{background:var(--brand);color:#22262c;border-color:#e6b800;font-weight:600}
+  .tb-btn.primary:hover{filter:brightness(.96)}
+  .back{color:#c7cbd1;text-decoration:none;font-size:13px;margin-left:2px}
+  .back:hover{color:#fff}
+
+  .toolbar{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--line)}
+  .search{position:relative;flex:1;max-width:420px}
+  .search input{width:100%;font:inherit;font-size:13px;padding:8px 10px 8px 30px;border:1px solid var(--line);border-radius:8px}
+  .search input:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+  .search .ic{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted-2)}
+  .toolbar .count{font-size:12px;color:var(--muted)}
+
+  /* ---- grid ---- */
+  .gridwrap{flex:1 1 auto;overflow:auto;background:var(--card);position:relative}
+  .gridwrap.empty-state{display:grid;place-items:center}
+  .content{position:relative;margin:0 auto}
+  .ghead{position:sticky;top:0;z-index:5;display:flex;height:var(--head-h);
+    background:#f8fafc;border-bottom:2px solid var(--line);box-shadow:0 1px 0 var(--line)}
+  .ghead .h{flex:0 0 auto;display:flex;align-items:center;gap:4px;padding:0 8px;font-size:11px;
+    font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);
+    border-right:1px solid var(--line-soft);cursor:pointer;user-select:none;white-space:nowrap;overflow:hidden}
+  .ghead .h:hover{background:#eef2f6;color:var(--ink)}
+  .ghead .h .ar{color:var(--accent);font-size:10px}
+  .gbody{position:relative}
+  .grow{position:absolute;left:0;display:flex;border-bottom:1px solid var(--line-soft)}
+  .grow:nth-child(even){background:#fcfcfd}
+  .grow:hover{background:var(--accent-soft)}
+  .grow.is-edited{box-shadow:inset 3px 0 0 var(--amber);background:#fffbeb}
+  .row-presence{display:flex;align-items:center;gap:4px;margin-left:5px;overflow:hidden}
+  .presence-chip{display:inline-flex;align-items:center;max-width:120px;padding:1px 6px;border-radius:999px;
+    background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gc{flex:0 0 auto;display:flex;align-items:stretch;border-right:1px solid var(--line-soft);overflow:hidden}
+  .gc .cv{flex:1;min-width:0;padding:6px 8px;line-height:17px;white-space:pre-wrap;
+    word-break:break-word;overflow-wrap:anywhere}
+  .gc.ro .cv{color:var(--muted)}
+  .gc.num .cv{font-family:var(--mono)}
+  .gc textarea{flex:1;min-width:0;width:100%;resize:none;border:1px solid transparent;border-radius:5px;
+    background:transparent;font:inherit;font-size:13px;line-height:17px;padding:5px 7px;color:var(--ink);
+    white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;overflow:hidden}
+  .gc select{flex:1;min-width:0;width:100%;height:26px;align-self:center;font:inherit;font-size:13px;
+    border:1px solid transparent;border-radius:5px;background:transparent;padding:0 4px;color:var(--ink)}
+  .gc textarea:hover,.gc select:hover{border-color:var(--line)}
+  .gc textarea:focus,.gc select:focus{outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 2px var(--accent-soft)}
+  .gc textarea:focus{overflow:auto}
+  .gc.dirty textarea,.gc.dirty select{background:#fffbeb}
+  .gc.saving{opacity:.5}
+  .gc .pill{font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px}
+
+  /* status pill colors when not editing — applied to the select via class */
+  .st-resolved{color:#15803d} .st-open{color:#b45309} .st-nosol{color:#b91c1c}
+  .st-rma{color:#6d28d9} .st-destroy{color:#991b1b} .st-distrib{color:#0e7490}
+
+  /* ---- new-ticket modal ---- */
+  .overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;place-items:center;z-index:50;padding:16px}
+  .overlay.show{display:grid}
+  .modal{background:#fff;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.3);width:560px;max-width:100%;max-height:90vh;overflow:auto}
+  .modal h2{margin:0;padding:16px 18px;border-bottom:1px solid var(--line);font-size:16px}
+  .modal .body{padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .modal .body .full{grid-column:1 / -1}
+  .fld{display:flex;flex-direction:column;gap:4px}
+  .fld label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .fld input,.fld select,.fld textarea{font:inherit;font-size:13px;padding:8px 9px;border:1px solid var(--line);border-radius:8px;background:#fff}
+  .fld textarea{resize:vertical;min-height:54px}
+  .fld input:focus,.fld select:focus,.fld textarea:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+  .modal .foot{padding:14px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;align-items:center}
+  .btn{appearance:none;font:inherit;font-size:13px;padding:9px 15px;border-radius:8px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink)}
+  .btn:hover{background:#f8fafc}
+  .btn.accent{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+  .btn.accent:hover{filter:brightness(.96)}
+  .btn:disabled{opacity:.55;cursor:default}
+  .modal .msg{font-size:12px;color:var(--muted);margin-right:auto}
+  .modal .msg.err{color:var(--red)}
+
+  #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);opacity:0;
+    background:var(--ink);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;z-index:90;
+    transition:.25s;box-shadow:0 8px 24px rgba(0,0,0,.25);pointer-events:none;max-width:90vw}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #toast.err{background:var(--red)} #toast.ok{background:var(--green)}
+  .loading,.err{flex:1;display:grid;place-items:center;text-align:center;padding:30px;color:var(--muted)}
+  .spinner{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+  /* ===== ZZ2 dark theme + responsive — ADDITIVE ONLY (no light-mode rule is modified) ===== */
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --ink:#e6e8ec; --bg:#0f1216; --card:#1b1f25; --line:#2a2f37; --line-soft:#23272e;
+    --muted:#9aa3ad; --muted-2:#79828d; --accent:#38bdf8; --accent-soft:#0b2f47;
+    --green:#22c55e; --amber:#fbbf24; --red:#f87171;
+    --shadow:0 1px 2px rgba(0,0,0,.45),0 1px 3px rgba(0,0,0,.55);
+  }
+  /* surfaces that were hardcoded light in light mode */
+  [data-theme="dark"] .topbar{background:#15181d}
+  [data-theme="dark"] .toolbar{background:#161a20}
+  [data-theme="dark"] .search input{background:#0f1318;color:var(--ink)}
+  [data-theme="dark"] .ghead{background:#191d23}
+  [data-theme="dark"] .ghead .h:hover{background:#222831;color:var(--ink)}
+  [data-theme="dark"] .grow:nth-child(even){background:rgba(255,255,255,.025)}
+  [data-theme="dark"] .grow:hover{background:#15303f}
+  [data-theme="dark"] .grow.is-edited{background:#2a2410}
+  [data-theme="dark"] .presence-chip{background:#4b3610;color:#fde68a}
+  [data-theme="dark"] .gc textarea:focus,[data-theme="dark"] .gc select:focus{background:#0f1318}
+  [data-theme="dark"] .gc.dirty textarea,[data-theme="dark"] .gc.dirty select{background:#2a2410}
+  [data-theme="dark"] .modal{background:var(--card)}
+  [data-theme="dark"] .fld input,[data-theme="dark"] .fld select,[data-theme="dark"] .fld textarea{background:#0f1318;color:var(--ink)}
+  [data-theme="dark"] .btn{background:#222831;color:var(--ink)}
+  [data-theme="dark"] .btn:hover{background:#2a313a}
+  [data-theme="dark"] #toast{background:#2b3037}
+  [data-theme="dark"] select option{background:#1b1f25;color:var(--ink)}
+  /* status text — brightened for dark legibility */
+  [data-theme="dark"] .st-resolved{color:#4ade80} [data-theme="dark"] .st-open{color:#fbbf24}
+  [data-theme="dark"] .st-nosol{color:#f87171} [data-theme="dark"] .st-rma{color:#c4b5fd}
+  [data-theme="dark"] .st-destroy{color:#fca5a5} [data-theme="dark"] .st-distrib{color:#5fd0e6}
+
+  /* theme toggle button — sits in the always-dark topbar, matches .tb-btn */
+  .tb-toggle{appearance:none;border:1px solid #3a4049;background:#2b3037;color:#e5e7eb;font:inherit;
+    font-size:15px;line-height:1;width:34px;height:34px;border-radius:8px;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .tb-toggle:hover{background:#343a42}
+
+  /* ===== responsive ===== */
+  @media (max-width:640px){
+    .topbar{padding:0 10px;gap:8px;height:52px}
+    .brand .t{display:none}
+    .topbar .meta{display:none}
+    .toolbar{flex-wrap:wrap;gap:8px;padding:8px 10px}
+    .search{max-width:none;flex:1 1 100%;order:5}
+    .modal{max-width:calc(100vw - 20px)}
+    .modal .body{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<!-- ZZ2 shared navigation menu -->
+<style>
+  .zz2-burger{appearance:none;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);color:#fff;width:38px;height:34px;border-radius:7px;cursor:pointer;font-size:18px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;padding:0;transition:background .15s;margin-right:6px}
+  .zz2-burger:hover{background:rgba(255,205,0,0.28)}
+  .zz2-nav-overlay{position:fixed;inset:0;background:rgba(10,12,15,0.5);opacity:0;visibility:hidden;transition:opacity .2s;z-index:99998}
+  .zz2-nav-overlay.show{opacity:1;visibility:visible}
+  .zz2-nav{position:fixed;top:0;left:0;height:100%;width:264px;max-width:82vw;background:#22262c;border-right:2px solid #ffcd00;transform:translateX(-100%);transition:transform .22s ease;z-index:99999;display:flex;flex-direction:column;box-shadow:2px 0 18px rgba(0,0,0,0.35);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+  .zz2-nav.open{transform:translateX(0)}
+  .zz2-nav-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,0.08)}
+  .zz2-nav-title{color:#fff;font-size:15px;font-weight:600;letter-spacing:.02em}
+  .zz2-nav-title b{color:#ffcd00;font-weight:600}
+  .zz2-nav-x{appearance:none;background:none;border:none;color:#9ca3af;font-size:26px;line-height:1;cursor:pointer;padding:0 4px;transition:color .15s}
+  .zz2-nav-x:hover{color:#fff}
+  .zz2-nav-links{padding:8px 0;overflow-y:auto}
+  .zz2-nav-link{display:flex;align-items:center;gap:12px;padding:13px 20px;color:#d6dade;text-decoration:none;font-size:14px;font-weight:500;border-left:3px solid transparent;transition:background .14s,color .14s}
+  .zz2-nav-link:hover{background:rgba(255,205,0,0.10);color:#fff}
+  .zz2-nav-link .i{font-size:16px;width:20px;text-align:center;flex:0 0 auto}
+  .zz2-nav-link.active{background:rgba(255,205,0,0.14);color:#ffcd00;border-left-color:#ffcd00;cursor:default}
+  .zz2-nav-link.active:hover{background:rgba(255,205,0,0.14)}
+
+/* zz2-mobile-base */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+@media (max-width: 640px) {
+  input, select, textarea { font-size: 16px !important; }   /* no focus-zoom on iOS */
+  img, svg, video { max-width: 100%; }
+}
+</style>
+<div class="zz2-nav-overlay" id="zz2NavOverlay"></div>
+<nav class="zz2-nav" id="zz2Nav" aria-hidden="true">
+  <div class="zz2-nav-head">
+    <span class="zz2-nav-title">ZZ2 <b>Navigation</b></span>
+    <button class="zz2-nav-x" id="zz2NavClose" aria-label="Close menu">&times;</button>
+  </div>
+  <div class="zz2-nav-links">
+    <a class="zz2-nav-link" href="/dashboard.html" data-perm="dashboard" data-page="dashboard"><span class="i">⬡</span>Dashboard</a>
+    <a class="zz2-nav-link" href="/index.html" data-perm="" data-page="index"><span class="i">🔧</span>Kit &amp; Ticket Tool</a>
+    <a class="zz2-nav-link" href="/tickets.html" data-perm="tickets" data-page="tickets"><span class="i">🗂️</span>Tickets</a>
+    <a class="zz2-nav-link" href="/analytics.html" data-perm="analytics" data-page="analytics"><span class="i">📊</span>Analytics</a>
+    <a class="zz2-nav-link" href="/users.html" data-perm="manage_users|manage_roles" data-page="users"><span class="i">👥</span>Users &amp; Roles</a>
+    <a class="zz2-nav-link" href="/settings.html" data-perm="system_settings" data-page="settings"><span class="i">⚙️</span>System Settings</a>
+  </div>
+</nav>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  function curPage(){ var f=(location.pathname.split('/').pop()||'').toLowerCase(); if(!f) return 'index'; return f.replace('.html',''); }
+  window.zz2NavToggle=function(open){
+    var nav=document.getElementById('zz2Nav'), ov=document.getElementById('zz2NavOverlay');
+    if(!nav) return;
+    var show=(open===undefined)?!nav.classList.contains('open'):!!open;
+    nav.classList.toggle('open',show); if(ov) ov.classList.toggle('show',show);
+    nav.setAttribute('aria-hidden',show?'false':'true');
+  };
+  window.zz2BuildNav=function(perms){
+    perms=perms||[];
+    function has(spec){ if(!spec) return true; return spec.split('|').some(function(p){return perms.indexOf(p)>=0;}); }
+    var cp=curPage(), links=document.querySelectorAll('#zz2Nav .zz2-nav-link');
+    for(var i=0;i<links.length;i++){
+      var el=links[i], perm=el.getAttribute('data-perm'), page=el.getAttribute('data-page');
+      el.style.display=has(perm)?'flex':'none';
+      if(page===cp){ el.classList.add('active'); el.removeAttribute('href'); }
+      else el.classList.remove('active');
+    }
+  };
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'||e.key==='Esc') zz2NavToggle(false); });
+  function wire(){ var ov=document.getElementById('zz2NavOverlay'), x=document.getElementById('zz2NavClose');
+    if(ov) ov.addEventListener('click',function(){zz2NavToggle(false);});
+    if(x) x.addEventListener('click',function(){zz2NavToggle(false);}); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',wire); else wire();
+})();
+</script>
+<!-- /ZZ2 shared navigation menu -->
+
+
+<header class="topbar">
+  <button class="zz2-burger" onclick="zz2NavToggle()" aria-label="Open menu">☰</button>
+  <a class="brand" href="dashboard.html" title="Back to dashboard">
+    <img class="logo" src="/images/zz2-logo.png" alt="ZZ2">
+    <span class="t">Tickets</span>
+  </a>
+  <span class="spacer"></span>
+  <button class="tb-toggle" id="themeToggle" onclick="zz2ToggleTheme()" title="Switch to dark mode" aria-label="Switch color theme">☀️</button>
+  <div class="meta" id="meta">—</div>
+  <button class="tb-btn" id="btn-refresh" title="Reload tickets from Supabase">↻ Refresh</button>
+  <button class="tb-btn primary" id="btn-new">+ New ticket</button>
+</header>
+
+<div class="toolbar" id="toolbar" style="display:none">
+  <div class="search">
+    <span class="ic">⌕</span>
+    <input id="q" type="text" placeholder="Search tickets — client, kit, vehicle, issue, tech, status…">
+  </div>
+  <span class="count" id="count"></span>
+</div>
+
+<div class="gridwrap" id="gridwrap">
+  <div class="loading"><div><div class="spinner"></div><div>Loading tickets…</div></div></div>
+</div>
+
+<!-- New ticket modal -->
+<div class="overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h2>New ticket</h2>
+    <div class="body">
+      <div class="fld"><label>Tech</label><input id="n-tech"></div>
+      <div class="fld"><label>Client</label><input id="n-client"></div>
+      <div class="fld"><label>Product / Kit</label><input id="n-product"></div>
+      <div class="fld"><label>Vehicle</label><input id="n-vehicle"></div>
+      <div class="fld"><label>Serial #</label><input id="n-serial"></div>
+      <div class="fld"><label>Status</label>
+        <select id="n-status">
+          <option value=""></option>
+          <option>Resolved</option><option>W.O.E.</option><option>No solution</option>
+          <option>Waiting for customer feedback</option><option>RMA/Return</option>
+          <option>RMA - ADV REP REQ GROUND</option><option>RMA - ADV REP REQ OVERNIGHT</option>
+          <option>DISTRIBUTOR</option><option>Field Destroy</option>
+        </select>
+      </div>
+      <div class="fld full"><label>Issue</label><textarea id="n-issue"></textarea></div>
+      <div class="fld full"><label>Resolution</label><textarea id="n-resolution"></textarea></div>
+      <div class="fld full"><label>Notes</label><textarea id="n-notes"></textarea></div>
+    </div>
+    <div class="foot">
+      <span class="msg" id="n-msg"></span>
+      <button class="btn" id="n-cancel">Cancel</button>
+      <button class="btn accent" id="n-save">Create ticket</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ============================================================
+//  ZZ2 Tickets — virtualized Supabase table + inline edit + create
+// ============================================================
+const AUTH_KEY='zz2_auth_token', ROLE_KEY='zz2_auth_role';
+let TOKEN = localStorage.getItem(AUTH_KEY) || '';
+let SB=null, SB_USER=null, RT_CHANNEL=null;
+let PRESENCE_BY_TICKET={};
+const RT_CLIENT_ID=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random());
+
+const ROW_H=32, HEAD_H=36, OVER=8;
+const LINE_H=17, VPAD=10;           // textarea/cell line height + vertical padding
+let ROWTOP=[], ROWH=[], TOTAL_H=0;  // per-row offsets/heights for variable-height virtualization
+const COLS=[
+  {k:'ticket', t:'Ticket #',  w:96,  ro:true, num:true},
+  {k:'date',   t:'Date',      w:136, ro:true},
+  {k:'tech',   t:'Tech',      w:96},
+  {k:'client', t:'Client',    w:160},
+  {k:'product',t:'Product',   w:130},
+  {k:'vehicle',t:'Vehicle',   w:150},
+  {k:'issue',  t:'Issue',     w:240},
+  {k:'resolution',t:'Resolution',w:260},
+  {k:'status', t:'Status',    w:252, type:'select'},
+  {k:'serial', t:'Serial',    w:120},
+  {k:'notes',  t:'Notes',     w:240},
+];
+const TOTAL_W = COLS.reduce((a,c)=>a+c.w,0);
+const STATUS_OPTIONS=['','Resolved','W.O.E.','No solution','Waiting for customer feedback',
+  'RMA/Return','RMA - ADV REP REQ GROUND','RMA - ADV REP REQ OVERNIGHT','DISTRIBUTOR','Field Destroy'];
+
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=n=>(n==null||isNaN(n))?'—':Number(n).toLocaleString('en-US');
+function toast(m,kind){const t=$('#toast');t.textContent=m;t.className='show'+(kind?' '+kind:'');clearTimeout(t._h);t._h=setTimeout(()=>t.className='',3000);}
+function ticketNum(t){const d=String(t||'').replace(/\D/g,'');return d?parseInt(d,10):0;}
+function statusClass(s){s=(s||'').toLowerCase();
+  if(s.indexOf('resolv')>=0)return'st-resolved'; if(s.indexOf('wait')>=0)return'st-open';
+  if(s.indexOf('no sol')>=0)return'st-nosol'; if(s.indexOf('rma')>=0)return'st-rma';
+  if(s.indexOf('destroy')>=0)return'st-destroy'; if(s.indexOf('distrib')>=0)return'st-distrib'; return'';}
+
+// ---- state ----
+let DATA=[];               // all tickets (objects)
+let VIEW=[];               // filtered + sorted view
+let sort={k:'ticket',dir:-1};
+let query='';
+let META={generated:null};
+let refreshTimer=null;
+
+// ============================================================
+//  LOAD
+// ============================================================
+async function loadTickets(){
+  if(!SB) throw new Error('Supabase is not configured.');
+  const rows=[]; const pageSize=1000;
+  for(let from=0;;from+=pageSize){
+    const {data,error}=await SB.schema('techSupport').from('tickets').select('*')
+      .order('ticket_number',{ascending:false}).range(from,from+pageSize-1);
+    if(error) throw error;
+    rows.push(...(data||[]));
+    if(!data || data.length<pageSize) break;
+  }
+  META.generated = new Date().toISOString();
+  DATA = rows.map(normalize).filter(t=>t.ticket||t.client||t.date);
+}
+function normalize(r){
+  return {
+    _id:r.id==null?null:r.id,
+    _raw:r,
+    date:String(r.ticket_date||r.date||r.Date||'').trim(),
+    ticket:String(r.ticket_number||r.ticket||r['Ticket #']||r.ticketNum||r.number||'').trim(),
+    tech:String(r.tech||r.Tech||'').trim(),
+    client:String(r.client||r.Client||'').trim(),
+    product:String(r.product||r.Product||r.kit||'').trim(),
+    vehicle:String(r.vehicle||r.Vehicle||'').trim(),
+    issue:String(r.issue||r.Issue||'').trim(),
+    resolution:String(r.resolution||r.Resolution||'').trim(),
+    status:String(r.status||r.Status||'').trim(),
+    serial:String(r.serial||r.Serial||'').trim(),
+    notes:String(r.notes||r.Notes||'').trim(),
+  };
+}
+
+function dayKey(s){
+  if(!s) return '';
+  s=String(s).trim(); if(!s) return '';
+  let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m) return m[1]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[3]).slice(-2);
+  m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  if(m){ let y=+m[3]; if(y<100)y+=2000; return y+'-'+('0'+m[1]).slice(-2)+'-'+('0'+m[2]).slice(-2); }
+  const d=new Date(s); if(!isNaN(d)) return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  return '';
+}
+
+// ============================================================
+//  VIEW (filter + sort)
+// ============================================================
+function applyView(preserveScroll){
+  const gw=$('#gridwrap'); const keepTop = preserveScroll? gw.scrollTop : 0;
+  const q=query.trim().toLowerCase();
+  VIEW = !q ? DATA.slice() : DATA.filter(t=>
+    (t.ticket+' '+t.tech+' '+t.client+' '+t.product+' '+t.vehicle+' '+t.issue+' '+
+     t.resolution+' '+t.status+' '+t.serial+' '+t.notes).toLowerCase().indexOf(q)>=0);
+  const k=sort.k, dir=sort.dir;
+  VIEW.sort((a,b)=>{
+    let va,vb;
+    if(k==='ticket'){ va=ticketNum(a.ticket); vb=ticketNum(b.ticket); }
+    else if(k==='date'){ va=dayKey(a.date); vb=dayKey(b.date); }   // normalize mixed date formats (M/D/YYYY vs ISO) to YYYY-MM-DD so the compare is chronological
+    else { va=(a[k]||'').toLowerCase(); vb=(b[k]||'').toLowerCase(); }
+    if(va<vb)return -1*dir; if(va>vb)return 1*dir; return 0;
+  });
+  $('#count').textContent = q? (fmt(VIEW.length)+' of '+fmt(DATA.length)+' tickets')
+                              : (fmt(DATA.length)+' tickets');
+  computeHeights();
+  $('#gbody').style.height = TOTAL_H+'px';
+  render();
+  if(preserveScroll) gw.scrollTop = keepTop;
+}
+
+// ============================================================
+//  RENDER (virtualized)
+// ============================================================
+function buildShell(){
+  const gw=$('#gridwrap'); gw.classList.remove('empty-state');
+  const head = COLS.map(c=>`<div class="h" data-k="${c.k}" style="width:${c.w}px">
+      <span>${esc(c.t)}</span><span class="ar" data-ar="${c.k}"></span></div>`).join('');
+  gw.innerHTML = `<div class="content" style="width:${TOTAL_W}px">
+      <div class="ghead">${head}</div>
+      <div class="gbody" id="gbody"></div>
+    </div>`;
+  // header sort
+  gw.querySelectorAll('.ghead .h').forEach(h=>h.onclick=()=>{
+    const k=h.dataset.k;
+    sort = sort.k===k? {k,dir:-sort.dir} : {k,dir:(k==='ticket'?-1:1)};
+    applyView(true); updateSortArrows();
+  });
+  updateSortArrows();
+  gw.addEventListener('scroll', onScroll, {passive:true});
+  // delegated commit on edit inputs
+  const body=$('#gbody');
+  body.addEventListener('change', onCellChange);
+  body.addEventListener('focusin', onEditFocus);
+  body.addEventListener('focusout', onEditBlur);
+  body.addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.shiftKey && e.target.tagName==='TEXTAREA'){ e.preventDefault(); e.target.blur(); } });
+}
+function updateSortArrows(){
+  COLS.forEach(c=>{ const el=document.querySelector(`[data-ar="${c.k}"]`); if(el) el.textContent = sort.k===c.k? (sort.dir<0?'▼':'▲'):''; });
+}
+let scrollRAF=null;
+function onScroll(){ if(scrollRAF) return; scrollRAF=requestAnimationFrame(()=>{scrollRAF=null;render();}); }
+
+// ---- variable row heights (wrapping) -----------------------------------
+// Format any date string to "Wed Jun 10 2026" (no time), parsing the calendar
+// parts directly so there's no timezone shift.
+function fmtDate(s){
+  s=String(s==null?'':s).trim(); if(!s) return '';
+  let Y,M,D,m;
+  if(m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)){ Y=+m[1];M=+m[2];D=+m[3]; }
+  else if(m=s.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})/)){ M=+m[1];D=+m[2];Y=+m[3]; if(Y<100)Y+=2000; }
+  else { const d=new Date(s); return isNaN(d.getTime())? s : d.toDateString(); }
+  const d=new Date(Y,M-1,D); return isNaN(d.getTime())? s : d.toDateString();
+}
+// What a cell actually shows (date gets formatted; everything else is raw).
+function dispVal(col,t){ const v=t[col.k]||''; return col.k==='date'? fmtDate(v) : v; }
+
+let _mctx=null;
+function _measCtx(){
+  if(_mctx) return _mctx;
+  _mctx=document.createElement('canvas').getContext('2d');
+  _mctx.font='13px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+  return _mctx;
+}
+// Greedy word-wrap line count for `text` within `availW` px (mirrors how the
+// browser wraps), honoring explicit newlines and breaking over-long tokens.
+function _linesFor(text, availW){
+  text=String(text==null?'':text);
+  if(!text || availW<=0) return 1;
+  const ctx=_measCtx(); let lines=0;
+  const paras=text.split('\n');
+  for(let p=0;p<paras.length;p++){
+    const words=paras[p].split(' '); let line='';
+    for(let wi=0;wi<words.length;wi++){
+      let w=words[wi];
+      const cand = line ? line+' '+w : w;
+      if(ctx.measureText(cand).width<=availW){ line=cand; continue; }
+      if(line){ lines++; line=''; }                  // wrap before this word
+      // a single word wider than the column breaks across lines
+      while(ctx.measureText(w).width>availW && w.length>1){
+        let cut=w.length;
+        while(cut>1 && ctx.measureText(w.slice(0,cut)).width>availW) cut--;
+        lines++; w=w.slice(cut);
+      }
+      line=w;
+    }
+    lines++;                                          // final line of paragraph
+  }
+  return Math.max(1, lines);
+}
+function computeHeights(){
+  const n=VIEW.length; ROWTOP=new Array(n); ROWH=new Array(n);
+  let y=0;
+  for(let i=0;i<n;i++){
+    const t=VIEW[i]; let maxLines=1;
+    for(let c=0;c<COLS.length;c++){
+      const col=COLS[c];
+      if(col.type==='select') continue;              // status is single-line
+      const ln=_linesFor(dispVal(col,t), col.w-16);
+      if(ln>maxLines) maxLines=ln;
+    }
+    const h=Math.max(ROW_H, maxLines*LINE_H+VPAD);
+    ROWH[i]=h; ROWTOP[i]=y; y+=h;
+  }
+  TOTAL_H=y;
+}
+// Largest row index whose bottom edge is still below `yTop` (binary search).
+function _firstVisible(yTop){
+  let lo=0, hi=ROWTOP.length-1, ans=0;
+  while(lo<=hi){ const mid=(lo+hi)>>1;
+    if(ROWTOP[mid]+ROWH[mid] > yTop){ ans=mid; hi=mid-1; } else lo=mid+1; }
+  return ans;
+}
+function recomputeAndRender(){ computeHeights(); const b=$('#gbody'); if(b) b.style.height=TOTAL_H+'px'; render(); }
+
+function render(){
+  const gw=$('#gridwrap'), body=$('#gbody'); if(!body) return;
+  if(!VIEW.length || !ROWTOP.length){ body.innerHTML=''; return; }
+  const top=gw.scrollTop;
+  const viewTop=Math.max(0, top-HEAD_H-300);          // gbody coords, with overscan
+  const viewBot=top+gw.clientHeight+300;
+  let html='';
+  for(let i=_firstVisible(viewTop); i<VIEW.length && ROWTOP[i]<=viewBot; i++){
+    const t=VIEW[i];
+    const editors=PRESENCE_BY_TICKET[String(t._id)]||[];
+    html+=`<div class="grow${editors.length?' is-edited':''}" data-row-id="${esc(t._id)}" style="top:${ROWTOP[i]}px;height:${ROWH[i]}px;width:${TOTAL_W}px">`+
+      COLS.map(c=>cellHTML(c,t,i)).join('')+`</div>`;
+  }
+  body.innerHTML=html;
+}
+function cellHTML(c,t,i){
+  const val=t[c.k]||'';
+  if(c.ro){
+    const presence=c.k==='ticket'?`<span class="row-presence">${presenceHTML(t)}</span>`:'';
+    return `<div class="gc ro ${c.num?'num':''}" style="width:${c.w}px"><div class="cv">${esc(dispVal(c,t))}${presence}</div></div>`;
+  }
+  if(c.type==='select'){
+    const opts=STATUS_OPTIONS.map(o=>`<option${o===val?' selected':''}>${esc(o)}</option>`).join('');
+    return `<div class="gc" style="width:${c.w}px"><select class="${statusClass(val)}" data-i="${i}" data-k="${c.k}">${opts}</select></div>`;
+  }
+  return `<div class="gc" style="width:${c.w}px"><textarea rows="1" data-i="${i}" data-k="${c.k}">${esc(val)}</textarea></div>`;
+}
+
+function presenceHTML(t){
+  return (PRESENCE_BY_TICKET[String(t._id)]||[]).map(p=>
+    `<span class="presence-chip" title="${esc(p.display)} editando ${esc(p.column||'a linha')}">${esc(p.display)}</span>`).join('');
+}
+
+// ============================================================
+//  INLINE EDIT
+// ============================================================
+async function onCellChange(e){
+  const el=e.target; const i=+el.dataset.i, k=el.dataset.k;
+  if(isNaN(i)||!k) return;
+  const t=VIEW[i]; if(!t) return;
+  const newVal=el.value, oldVal=t[k]||'';
+  if(newVal===oldVal) return;
+  const cell=el.closest('.gc'); cell.classList.add('saving','dirty');
+  t[k]=newVal;
+  try{
+    if(t._id==null) throw new Error('ticket has no id');
+    const patch={};
+    const columnMap={date:'ticket_date',ticket:'ticket_number'};
+    patch[columnMap[k]||k]=newVal||null;
+    const {data,error}=await SB.schema('techSupport').from('tickets').update(patch)
+      .eq('id',t._id).select().single();
+    if(error) throw error;
+    Object.assign(t,normalize(data));
+    cell.classList.remove('saving','dirty');
+    if(k==='status' && el.tagName==='SELECT'){ el.className=statusClass(newVal); }
+    toast('Ticket '+t.ticket+' updated','ok');
+    recomputeAndRender();                 // row may need to grow/shrink to fit
+  }catch(err){
+    t[k]=oldVal; el.value=oldVal;
+    cell.classList.remove('saving','dirty');
+    toast('Update failed: '+err.message,'err');
+    recomputeAndRender();
+  }finally{
+    if(RT_CHANNEL) RT_CHANNEL.untrack();
+  }
+}
+
+function onEditFocus(e){
+  const el=e.target, i=+el.dataset.i;
+  if(!RT_CHANNEL || isNaN(i) || !VIEW[i]) return;
+  const t=VIEW[i];
+  RT_CHANNEL.track({client_id:RT_CLIENT_ID,user_id:SB_USER.id,
+    display:userDisplay(SB_USER),ticket_id:String(t._id),ticket_number:t.ticket,
+    column:el.dataset.k,online_at:new Date().toISOString()});
+}
+function onEditBlur(){
+  setTimeout(()=>{
+    const a=document.activeElement;
+    if(!a || !a.closest || !a.closest('#gbody')){
+      if(RT_CHANNEL) RT_CHANNEL.untrack();
+      renderPresenceMarkers();
+    }
+  },50);
+}
+
+// ============================================================
+//  NEW TICKET
+// ============================================================
+function openNew(){ $('#overlay').classList.add('show'); $('#n-msg').textContent=''; $('#n-tech').focus(); }
+function closeNew(){ $('#overlay').classList.remove('show');
+  ['tech','client','product','vehicle','serial','issue','resolution','notes'].forEach(f=>$('#n-'+f).value='');
+  $('#n-status').value=''; }
+async function saveNew(){
+  const g=f=>$('#n-'+f).value;
+  const payload={tech:g('tech'),client:g('client'),product:g('product'),
+    vehicle:g('vehicle'),serial:g('serial'),status:g('status'),issue:g('issue'),
+    resolution:g('resolution'),notes:g('notes')};
+  if(!payload.tech && !payload.client && !payload.product){
+    $('#n-msg').textContent='Add at least a tech, client, or product.'; $('#n-msg').className='msg err'; return; }
+  $('#n-save').disabled=true; $('#n-msg').className='msg'; $('#n-msg').textContent='Creating…';
+  try{
+    const ticketNumber=nextTicketNumber();
+    const insert={ticket_date:new Date().toISOString().slice(0,10),ticket_number:ticketNumber,
+      tech:payload.tech||null,client:payload.client||null,product:payload.product||null,
+      vehicle:payload.vehicle||null,issue:payload.issue||null,resolution:payload.resolution||null,
+      status:payload.status||null,serial:payload.serial||null,notes:payload.notes||null};
+    const {data,error}=await SB.schema('techSupport').from('tickets').insert(insert).select().single();
+    if(error) throw error;
+    const row=normalize(data);
+    if(!DATA.some(t=>String(t._id)===String(row._id))) DATA.push(row);
+    closeNew(); applyView(false); $('#gridwrap').scrollTop=0;
+    toast('Created '+row.ticket,'ok');
+  }catch(err){
+    $('#n-msg').className='msg err'; $('#n-msg').textContent='Failed: '+err.message;
+  }finally{ $('#n-save').disabled=false; }
+}
+
+function nextTicketNumber(){
+  let max=0, width=4, prefix='TKT-';
+  DATA.forEach(t=>{const m=String(t.ticket||'').match(/^(.*?)(\d+)$/);if(m){const n=+m[2];if(n>max){max=n;width=m[2].length;prefix=m[1];}}});
+  return prefix+String(max+1).padStart(width,'0');
+}
+
+// ============================================================
+//  REFRESH
+// ============================================================
+function isEditing(){ const a=document.activeElement; return a && (a.tagName==='TEXTAREA'||a.tagName==='SELECT') && a.closest('#gbody'); }
+async function hardRefresh(){
+  $('#btn-refresh').disabled=true; toast('Refreshing Supabase…');
+  try{
+    await loadTickets(); applyView(true); setMeta(); toast('Up to date','ok');
+  }catch(e){ toast('Refresh failed','err'); }
+  finally{ $('#btn-refresh').disabled=false; }
+}
+function setMeta(){
+  const g=META.generated?new Date(META.generated):null;
+  $('#meta').innerHTML=`<b>${fmt(DATA.length)}</b> tickets`+
+    (g&&!isNaN(g)?` · synced ${g.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}`:'');
+}
+
+// ============================================================
+//  INIT + AUTH GUARD (any logged-in role)
+// ============================================================
+function showError(msg){
+  $('#gridwrap').className='gridwrap empty-state';
+  $('#gridwrap').innerHTML=`<div class="err"><div>
+    <div style="font-size:15px;color:var(--ink);font-weight:600;margin-bottom:6px">Couldn't load tickets</div>
+    <div>${esc(msg)}</div>
+    <div style="margin-top:10px"><button class="btn accent" onclick="location.reload()">Retry</button></div>
+  </div></div>`;
+}
+async function init(){
+  try{
+    await loadTickets();
+    buildShell();
+    $('#toolbar').style.display='flex';
+    applyView(false);
+    setMeta();
+    subscribeRealtime();
+  }catch(e){
+    showError(e.message==='forbidden'? 'You don\'t have access to ticket data.' : e.message);
+  }
+}
+
+function userDisplay(user){
+  const m=(user&&user.user_metadata)||{};
+  return m.display_name||m.full_name||m.name||user.email||'User';
+}
+function rebuildPresence(){
+  const next={};
+  const state=RT_CHANNEL?RT_CHANNEL.presenceState():{};
+  Object.keys(state).forEach(key=>(state[key]||[]).forEach(p=>{
+    if(!p.ticket_id) return;
+    (next[String(p.ticket_id)]||(next[String(p.ticket_id)]=[])).push(p);
+  }));
+  PRESENCE_BY_TICKET=next;
+  renderPresenceMarkers();
+}
+function renderPresenceMarkers(){
+  document.querySelectorAll('.grow[data-row-id]').forEach(row=>{
+    const editors=PRESENCE_BY_TICKET[String(row.dataset.rowId)]||[];
+    row.classList.toggle('is-edited',editors.length>0);
+    const host=row.querySelector('.row-presence');
+    if(host) host.innerHTML=editors.map(p=>`<span class="presence-chip" title="${esc(p.display)} editando ${esc(p.column||'a linha')}">${esc(p.display)}</span>`).join('');
+  });
+}
+function applyRealtimeChange(payload){
+  const row=payload.new&&Object.keys(payload.new).length?payload.new:payload.old;
+  if(!row || row.id==null) return;
+  const pos=DATA.findIndex(t=>String(t._id)===String(row.id));
+  if(payload.eventType==='DELETE'){
+    if(pos>=0) DATA.splice(pos,1);
+  }else if(pos>=0){
+    DATA[pos]=normalize(Object.assign({},DATA[pos]._raw||{},row));
+  }else{
+    DATA.push(normalize(row));
+  }
+  if(!isEditing()) applyView(true);
+  setMeta();
+}
+function subscribeRealtime(){
+  RT_CHANNEL=SB.channel('techSupport:tickets',{config:{presence:{key:RT_CLIENT_ID}}})
+    .on('postgres_changes',{event:'*',schema:'techSupport',table:'tickets'},applyRealtimeChange)
+    .on('presence',{event:'sync'},rebuildPresence)
+    .on('presence',{event:'join'},rebuildPresence)
+    .on('presence',{event:'leave'},rebuildPresence)
+    .subscribe(status=>{
+      if(status==='CHANNEL_ERROR') toast('Realtime connection unavailable','err');
+    });
+}
+// wire controls
+$('#btn-new').onclick=openNew;
+$('#n-cancel').onclick=closeNew;
+$('#n-save').onclick=saveNew;
+$('#btn-refresh').onclick=hardRefresh;
+$('#overlay').addEventListener('click',e=>{ if(e.target.id==='overlay') closeNew(); });
+let qTimer=null;
+$('#q').addEventListener('input',e=>{ query=e.target.value; clearTimeout(qTimer);
+  qTimer=setTimeout(()=>{ $('#gridwrap').scrollTop=0; applyView(false); },180); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeNew(); });
+window.addEventListener('resize',()=>{ if($('#gbody')) render(); });
+
+(async function guard(){
+  try{
+    const cfg=await fetch('/api/config',{cache:'no-store'}).then(r=>r.json());
+    if(!window.supabase||!cfg.supabase_url||!cfg.supabase_publishable_key) throw new Error('Supabase is not configured');
+    SB=window.supabase.createClient(cfg.supabase_url,cfg.supabase_publishable_key);
+    const {data:{session}}=await SB.auth.getSession();
+    if(!session){ location.href='/login.html'; return; }
+    SB_USER=session.user; TOKEN=session.access_token; localStorage.setItem(AUTH_KEY,TOKEN);
+    SB.auth.onAuthStateChange((event,next)=>{
+      if(next){TOKEN=next.access_token;localStorage.setItem(AUTH_KEY,TOKEN);}
+      else if(event==='SIGNED_OUT'){localStorage.removeItem(AUTH_KEY);location.href='/login.html';}
+    });
+    const r=await fetch('/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:TOKEN})});
+    const d=await r.json();
+    if(!d.ok){ localStorage.removeItem(AUTH_KEY); location.href='/login.html'; return; }
+    if(!(d.permissions||[]).includes('tickets')){ location.href='/index.html'; return; }
+    if(window.zz2BuildNav) zz2BuildNav(d.permissions||[]);
+    init();
+  }catch(e){ showError(e.message||'Authentication failed.'); }
+})();
+window.addEventListener('beforeunload',()=>{if(RT_CHANNEL)RT_CHANNEL.untrack();});
+</script>
+<script>
+/* ZZ2 theme toggle — button shows the CURRENT mode (☀️ light / 🌙 dark); tooltip names the action */
+(function(){
+  function isDark(){return document.documentElement.getAttribute('data-theme')==='dark';}
+  function syncBtn(){
+    var b=document.getElementById('themeToggle'); if(!b) return;
+    var d=isDark();
+    b.textContent=d?'🌙':'☀️';
+    b.title=d?'Switch to light mode':'Switch to dark mode';
+  }
+  window.zz2ToggleTheme=function(){
+    var next=isDark()?'light':'dark';
+    if(next==='dark') document.documentElement.setAttribute('data-theme','dark');
+    else document.documentElement.removeAttribute('data-theme');
+    try{localStorage.setItem('zz2-theme',next);}catch(e){}
+    syncBtn();
+  };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',syncBtn);
+  else syncBtn();
+})();
+</script>
+</body>
+</html>
