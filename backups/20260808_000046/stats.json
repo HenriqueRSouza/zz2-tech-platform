@@ -1,0 +1,29 @@
+{
+  "local admin": {
+    "this_week": 1, 
+    "last_month": "2026-08", 
+    "last_date": "2026-08-04", 
+    "last_week": "2026-W31", 
+    "this_month": 1, 
+    "total": 1, 
+    "today": 1
+  }, 
+  "henrique.ribeiro@zz2.com.br": {
+    "this_week": 2, 
+    "last_month": "2026-08", 
+    "last_date": "2026-08-07", 
+    "last_week": "2026-W31", 
+    "this_month": 2, 
+    "total": 2, 
+    "today": 2
+  }, 
+  "henriqueikesouza@gmail.com": {
+    "this_week": 1, 
+    "last_month": "2026-08", 
+    "last_date": "2026-08-05", 
+    "today": 1, 
+    "this_month": 1, 
+    "total": 1, 
+    "last_week": "2026-W31"
+  }
+}

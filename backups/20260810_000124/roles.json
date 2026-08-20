@@ -1,0 +1,45 @@
+[
+  {
+    "system": true, 
+    "rank": 100, 
+    "label": "Super Admin", 
+    "key": "super_admin", 
+    "root": true, 
+    "permissions": [
+      "tickets", 
+      "manage_users", 
+      "kit_editor", 
+      "manage_roles", 
+      "analytics", 
+      "dashboard", 
+      "create_tickets", 
+      "system_settings"
+    ]
+  }, 
+  {
+    "system": true, 
+    "permissions": [
+      "tickets", 
+      "create_tickets", 
+      "kit_editor", 
+      "analytics", 
+      "dashboard", 
+      "manage_users", 
+      "manage_roles"
+    ], 
+    "rank": 50, 
+    "key": "admin", 
+    "label": "Admin"
+  }, 
+  {
+    "system": true, 
+    "permissions": [
+      "tickets", 
+      "create_tickets", 
+      "dashboard"
+    ], 
+    "rank": 10, 
+    "key": "tech", 
+    "label": "Tech"
+  }
+]

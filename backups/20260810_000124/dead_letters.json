@@ -1,0 +1,134 @@
+[
+  {
+    "dead_reason": "gave up after 25 attempts", 
+    "created": "2026-08-04T22:49:48Z", 
+    "predicted_num": 1, 
+    "attempts": 24, 
+    "params": {
+      "status": "Waiting for customer feedback", 
+      "product": "IT3-NBT", 
+      "issue": "No audio", 
+      "notes": "local test ticket", 
+      "client": "Autotronix", 
+      "tech": "Local Admin", 
+      "vehicle": "2022 BMW X3", 
+      "action": "newticket", 
+      "serial": "", 
+      "resolution": ""
+    }, 
+    "dead_at": "2026-08-04T23:14:45Z", 
+    "action": "newticket", 
+    "id": "1785883788572-77ae7927"
+  }, 
+  {
+    "dead_reason": "gave up after 25 attempts", 
+    "created": "2026-08-05T14:22:40Z", 
+    "predicted_num": 2, 
+    "attempts": 24, 
+    "params": {
+      "status": "", 
+      "product": "", 
+      "resolution": "", 
+      "notes": "", 
+      "client": "Auto Hifi Service", 
+      "tech": "henriqueikesouza@gmail.com", 
+      "vehicle": "", 
+      "action": "newticket", 
+      "serial": "", 
+      "issue": ""
+    }, 
+    "dead_at": "2026-08-05T14:47:46Z", 
+    "action": "newticket", 
+    "id": "1785939760988-a7635c60"
+  }, 
+  {
+    "dead_reason": "gave up after 25 attempts", 
+    "created": "2026-08-07T23:37:44Z", 
+    "predicted_num": 3, 
+    "attempts": 24, 
+    "params": {
+      "status": "", 
+      "product": "I", 
+      "issue": "", 
+      "notes": "", 
+      "client": "", 
+      "tech": "henrique.ribeiro@zz2.com.br", 
+      "vehicle": "", 
+      "action": "newticket", 
+      "serial": "", 
+      "resolution": ""
+    }, 
+    "dead_at": "2026-08-08T00:02:14Z", 
+    "action": "newticket", 
+    "id": "1786145864394-55899cfb"
+  }, 
+  {
+    "dead_reason": "gave up after 25 attempts", 
+    "created": "2026-08-07T23:45:46Z", 
+    "predicted_num": null, 
+    "attempts": 24, 
+    "params": {
+      "status": "", 
+      "product": "IT3-EVO", 
+      "resolution": "", 
+      "notes": "", 
+      "client": "ABT Electronics", 
+      "tech": "henrique.ribeiro@zz2.com.br", 
+      "ticketNum": "3", 
+      "vehicle": "", 
+      "action": "updateticket", 
+      "serial": "", 
+      "issue": ""
+    }, 
+    "dead_at": "2026-08-08T00:27:19Z", 
+    "action": "updateticket", 
+    "id": "1786146346763-04d530f2"
+  }, 
+  {
+    "dead_reason": "gave up after 25 attempts", 
+    "created": "2026-08-07T23:46:06Z", 
+    "predicted_num": null, 
+    "attempts": 24, 
+    "params": {
+      "action": "deleteticket", 
+      "ticketNum": "3"
+    }, 
+    "dead_at": "2026-08-08T01:44:08Z", 
+    "action": "deleteticket", 
+    "id": "1786146366867-13272d58"
+  }, 
+  {
+    "dead_reason": "gave up after 25 attempts", 
+    "created": "2026-08-07T23:46:27Z", 
+    "predicted_num": 7388, 
+    "attempts": 24, 
+    "params": {
+      "status": "", 
+      "product": "", 
+      "issue": "", 
+      "notes": "", 
+      "client": "ABT Electronics", 
+      "tech": "henrique.ribeiro@zz2.com.br", 
+      "vehicle": "", 
+      "action": "newticket", 
+      "serial": "", 
+      "resolution": ""
+    }, 
+    "dead_at": "2026-08-08T02:09:13Z", 
+    "action": "newticket", 
+    "id": "1786146387210-615a696d"
+  }, 
+  {
+    "action": "deleteticket", 
+    "attempts": 24, 
+    "params": {
+      "action": "deleteticket", 
+      "ticketNum": "7388"
+    }, 
+    "dead_at": "2026-08-08T13:40:44Z", 
+    "dead_reason": "gave up after 25 attempts", 
+    "created": "2026-08-07T23:46:59Z", 
+    "predicted_num": null, 
+    "id": "1786146419638-cc5cdc4e"
+  }
+]

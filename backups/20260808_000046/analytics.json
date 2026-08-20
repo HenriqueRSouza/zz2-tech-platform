@@ -1,0 +1,33 @@
+{
+  "count": 2, 
+  "tickets": [
+    {
+      "status": "Waiting for customer feedback", 
+      "product": "IT3-NBT", 
+      "issue": "No audio", 
+      "notes": "local test ticket", 
+      "client": "Autotronix", 
+      "tech": "Local Admin", 
+      "vehicle": "2022 BMW X3", 
+      "date": "2026-08-04", 
+      "ticket": "1", 
+      "resolution": "", 
+      "serial": ""
+    }, 
+    {
+      "status": "", 
+      "product": "", 
+      "resolution": "", 
+      "notes": "", 
+      "client": "Auto Hifi Service", 
+      "tech": "henriqueikesouza@gmail.com", 
+      "vehicle": "", 
+      "date": "2026-08-05", 
+      "ticket": "2", 
+      "issue": "", 
+      "serial": ""
+    }
+  ], 
+  "generated": "", 
+  "updated": "2026-08-07T23:46:59Z"
+}

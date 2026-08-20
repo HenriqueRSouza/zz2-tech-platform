@@ -1,0 +1,827 @@
+{
+  "files": [
+    {
+      "path": "analytics.html", 
+      "sha256": "ca37bd22a338c2cb485e473d6811177ce3da3105c12d0e0a90cce9e914045178", 
+      "size": 82226
+    }, 
+    {
+      "path": "analytics.json", 
+      "sha256": "454247c88e89bdff73ca80417844b1a5ac36b4e24c04fcd150385968ae444d9a", 
+      "size": 2741153
+    }, 
+    {
+      "path": "chart.min.js", 
+      "sha256": "48444a82d4edcb5bec0f1965faacdde18d9c17db3063d042abada2f705c9f54a", 
+      "size": 208522
+    }, 
+    {
+      "path": "config.example.json", 
+      "sha256": "7e7ce18c4fcd5babf99a76b4d9eda0ddec4e9229230ea2fb3ecda27c8957b1eb", 
+      "size": 883
+    }, 
+    {
+      "path": "config.json", 
+      "sha256": "3ce0a8c7c86c09229b165712f121875c1a11e17dbaa206aad0e3ae96cc24b547", 
+      "size": 899
+    }, 
+    {
+      "path": "credentials.json", 
+      "sha256": "1294c3a11333e8d1f4bee68b3eec063de5f909934bcf86676d00c4bebf78833d", 
+      "size": 548
+    }, 
+    {
+      "path": "dashboard.html", 
+      "sha256": "99e71f90a456bfef7547a1a6c22f0b84a5edd581ffb97d0deffe8c9d413f8ca0", 
+      "size": 21888
+    }, 
+    {
+      "path": "data/analytics_view.json", 
+      "sha256": "525fa12bf525805f245825bbfeba5f027fd45ee086236a7926240e3e2463c145", 
+      "size": 2740505
+    }, 
+    {
+      "path": "data/blueprints.json", 
+      "sha256": "4437e76f51f14966d81a06f83f3d95e6c528ab0b95b8c53b095b08d81486ddd0", 
+      "size": 8791
+    }, 
+    {
+      "path": "data/catalog_meta.json", 
+      "sha256": "6fb315b7235a70f04f590be54c16c6dc8821ddac26568893b3075b4147569c4d", 
+      "size": 67
+    }, 
+    {
+      "path": "data/kits.json", 
+      "sha256": "059cd312b9429710c2f71e8d03f0a3b2da0af4b40c20bc791f64b2301d59598f", 
+      "size": 17534
+    }, 
+    {
+      "path": "data/troubleshooting.json", 
+      "sha256": "77a7cefe6847f0a393cc922c3d26247b3c7066c3c0596750468976898a2cf03c", 
+      "size": 577599
+    }, 
+    {
+      "path": "dead_letters.json", 
+      "sha256": "15acd4c73fd339d8a03c60c31f5992a62392d9e2f9ec49a958c7e0a27a1d6ad6", 
+      "size": 7066
+    }, 
+    {
+      "path": "images/DZZ AUDI/wiring.jpg", 
+      "sha256": "91ef45a24218e83e88bca89cf01c92da95f8fefc6c7a1707a580479cc5a0afbb", 
+      "size": 550320
+    }, 
+    {
+      "path": "images/DZZ BMW/wiring.jpg", 
+      "sha256": "abe7535ef190c5bf6c2d12072431ff85114e8853d5d10ad9c1953d942f55a49f", 
+      "size": 232273
+    }, 
+    {
+      "path": "images/DZZ MERCEDES/wiring.jpg", 
+      "sha256": "85b77ebd929f9c6d0924c6085ec1a5a4e4b05e954b0f4382c047af97dd5b0509", 
+      "size": 230343
+    }, 
+    {
+      "path": "images/IT2-BNT/dip.jpg", 
+      "sha256": "434c45d3054400b0b234392206670311cd247b5e4309684cf7b6c54ec107b509", 
+      "size": 354830
+    }, 
+    {
+      "path": "images/IT2-BNT/wiring.jpg", 
+      "sha256": "434c45d3054400b0b234392206670311cd247b5e4309684cf7b6c54ec107b509", 
+      "size": 354830
+    }, 
+    {
+      "path": "images/IT2-INF-Q/dip.jpg", 
+      "sha256": "e038c0ed9d2d1ec51163fcc06d88609f831de3152a92f958541b01fa3dab0c81", 
+      "size": 244970
+    }, 
+    {
+      "path": "images/IT2-INF-Q/wiring.jpg", 
+      "sha256": "dc738b7466f11b5e36c4920ce537dd92f44b5cd7b0c350e1f17e8d30bd63cc11", 
+      "size": 462691
+    }, 
+    {
+      "path": "images/IT2-INF-Q2/dip.jpg", 
+      "sha256": "e038c0ed9d2d1ec51163fcc06d88609f831de3152a92f958541b01fa3dab0c81", 
+      "size": 244970
+    }, 
+    {
+      "path": "images/IT2-INF-Q2/wiring.jpg", 
+      "sha256": "dc738b7466f11b5e36c4920ce537dd92f44b5cd7b0c350e1f17e8d30bd63cc11", 
+      "size": 462691
+    }, 
+    {
+      "path": "images/IT2-INF-Q70/dip.jpg", 
+      "sha256": "7833fd95b3c90dd00d2edf6701701c24b46c8799b132928f1782e2f9ab1ccfdd", 
+      "size": 100892
+    }, 
+    {
+      "path": "images/IT2-INF-Q70/wiring.jpg", 
+      "sha256": "94d34a1f36808bba7bf7759aaf17d726820ca4b47b85681222c938494fb6cf38", 
+      "size": 213194
+    }, 
+    {
+      "path": "images/IT2-JGC/dip.jpg", 
+      "sha256": "cc7e9011dbbc626d650fd67a35723f66ae25cfecc7ac87f6d39c5357727b4c37", 
+      "size": 432712
+    }, 
+    {
+      "path": "images/IT2-JGC/wiring.jpg", 
+      "sha256": "174a597314938f8f2f0883f4888ff4e8546b49e178f30cd2a7191e21a8c7bfd8", 
+      "size": 407127
+    }, 
+    {
+      "path": "images/IT2-LR12/dip.jpg", 
+      "sha256": "0bde7a430a2de790427e59f18f5e40181410c5a9d9fc88ac368a451f83537f83", 
+      "size": 566577
+    }, 
+    {
+      "path": "images/IT2-LR12/wiring.jpg", 
+      "sha256": "ae488f0265f2069ce85065e1dd22c228f8e47f3e50c8325d23e49a6dae1845d1", 
+      "size": 524227
+    }, 
+    {
+      "path": "images/IT2-LR15/dip.jpg", 
+      "sha256": "81866e11b2a19f00c8c2083e34a9ffe82505fbdf1e5a34aafe14a8386570ad13", 
+      "size": 600359
+    }, 
+    {
+      "path": "images/IT2-LR15/wiring.jpg", 
+      "sha256": "28288272a4605b38831a992586b2ae04cd0b189ae859c216d43d0ca93a452576", 
+      "size": 458957
+    }, 
+    {
+      "path": "images/IT2-MAS-QTG/dip.jpg", 
+      "sha256": "805647cd3df64d2b9140e276246ccd2fda39e0fb4febdfd48c384023bdeedf21", 
+      "size": 549289
+    }, 
+    {
+      "path": "images/IT2-MAS-QTG/wiring.jpg", 
+      "sha256": "865ea6c4ffb45fce2c64166894ddf73296419a4c7334306348e13895f16f7df0", 
+      "size": 507977
+    }, 
+    {
+      "path": "images/IT2-MYLINK/dip.jpg", 
+      "sha256": "213d241f16f3273ff2f0203b41ff5c36268279dd2a6d9c4f64bc9beda9828859", 
+      "size": 219799
+    }, 
+    {
+      "path": "images/IT2-MYLINK/wiring.jpg", 
+      "sha256": "003895d2937946dee2967e862b7a5363f18cd4c28cf674c730da2ae844a58253", 
+      "size": 349086
+    }, 
+    {
+      "path": "images/IT2-RMC/dip.jpg", 
+      "sha256": "09b4e47d57395e141e98c87f6ca82bf83061c305c4ac870f51fabe2f81881293", 
+      "size": 282329
+    }, 
+    {
+      "path": "images/IT2-RMC/wiring.jpg", 
+      "sha256": "7152f71e55abb7c5f1617ca05e1e1d2a24c418abff015222ab886ffd562fc479", 
+      "size": 404984
+    }, 
+    {
+      "path": "images/IT3-AUDI/dip.jpg", 
+      "sha256": "7266957f701317a2c57dcea016a4cf3249ecd5f0a8f649a9a3f854122028799d", 
+      "size": 404872
+    }, 
+    {
+      "path": "images/IT3-AUDI/wiring.jpg", 
+      "sha256": "8d422289ec88f10570dc32f2d09116b638b1a6525b575695a636bbad7c545c7b", 
+      "size": 218914
+    }, 
+    {
+      "path": "images/IT3-CIC/dip.jpg", 
+      "sha256": "a1a10e696b2982f5dccde01036718b24d8e26247384ba013728b6c5a6f0d2ce9", 
+      "size": 167145
+    }, 
+    {
+      "path": "images/IT3-CIC/wiring.jpg", 
+      "sha256": "48c47f8dd327a9ffd54f96896acc5a00ec0727d3394d5f8eaa8d4d9738d6a76c", 
+      "size": 260299
+    }, 
+    {
+      "path": "images/IT3-EVO/dip.jpg", 
+      "sha256": "0f861706d517a1b1ee71049a34d074df7e296922596699801ac0f05b5278b38f", 
+      "size": 300148
+    }, 
+    {
+      "path": "images/IT3-EVO/misc.jpg", 
+      "sha256": "d839c80e79921cd2b8b9c1726384de3484449f6a4b642b2a094e6168173f91e4", 
+      "size": 390228
+    }, 
+    {
+      "path": "images/IT3-EVO/wiring.jpg", 
+      "sha256": "d839c80e79921cd2b8b9c1726384de3484449f6a4b642b2a094e6168173f91e4", 
+      "size": 390228
+    }, 
+    {
+      "path": "images/IT3-LEX15/dip.jpg", 
+      "sha256": "960ab127aa4355c87bc16a553736378c87eedf0b7b58c30ef94d3e50d0292842", 
+      "size": 150492
+    }, 
+    {
+      "path": "images/IT3-LEX15/wiring.jpg", 
+      "sha256": "6d39d2619db02e0981f51ac7b02074bb0a7cae5ba824745715a9fd05b7d60201", 
+      "size": 227000
+    }, 
+    {
+      "path": "images/IT3-LEX17/dip.jpg", 
+      "sha256": "960ab127aa4355c87bc16a553736378c87eedf0b7b58c30ef94d3e50d0292842", 
+      "size": 150492
+    }, 
+    {
+      "path": "images/IT3-LEX17/wiring.jpg", 
+      "sha256": "cb2017a053b22bc87eddade36b3db091a617d2a67f504df1ce382df3c4a536ab", 
+      "size": 200892
+    }, 
+    {
+      "path": "images/IT3-LEX19/dip.jpg", 
+      "sha256": "960ab127aa4355c87bc16a553736378c87eedf0b7b58c30ef94d3e50d0292842", 
+      "size": 150492
+    }, 
+    {
+      "path": "images/IT3-LEX19/wiring.jpg", 
+      "sha256": "ad22c53fa998cc221fdd763e4486ec0cfccefec7a15dee5aaefe1b92e664eefa", 
+      "size": 181357
+    }, 
+    {
+      "path": "images/IT3-NBT/dip.jpg", 
+      "sha256": "dce75b0fde5aa4d7608a6acf75fd09d2b6c7918aec5504690d7a48914e30d46e", 
+      "size": 204612
+    }, 
+    {
+      "path": "images/IT3-NBT/wiring.jpg", 
+      "sha256": "11b0a0fac5bbd3fb26b3342e306ca8504dabff44ad86c128994127372ffcf6ac", 
+      "size": 366124
+    }, 
+    {
+      "path": "images/IT3-NTG45/dip.jpg", 
+      "sha256": "d96436518ada72748378907c69ddae7889c3436897a0747578411d909b5649e2", 
+      "size": 142763
+    }, 
+    {
+      "path": "images/IT3-NTG45/wiring.jpg", 
+      "sha256": "3e51a85e1e5332f20fdc08f7a6652f9857b3ec5b4c6fb0928f28c6d1548127c9", 
+      "size": 223406
+    }, 
+    {
+      "path": "images/IT3-NTG5/dip.jpg", 
+      "sha256": "e8ed9d4d28287fe31fe10ac5c687c0e267ba4b3ec777192a5597b0a5b04d6311", 
+      "size": 201271
+    }, 
+    {
+      "path": "images/IT3-NTG5/wiring.jpg", 
+      "sha256": "824a5664bb667d4fa024fb41d2ec8dbaea79276865b1bf54071a03ce0577a084", 
+      "size": 333628
+    }, 
+    {
+      "path": "images/IT3-PCM3/dip.jpg", 
+      "sha256": "46e821abba8ce99f51c7096d8510bcc43d7bde7c94fa3ddb451db67c09e63cb0", 
+      "size": 170316
+    }, 
+    {
+      "path": "images/IT3-PCM3/wiring.jpg", 
+      "sha256": "a0019fe22f7c3825568835679efc892e4b800e7af70f482519e2ddcb9198aa4d", 
+      "size": 223286
+    }, 
+    {
+      "path": "images/IT3-PCM31A/wiring.jpg", 
+      "sha256": "47221a174a15ae22c9452395ce6d11fbd3c4a14b786920ecbd9123bafbba82ba", 
+      "size": 252850
+    }, 
+    {
+      "path": "images/IT3-SYM/dip.jpg", 
+      "sha256": "ce26c47589d52886261c3db24a8bdc8846816d4ec4fba0afaa0fbf9b719c53cd", 
+      "size": 194490
+    }, 
+    {
+      "path": "images/IT3-SYM/wiring.jpg", 
+      "sha256": "6c9973945aa230fd2bfe2d4f94a36a7143c197750f4afe60281bd5652763b9b0", 
+      "size": 343117
+    }, 
+    {
+      "path": "images/IT3-VOLVO/dip.jpg", 
+      "sha256": "381ce1a216fd7890eee9a0e6689da910ec502291258e5b8a9f165aa5e3733a9a", 
+      "size": 185296
+    }, 
+    {
+      "path": "images/IT3-VOLVO/wiring.jpg", 
+      "sha256": "9a15ce72c28c9b77e6a26064051dd6424852abc202ca54880083bdaadce665b0", 
+      "size": 170168
+    }, 
+    {
+      "path": "images/ITB-EVO/dip.jpg", 
+      "sha256": "03b8c3245bf2f8dd23b5c62fe59b977a60c954670320bd09e7f1e80536f76a0e", 
+      "size": 110442
+    }, 
+    {
+      "path": "images/ITB-EVO/wiring.jpg", 
+      "sha256": "0869d1f6c3a29b2726716508db93f74e51d8f43bf1d044869a3088d301479e43", 
+      "size": 155846
+    }, 
+    {
+      "path": "images/ITB-RMC/dip.jpg", 
+      "sha256": "477a91707ba02f21138b851c2fd03bfe07ead89680676875ec37d18adcff060b", 
+      "size": 268570
+    }, 
+    {
+      "path": "images/ITB-RMC/wiring.jpg", 
+      "sha256": "badba9a091573fd077eba01fb5296f294ba0a3148ddf17887bef7e33c51b5108", 
+      "size": 310635
+    }, 
+    {
+      "path": "images/ITZ-458/dip.jpg", 
+      "sha256": "42446192d7b628fa6451e4db05af1b1f2e7a5be7cc708d1e7848abb48e13f78c", 
+      "size": 144743
+    }, 
+    {
+      "path": "images/ITZ-458/wiring.jpg", 
+      "sha256": "9866377362d54c76513009e8a30a02ea6fca327e1f9f76391ead5efd6c726828", 
+      "size": 342642
+    }, 
+    {
+      "path": "images/ITZ-488-F12/dip.jpg", 
+      "sha256": "42446192d7b628fa6451e4db05af1b1f2e7a5be7cc708d1e7848abb48e13f78c", 
+      "size": 144743
+    }, 
+    {
+      "path": "images/ITZ-488-F12/wiring.jpg", 
+      "sha256": "c3bec6ad674df859a4bd4ea9ce1b3ab1a1d5e7836fabae7673e032ba02ce9b9e", 
+      "size": 317062
+    }, 
+    {
+      "path": "images/ITZ-ACH/dip.jpg", 
+      "sha256": "854aac6eeda130485b0a1069c5e9ee181a69051a8938f49dcafaf689473b8bb7", 
+      "size": 116607
+    }, 
+    {
+      "path": "images/ITZ-ACH/wiring.jpg", 
+      "sha256": "d039d311dc721a7978b581ae7713ccff6ae307cf6045cbc7588dc43f6d7300b1", 
+      "size": 194922
+    }, 
+    {
+      "path": "images/ITZ-ACURA-A/dip.jpg", 
+      "sha256": "854aac6eeda130485b0a1069c5e9ee181a69051a8938f49dcafaf689473b8bb7", 
+      "size": 116607
+    }, 
+    {
+      "path": "images/ITZ-ACURA-A/wiring.jpg", 
+      "sha256": "6135908f938c9e7c5f067bbcedcefc92803ffe28bc44d6eb16d84decfd65c51d", 
+      "size": 216724
+    }, 
+    {
+      "path": "images/ITZ-ALFA-A/dip.jpg", 
+      "sha256": "05cdcb428ae2b90ff2957b115ec51b6a226ccf1b4663abbd0e9b56c076c37ba0", 
+      "size": 347065
+    }, 
+    {
+      "path": "images/ITZ-ALFA-A/wiring.jpg", 
+      "sha256": "d08629337e5ed6d3ed9a37e94a3ff0110bf1817a798e61d871e3e08de3c38d55", 
+      "size": 389732
+    }, 
+    {
+      "path": "images/ITZ-BNT-A/dip.jpg", 
+      "sha256": "0a2c28d9003879ec77aa90bf61691898c5a0ee277b337525db7393cf227f711a", 
+      "size": 428918
+    }, 
+    {
+      "path": "images/ITZ-BNT-A/wiring.jpg", 
+      "sha256": "c278074dbb5d4a6d2c36140233e07af007a8ccf8d098eea8718c486ed6eef43a", 
+      "size": 456470
+    }, 
+    {
+      "path": "images/ITZ-BNT/dip.jpg", 
+      "sha256": "159416283e9c40d131fc1a3d9c3b744b75068527bd417dc82dfdbd279541aa66", 
+      "size": 92269
+    }, 
+    {
+      "path": "images/ITZ-BNT/wiring.jpg", 
+      "sha256": "5213377a6fe435dd9356db9460466bf9c183d1ce657dc863d05d582c4bfaf10a", 
+      "size": 156390
+    }, 
+    {
+      "path": "images/ITZ-CCC-A/dip.jpg", 
+      "sha256": "2511a39551ed1322bd841a6288ea72db9eee986ee6149bafeca8185698f0e4b9", 
+      "size": 457457
+    }, 
+    {
+      "path": "images/ITZ-CCC-A/wiring.jpg", 
+      "sha256": "36822ab7ba96f65a2e02194cc51f9f3bd93a7f7116453545c31efd6b59261fb3", 
+      "size": 565930
+    }, 
+    {
+      "path": "images/ITZ-CCC/dip.jpg", 
+      "sha256": "75a64f558eb856aab05b26e594404ef2fb6dd3fe71d2a5708c6d0839b88ea78f", 
+      "size": 150087
+    }, 
+    {
+      "path": "images/ITZ-CCC/wiring.jpg", 
+      "sha256": "4675986db8a479781fec9e002c6e037d6e2f7b50ab4e7cc399b436525a79f102", 
+      "size": 205912
+    }, 
+    {
+      "path": "images/ITZ-CDR31-A/dip.jpg", 
+      "sha256": "c9490b49506358e6eb39a57c8d115d1a48bc4a61a26a73325b0d602ad79dacfd", 
+      "size": 164132
+    }, 
+    {
+      "path": "images/ITZ-CDR31-A/wiring.jpg", 
+      "sha256": "9ef8b6e15c13e419d9505d478654726945063ab6959270efdf0b46f56ee32161", 
+      "size": 195841
+    }, 
+    {
+      "path": "images/ITZ-FCL/dip.jpg", 
+      "sha256": "d0452755daccddd515eb211eb0288959e979a10f3d694c7c120f51f07338c9e7", 
+      "size": 144300
+    }, 
+    {
+      "path": "images/ITZ-FCL/wiring.jpg", 
+      "sha256": "ea03ae4d83587b3d26751e96df39f6aba00f788e0a8019d23336078c823ca6b0", 
+      "size": 284475
+    }, 
+    {
+      "path": "images/ITZ-GX-A/dip.jpg", 
+      "sha256": "e796fc7f229bf3fa39b59bf8753231afe254538780cddc372eecf9d47880324d", 
+      "size": 418213
+    }, 
+    {
+      "path": "images/ITZ-GX-A/wiring.jpg", 
+      "sha256": "cea6d5780a11120691b601b86a6932d9bc7bcdae45b9798bf3bbc16f80cf540f", 
+      "size": 409714
+    }, 
+    {
+      "path": "images/ITZ-GX1-A/dip.jpg", 
+      "sha256": "a1c66ceb7412c9b8d225c0b0dd2f233d138d7e960fded1b13849a2c26dee92c6", 
+      "size": 180008
+    }, 
+    {
+      "path": "images/ITZ-GX1-A/wiring.jpg", 
+      "sha256": "59f44a26e08f0c4687de3928354f98c8b59dd89031dec973e948b3f4f0864272", 
+      "size": 364171
+    }, 
+    {
+      "path": "images/ITZ-HON/dip.jpg", 
+      "sha256": "9cecc3eacfd5916c555f22b06bb53e89ce9f43424831000fe71a74548427fa00", 
+      "size": 136630
+    }, 
+    {
+      "path": "images/ITZ-HON/wiring.jpg", 
+      "sha256": "c8fe6add3fc35892b891fb16dca8b98f541adfb1921909734d198a2b28779597", 
+      "size": 161117
+    }, 
+    {
+      "path": "images/ITZ-JGC/dip.jpg", 
+      "sha256": "1c0f19afdb9f42cebbc80b5d3ebdb7623e2fb3a22d8e7d29aeb724cf66867e32", 
+      "size": 184067
+    }, 
+    {
+      "path": "images/ITZ-JGC/wiring.jpg", 
+      "sha256": "1799326823531317229ccdcf18eec89279f20c132a5bfbbf5e0508f8aec99d01", 
+      "size": 297793
+    }, 
+    {
+      "path": "images/ITZ-LR12-C/dip.jpg", 
+      "sha256": "adf4fef02e28d2a272bd4aa708dbd06c79acd7b1483f0948b3f34be90816bcd6", 
+      "size": 178061
+    }, 
+    {
+      "path": "images/ITZ-LR12-C/wiring.jpg", 
+      "sha256": "6c11918a15f3663c203d4d0e47d6663d46a299196cdcf1b508e20d08b6d5417b", 
+      "size": 212441
+    }, 
+    {
+      "path": "images/ITZ-LR15-A/dip.jpg", 
+      "sha256": "26858f652de01d9df33b3a7e27c64a3f0358195fba54fc4f4babe6b8f18f08c4", 
+      "size": 394726
+    }, 
+    {
+      "path": "images/ITZ-LR15-A/wiring.jpg", 
+      "sha256": "10a733d07df1aa46ebf0b6678dfc8663089a36ef6b01ed08e0c174c5aa868f4c", 
+      "size": 429751
+    }, 
+    {
+      "path": "images/ITZ-LR15T/dip.jpg", 
+      "sha256": "090265296712b076a517252f3d4a92ed6ed312b0d69a1ab1d8ecd6b3069d0992", 
+      "size": 412732
+    }, 
+    {
+      "path": "images/ITZ-LR15T/wiring.jpg", 
+      "sha256": "325f756528903bfb79d1403c3ab1be68e1bce5c182c938f4f3111871f94ff08f", 
+      "size": 811719
+    }, 
+    {
+      "path": "images/ITZ-LRB/dip.jpg", 
+      "sha256": "7fb5d55182be6ac01da9a2eb8e7ab9e65902f78995fd05c13960ca5e5ad356c4", 
+      "size": 172183
+    }, 
+    {
+      "path": "images/ITZ-LRB/wiring.jpg", 
+      "sha256": "560d653c5009d97622f3c6e07fd13e4dd75741ea1422ec8f59c6bb26d30e2080", 
+      "size": 191442
+    }, 
+    {
+      "path": "images/ITZ-MCL/dip.jpg", 
+      "sha256": "22844c7d2f54a7e94e2dec3a5eda2fae8f3596c9064410c6cc3b33587f465c0b", 
+      "size": 128458
+    }, 
+    {
+      "path": "images/ITZ-MCL/wiring.jpg", 
+      "sha256": "6cec56a4c52a25499330d305f06626a1507f7a239b5c53f3d9bc7b886a31a887", 
+      "size": 194610
+    }, 
+    {
+      "path": "images/ITZ-MYLINK/dip.jpg", 
+      "sha256": "1844d0caff795c16ac21085283d2359b29af9e995ff445d081818ec3fe49ecca", 
+      "size": 125630
+    }, 
+    {
+      "path": "images/ITZ-MYLINK/wiring.jpg", 
+      "sha256": "62a08396d949a2e637974640a62fcbf4c16d0f60d3c8c69492e5327577852253", 
+      "size": 195360
+    }, 
+    {
+      "path": "images/ITZ-NIF/dip.jpg", 
+      "sha256": "913f1794918e5f5a3aadcb466272bcfb423aea5cc33564264e3104f1517fd742", 
+      "size": 172815
+    }, 
+    {
+      "path": "images/ITZ-NIF/wiring.jpg", 
+      "sha256": "a60400d04c978656bb591e9d47b0c8a173b96755075534b362113412540d7281", 
+      "size": 222699
+    }, 
+    {
+      "path": "images/ITZ-NTG3-A/dip.jpg", 
+      "sha256": "040c15bfb18909b91e27c08b5b71e1283cb067e347b48f36a74bde3b4cdc79d6", 
+      "size": 99646
+    }, 
+    {
+      "path": "images/ITZ-NTG3-A/wiring.jpg", 
+      "sha256": "f98005dc934a8fc9b774263dca2f2e9f2e739cdecaecb90e4b427f1f10e1a33d", 
+      "size": 202334
+    }, 
+    {
+      "path": "images/ITZ-NTG3/dip.jpg", 
+      "sha256": "759072289675dbfb273eef78364e0293e3aa31d9be0572072b1634e95e8b8ce5", 
+      "size": 422878
+    }, 
+    {
+      "path": "images/ITZ-NTG3/wiring.jpg", 
+      "sha256": "2c017a7e8347afe3bc7cd7ef76a7b742cb01af70fa2ea6443cd668c0e4c6d9e9", 
+      "size": 383525
+    }, 
+    {
+      "path": "images/ITZ-NTG35-A/dip.jpg", 
+      "sha256": "d1bda3a1fb0ae4628a06b45e8445c440dd292dec57097e2a7da7a9abd67b25ba", 
+      "size": 108165
+    }, 
+    {
+      "path": "images/ITZ-NTG35-A/wiring.jpg", 
+      "sha256": "09ab16aecb91dda90b160ef813b0b5ea947fca987a3c173febd2cda2389f6b34", 
+      "size": 213380
+    }, 
+    {
+      "path": "images/ITZ-NTG4-A/dip.jpg", 
+      "sha256": "f78b5fe84339bef0bf57a6d370024da2df6af2e3a3d29379dbf3ebf7fd6f678f", 
+      "size": 127040
+    }, 
+    {
+      "path": "images/ITZ-NTG4-A/wiring.jpg", 
+      "sha256": "1b9e48cbed4b45939aa7a4673760efb665f244de24614d3a651d9c83c25d91e4", 
+      "size": 198546
+    }, 
+    {
+      "path": "images/ITZ-NTG4-SLS/dip.jpg", 
+      "sha256": "6497ab5b6646b6c692ef8a0ae7dde86abcd1fc1e9ce58a28ee3407a99f8470ba", 
+      "size": 110771
+    }, 
+    {
+      "path": "images/ITZ-NTG4-SLS/wiring.jpg", 
+      "sha256": "77246a8aca2c55dc6179849e9e16d12ef7276cf23d5ef35d905e03ad62bfbc2f", 
+      "size": 181203
+    }, 
+    {
+      "path": "images/ITZ-NTG4/dip.jpg", 
+      "sha256": "84f97df5e240371d8fffebfed42ad2911b4f1164ab24152df94ba47a65931878", 
+      "size": 335752
+    }, 
+    {
+      "path": "images/ITZ-NTG4/wiring.jpg", 
+      "sha256": "754dfdd07b9946be86cb19def9a7d85d044d4c594829e9550d7e6ef755861570", 
+      "size": 417774
+    }, 
+    {
+      "path": "images/ITZ-NTG6/dip.jpg", 
+      "sha256": "d02b951a5f1b0fece0dae42675447c1e30d89569fab00ae00edde88ad3871fd9", 
+      "size": 289151
+    }, 
+    {
+      "path": "images/ITZ-NTG6/wiring.jpg", 
+      "sha256": "e24780025b0890390f7ac05ffb566efe4c6eb1246a3f4b129d66d13e19d45ada", 
+      "size": 276389
+    }, 
+    {
+      "path": "images/ITZ-PCM4-C/dip.jpg", 
+      "sha256": "da8c640bd5b2e0c1d0c04faec001d8d2f863b50b4abc81958ab50d40f577ee9e", 
+      "size": 114756
+    }, 
+    {
+      "path": "images/ITZ-PCM4-C/wiring.jpg", 
+      "sha256": "c020f30ce72650465fcbc5f8916a37517e06c33fa4dd60b8a5459ec263aaf4cf", 
+      "size": 201585
+    }, 
+    {
+      "path": "images/ITZ-PTC4/dip.jpg", 
+      "sha256": "a0beb7091fbe771f57a709167c821e40f5ad8a92e6718040d07fa58f2f08a68d", 
+      "size": 147340
+    }, 
+    {
+      "path": "images/ITZ-PTC4/wiring.jpg", 
+      "sha256": "5b3deeb856ff4e38375f9af9e045c5cdbcab5ae59666ddee271e0650d6a16eb7", 
+      "size": 277199
+    }, 
+    {
+      "path": "images/ITZ-RMC/dip.jpg", 
+      "sha256": "7233a91bd1869ebe48ea009a3615268f95cf2891fbc8fb340b30cc8b9df3c76d", 
+      "size": 164865
+    }, 
+    {
+      "path": "images/ITZ-RMC/wiring.jpg", 
+      "sha256": "37478fb80b3538d1dd47ed32924a7573988d43b986b874b99a78e8f9fa9efdb8", 
+      "size": 226758
+    }, 
+    {
+      "path": "images/ITZ-SYNC2/dip.jpg", 
+      "sha256": "1419f3cfc0a33ab67c2cdf580a5b407257a5afb31bef9a418fe2bcd04eefaf1e", 
+      "size": 138179
+    }, 
+    {
+      "path": "images/ITZ-SYNC2/wiring.jpg", 
+      "sha256": "35b09fe7e7d3ba11a28c1cca9b1f5297f1ca777afcafd0c356051ab0692f7f07", 
+      "size": 179158
+    }, 
+    {
+      "path": "images/ITZ-TOY/dip.jpg", 
+      "sha256": "a56fce47f5c499c275a9d01adb8ceb420ff6387bf9c6d8f9f3fd712d786ef224", 
+      "size": 245851
+    }, 
+    {
+      "path": "images/ITZ-TOY/wiring.jpg", 
+      "sha256": "acce05837a38a1f1339b46eaf89195052ececa9a3a884bbd720438798ee4c076", 
+      "size": 181660
+    }, 
+    {
+      "path": "images/ITZ-TOY2/dip.jpg", 
+      "sha256": "5a1469c6ce01bf1e8e4ca276cde9f55dfe380878caa08371e8b3126d32920506", 
+      "size": 167406
+    }, 
+    {
+      "path": "images/ITZ-TOY2/wiring.jpg", 
+      "sha256": "1ab3909e851ebfa686c3de061fef49022fb9e64c0faebec5ecb55414a74275d6", 
+      "size": 136318
+    }, 
+    {
+      "path": "images/ITZ-TRG/dip.jpg", 
+      "sha256": "80e6dbe3f6d2117e157e0a9bf03c18b61634428d06b5e5b1a1d3a6bbff9efee8", 
+      "size": 151866
+    }, 
+    {
+      "path": "images/ITZ-TRG/wiring.jpg", 
+      "sha256": "ed25cf34344ffcfe2b6ddd5ffcdd9a1c3387a49013beaec1250ef004acfcb90c", 
+      "size": 300627
+    }, 
+    {
+      "path": "images/ZW-FRD/dip.jpg", 
+      "sha256": "18c91019af0875d4ad19fedc9a28098775a53edfb38f07ba5839285298ce5872", 
+      "size": 513635
+    }, 
+    {
+      "path": "images/ZW-FRD/wiring.jpg", 
+      "sha256": "2f84bc884b8531c4c11bd68eba088526370525103801ffca33e10fad58ea47fa", 
+      "size": 502142
+    }, 
+    {
+      "path": "images/ZW-FSD/dip.jpg", 
+      "sha256": "92b8de84662a6cc479624cecbcaa2bce6241c2df151f398e8d07a4a8a2c2fa46", 
+      "size": 517372
+    }, 
+    {
+      "path": "images/ZW-FSD/wiring.jpg", 
+      "sha256": "003888c2c9ff12bb74271e914aec6c5d13414c6c67fe39084ef33e85630eeda7", 
+      "size": 325482
+    }, 
+    {
+      "path": "images/ZW-GM/dip.jpg", 
+      "sha256": "532b02a6d98216617bda4451fad94f479d8903332b282d9097a652f471d09df7", 
+      "size": 411371
+    }, 
+    {
+      "path": "images/ZW-GM/wiring.jpg", 
+      "sha256": "7733137bc4efca188e055594bf8dff7130cc661c3483f66c52f19fec0eb56584", 
+      "size": 608691
+    }, 
+    {
+      "path": "images/ZW-GMLC-EV/dip.jpg", 
+      "sha256": "c344c84d3a18a7992f5cc5656ba85d55a2a2b85b1a107ad14931a41095aa4d30", 
+      "size": 530799
+    }, 
+    {
+      "path": "images/ZW-GMLC-EV/wiring.jpg", 
+      "sha256": "73ec9a08691ac67e4511905566050e0f4e4cd79ad8b40b0efd422967c5828716", 
+      "size": 558956
+    }, 
+    {
+      "path": "images/ZW-GMLCv2/dip.jpg", 
+      "sha256": "93781c972126dbe9c3c18efa102d6ac190310e7a24cac3d37489923018e65a79", 
+      "size": 645848
+    }, 
+    {
+      "path": "images/ZW-GMLCv2/wiring.jpg", 
+      "sha256": "67b85de47555aac7afd5c253b0832b2cb2704b3fdbfcb414a7c09910e38416aa", 
+      "size": 671788
+    }, 
+    {
+      "path": "images/ZW-RAM/dip.jpg", 
+      "sha256": "8ca2c93e288530e22ed9302d3d5391d1ec6c3d36b56205cffefae2e4518f72d8", 
+      "size": 561099
+    }, 
+    {
+      "path": "images/ZW-RAM/wiring.jpg", 
+      "sha256": "8ca2c93e288530e22ed9302d3d5391d1ec6c3d36b56205cffefae2e4518f72d8", 
+      "size": 561099
+    }, 
+    {
+      "path": "images/favicon.jpg", 
+      "sha256": "c673161dbcbf26febba46353dc533cba4e770bfc41ed5d17ac266bcce689d8ed", 
+      "size": 11298
+    }, 
+    {
+      "path": "images/zz2-logo.png", 
+      "sha256": "f349a01218274a625801d07a8838a0edcefd228f75d594c89bab84d0ea3ca733", 
+      "size": 343069
+    }, 
+    {
+      "path": "index.html", 
+      "sha256": "3b9c5c95e80874b7762a7faf93ff610e085158e29ccb08efebb0bd789c10fa82", 
+      "size": 260431
+    }, 
+    {
+      "path": "kit-editor.html", 
+      "sha256": "cc680424ce3936b2fa19ffa9301037f1ea38f6a56b8d7d0ba0ffae7c9e6b0ece", 
+      "size": 110236
+    }, 
+    {
+      "path": "login.html", 
+      "sha256": "0056142953b13e6f853e88ef3200c0139c01e29686d1afd2bebd1588a353b7bb", 
+      "size": 10649
+    }, 
+    {
+      "path": "pending_writes.json", 
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945", 
+      "size": 2
+    }, 
+    {
+      "path": "roles.json", 
+      "sha256": "d018b7ed53d6b98425fbe280a4f0195dcc8bdc5d39cbaa1ab49ff376f9b7a2ec", 
+      "size": 771
+    }, 
+    {
+      "path": "server.py", 
+      "sha256": "ce07d8fddad8a7e984e2701a8dfabfea105b6ea47915796244af134211122a34", 
+      "size": 240395
+    }, 
+    {
+      "path": "sessions.json", 
+      "sha256": "0219b18e9f75b91d976ae6cafc2f06cbf1d2eff24c62fb688cd50ad1c8391fb3", 
+      "size": 784
+    }, 
+    {
+      "path": "settings.html", 
+      "sha256": "79a49fb47a544530a379caac9ac497ae815fa6cad196dd02824c59b5ff799c92", 
+      "size": 54684
+    }, 
+    {
+      "path": "stats.json", 
+      "sha256": "dbae3925e7ba6e70f0c76c3010f85e2fd50fae96f412a3053c20ad4776aed26e", 
+      "size": 608
+    }, 
+    {
+      "path": "tickets.html", 
+      "sha256": "a5d7f69811ddd26bdaeaf27af9b2a38a085fedc0889f91be836de1162b24692b", 
+      "size": 40808
+    }, 
+    {
+      "path": "users.html", 
+      "sha256": "7a25ea6e9c180dbcc8bf4de2ede571f1f4fc989728ada86bfbfe30131185266d", 
+      "size": 39086
+    }
+  ], 
+  "include_media": true, 
+  "file_count": 163, 
+  "total_bytes": 47361080, 
+  "created": "2026-08-12T00:02:16Z", 
+  "python": "2.7.18", 
+  "base_dir": "/app", 
+  "ts": "20260812_000216", 
+  "label": "auto"
+}

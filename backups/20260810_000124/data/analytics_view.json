@@ -1,0 +1,38 @@
+{
+  "count": 1, 
+  "precomputed": true, 
+  "rows": [
+    {
+      "status": "Waiting for customer feedback", 
+      "product": "IT3-NBT", 
+      "client": "Autotronix", 
+      "tech": "Local Admin", 
+      "vehicle": "2022 BMW X3", 
+      "date": "2026-08-04", 
+      "issue": "No audio", 
+      "ticket": "1", 
+      "canon": "open", 
+      "resolution": ""
+    }
+  ], 
+  "source_generated": "", 
+  "generated": "", 
+  "source_count": 1, 
+  "norm": {
+    "client": {
+      "merges": [], 
+      "after": 1, 
+      "before": 1
+    }, 
+    "tech": {
+      "merges": [], 
+      "after": 1, 
+      "before": 1
+    }, 
+    "vehicle": {
+      "merges": [], 
+      "after": 1, 
+      "before": 1
+    }
+  }
+}

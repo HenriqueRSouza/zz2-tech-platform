@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/jpeg" href="/images/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>/* zz2 theme: apply saved choice before paint; default stays light */(function(){try{var t=localStorage.getItem('zz2-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+  <title>ZZ2 Admin Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f4f5f7;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: #22262c;
+      padding: 0 28px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #ffcd00;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 14px; }
+    .header img { height: 32px; }
+    .header-title {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .header-title span { color: #ffcd00; }
+
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .user-badge {
+      background: rgba(255,205,0,0.15);
+      border: 1px solid rgba(255,205,0,0.3);
+      color: #ffcd00;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .role-badge {
+      background: rgba(255,255,255,0.08);
+      color: #9ca3af;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .logout-btn {
+      background: none;
+      border: 1px solid #374151;
+      color: #9ca3af;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .logout-btn:hover { border-color: #f87171; color: #f87171; }
+
+    /* Main content */
+    .main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 36px 24px;
+    }
+
+    .greeting {
+      margin-bottom: 32px;
+    }
+    .greeting h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: #111827;
+    }
+    .greeting p {
+      font-size: 14px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    /* Dashboard cards grid */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 28px 24px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      display: block;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent, #e5e7eb);
+      transition: height 0.15s;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+
+    .card:hover::before { height: 4px; }
+
+    .card-icon {
+      font-size: 28px;
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 6px;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: #6b7280;
+      line-height: 1.5;
+    }
+
+    .card-arrow {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      color: #d1d5db;
+      font-size: 18px;
+    }
+
+    /* Super admin only badge */
+    .super-only {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 8px;
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .stat-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 32px;
+      font-weight: 800;
+      color: #111827;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 16px;
+    }
+
+    .hidden { display: none !important; }
+
+  /* ===== ZZ2 dark theme + responsive - ADDITIVE ONLY ===== */
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --ink:#e6e8ec; --bg:#0f1216; --card:#1b1f25; --line:#2a2f37; --line-soft:#23272e;
+    --muted:#9aa3ad; --muted-2:#79828d; --accent:#818cf8; --brand:#ffcd00;
+    --shadow:0 1px 2px rgba(0,0,0,.45),0 1px 3px rgba(0,0,0,.55);
+  }
+  /* auto surface overrides */
+  [data-theme="dark"] body{background:#181c22}
+  [data-theme="dark"] .greeting h1{color:#e6e8ec}
+  [data-theme="dark"] .greeting p{color:#aab2bd}
+  [data-theme="dark"] .card{background:#1b1f25;border-color:#2a2f37}
+  [data-theme="dark"] .card-title{color:#e6e8ec}
+  [data-theme="dark"] .card-desc{color:#aab2bd}
+  [data-theme="dark"] .stat-card{background:#1b1f25;border-color:#2a2f37}
+  [data-theme="dark"] .stat-num{color:#e6e8ec}
+  [data-theme="dark"] .section-title{color:#aab2bd}
+
+  .tb-toggle{appearance:none;border:1px solid #3a4049;background:#2b3037;color:#e5e7eb;font:inherit;
+    font-size:15px;line-height:1;width:34px;height:34px;border-radius:8px;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .tb-toggle:hover{background:#343a42}
+  </style>
+</head>
+<body>
+<!-- ZZ2 shared navigation menu -->
+<style>
+  .zz2-burger{appearance:none;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);color:#fff;width:38px;height:34px;border-radius:7px;cursor:pointer;font-size:18px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;padding:0;transition:background .15s;margin-right:6px}
+  .zz2-burger:hover{background:rgba(255,205,0,0.28)}
+  .zz2-nav-overlay{position:fixed;inset:0;background:rgba(10,12,15,0.5);opacity:0;visibility:hidden;transition:opacity .2s;z-index:99998}
+  .zz2-nav-overlay.show{opacity:1;visibility:visible}
+  .zz2-nav{position:fixed;top:0;left:0;height:100%;width:264px;max-width:82vw;background:#22262c;border-right:2px solid #ffcd00;transform:translateX(-100%);transition:transform .22s ease;z-index:99999;display:flex;flex-direction:column;box-shadow:2px 0 18px rgba(0,0,0,0.35);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+  .zz2-nav.open{transform:translateX(0)}
+  .zz2-nav-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,0.08)}
+  .zz2-nav-title{color:#fff;font-size:15px;font-weight:600;letter-spacing:.02em}
+  .zz2-nav-title b{color:#ffcd00;font-weight:600}
+  .zz2-nav-x{appearance:none;background:none;border:none;color:#9ca3af;font-size:26px;line-height:1;cursor:pointer;padding:0 4px;transition:color .15s}
+  .zz2-nav-x:hover{color:#fff}
+  .zz2-nav-links{padding:8px 0;overflow-y:auto}
+  .zz2-nav-link{display:flex;align-items:center;gap:12px;padding:13px 20px;color:#d6dade;text-decoration:none;font-size:14px;font-weight:500;border-left:3px solid transparent;transition:background .14s,color .14s}
+  .zz2-nav-link:hover{background:rgba(255,205,0,0.10);color:#fff}
+  .zz2-nav-link .i{font-size:16px;width:20px;text-align:center;flex:0 0 auto}
+  .zz2-nav-link.active{background:rgba(255,205,0,0.14);color:#ffcd00;border-left-color:#ffcd00;cursor:default}
+  .zz2-nav-link.active:hover{background:rgba(255,205,0,0.14)}
+
+/* zz2-mobile-base */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+@media (max-width: 640px) {
+  input, select, textarea { font-size: 16px !important; }   /* no focus-zoom on iOS */
+  img, svg, video { max-width: 100%; }
+}
+
+/* zz2-mobile-dashboard */
+@media (max-width: 640px) {
+  .header { padding: 0 12px; }
+  .header-left { gap: 8px; min-width: 0; }
+  .header-title { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .header-right { gap: 6px; }
+  .user-badge { max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 4px 9px; }
+  .role-badge { display: none; }            /* role still shows in the slide-out nav */
+  .logout-btn { padding: 5px 9px; }
+  .main { padding: 22px 15px; }
+  .greeting { margin-bottom: 22px; }
+  .greeting h1 { font-size: 21px; }
+  .greeting p { font-size: 13px; }
+  .stats-row { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .cards { gap: 14px; margin-bottom: 28px; }
+}
+</style>
+<div class="zz2-nav-overlay" id="zz2NavOverlay"></div>
+<nav class="zz2-nav" id="zz2Nav" aria-hidden="true">
+  <div class="zz2-nav-head">
+    <span class="zz2-nav-title">ZZ2 <b>Navigation</b></span>
+    <button class="zz2-nav-x" id="zz2NavClose" aria-label="Close menu">&times;</button>
+  </div>
+  <div class="zz2-nav-links">
+    <a class="zz2-nav-link" href="/dashboard.html" data-perm="dashboard" data-page="dashboard"><span class="i">⬡</span>Dashboard</a>
+    <a class="zz2-nav-link" href="/index.html" data-perm="" data-page="index"><span class="i">🔧</span>Kit &amp; Ticket Tool</a>
+    <a class="zz2-nav-link" href="/tickets.html" data-perm="tickets" data-page="tickets"><span class="i">🗂️</span>Tickets</a>
+    <a class="zz2-nav-link" href="/analytics.html" data-perm="analytics" data-page="analytics"><span class="i">📊</span>Analytics</a>
+    <a class="zz2-nav-link" href="/users.html" data-perm="manage_users|manage_roles" data-page="users"><span class="i">👥</span>Users &amp; Roles</a>
+    <a class="zz2-nav-link" href="/settings.html" data-perm="system_settings" data-page="settings"><span class="i">⚙️</span>System Settings</a>
+  </div>
+</nav>
+<script>
+(function(){
+  function curPage(){ var f=(location.pathname.split('/').pop()||'').toLowerCase(); if(!f) return 'index'; return f.replace('.html',''); }
+  window.zz2NavToggle=function(open){
+    var nav=document.getElementById('zz2Nav'), ov=document.getElementById('zz2NavOverlay');
+    if(!nav) return;
+    var show=(open===undefined)?!nav.classList.contains('open'):!!open;
+    nav.classList.toggle('open',show); if(ov) ov.classList.toggle('show',show);
+    nav.setAttribute('aria-hidden',show?'false':'true');
+  };
+  window.zz2BuildNav=function(perms){
+    perms=perms||[];
+    function has(spec){ if(!spec) return true; return spec.split('|').some(function(p){return perms.indexOf(p)>=0;}); }
+    var cp=curPage(), links=document.querySelectorAll('#zz2Nav .zz2-nav-link');
+    for(var i=0;i<links.length;i++){
+      var el=links[i], perm=el.getAttribute('data-perm'), page=el.getAttribute('data-page');
+      el.style.display=has(perm)?'flex':'none';
+      if(page===cp){ el.classList.add('active'); el.removeAttribute('href'); }
+      else el.classList.remove('active');
+    }
+  };
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'||e.key==='Esc') zz2NavToggle(false); });
+  function wire(){ var ov=document.getElementById('zz2NavOverlay'), x=document.getElementById('zz2NavClose');
+    if(ov) ov.addEventListener('click',function(){zz2NavToggle(false);});
+    if(x) x.addEventListener('click',function(){zz2NavToggle(false);}); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',wire); else wire();
+})();
+</script>
+<!-- /ZZ2 shared navigation menu -->
+
+  <div class="header">
+    <div class="header-left"><button class="zz2-burger" onclick="zz2NavToggle()" aria-label="Open menu">☰</button>
+      <img src="/images/zz2-logo.png" alt="ZZ2">
+      <span class="header-title">Admin <span>Dashboard</span></span>
+    </div>
+    <div class="header-right">
+  <button class="tb-toggle" id="themeToggle" onclick="zz2ToggleTheme()" title="Switch to dark mode" aria-label="Switch color theme">☀️</button>
+      <span class="user-badge" id="user-name">...</span>
+      <span class="role-badge" id="user-role">...</span>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="greeting">
+      <h1 id="greeting-text">Welcome back</h1>
+      <p id="date-text"></p>
+    </div>
+
+    <!-- Stats row -->
+    <div class="section-title" id="stats-title">Tickets</div>
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-today">—</div>
+        <div class="stat-label">Today</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-week">—</div>
+        <div class="stat-label">This Week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-month">—</div>
+        <div class="stat-label">This Month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-total">—</div>
+        <div class="stat-label">All Time</div>
+      </div>
+    </div>
+
+    <!-- Navigation cards -->
+    <div class="section-title">Navigate</div>
+    <div class="cards">
+
+      <a class="card" href="/index.html" style="--accent:#ffcd00;">
+        <span class="card-icon">🔧</span>
+        <div class="card-title">Kit & Ticket Tool</div>
+        <div class="card-desc">Troubleshoot kits, create and manage support tickets.</div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="card hidden" id="card-tickets" href="/tickets.html" style="--accent:#0ea5e9;">
+        <span class="card-icon">🗂️</span>
+        <div class="card-title">Tickets</div>
+        <div class="card-desc">View every ticket in a spreadsheet, search, edit inline, and add new ones.</div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="card hidden" id="card-analytics" href="/analytics.html" style="--accent:#6366f1;">
+        <span class="card-icon">📊</span>
+        <div class="card-title">Analytics</div>
+        <div class="card-desc">Ticket trends, tech performance, kit trouble scores, RMA tracking.</div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="card hidden" id="card-users" href="/users.html" style="--accent:#10b981;">
+        <span class="card-icon">👥</span>
+        <div class="card-title">Users &amp; Roles</div>
+        <div class="card-desc">Manage accounts, build custom roles, and assign permissions.</div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="card hidden" id="card-settings" href="/settings.html" style="--accent:#f59e0b;">
+        <span class="card-icon">⚙️</span>
+        <div class="card-title">System Settings</div>
+        <div class="card-desc">Server status, backups, logs, and system configuration.</div>
+        <span class="card-arrow">→</span>
+      </a>
+
+    </div>
+  </div>
+
+  <script>
+    const SERVER_URL = window.location.origin;
+    const AUTH_KEY   = 'zz2_auth_token';
+    const ROLE_KEY   = 'zz2_auth_role';
+    const STATS_CACHE_KEY = 'zz2_dash_stats';
+
+    function doLogout() {
+      var token = localStorage.getItem(AUTH_KEY);
+      fetch(SERVER_URL + '/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token })
+      }).catch(function(){});
+      localStorage.removeItem(AUTH_KEY);
+      localStorage.removeItem(ROLE_KEY);
+      // Remove Supabase's persisted refresh session as well as the compatibility
+      // access-token key above. The next login will start a clean Auth session.
+      for (var i = localStorage.length - 1; i >= 0; i--) {
+        var key = localStorage.key(i);
+        if (key && /^sb-.*-auth-token$/.test(key)) localStorage.removeItem(key);
+      }
+      window.location.href = '/login.html';
+    }
+
+    window.addEventListener('load', function() {
+      var token = localStorage.getItem(AUTH_KEY);
+      if (!token) { window.location.href = '/login.html'; return; }
+
+      fetch(SERVER_URL + '/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (!d.ok) { window.location.href = '/login.html'; return; }
+
+        var perms = d.permissions || [];
+        function can(p){ return perms.indexOf(p) >= 0; }
+        if(window.zz2BuildNav) zz2BuildNav(perms);
+
+        // The dashboard itself requires the `dashboard` permission.
+        if (!can('dashboard')) { window.location.href = '/index.html'; return; }
+
+        // Set UI
+        document.getElementById('user-name').textContent = d.display;
+        document.getElementById('user-role').textContent = (d.role || '').replace('_', ' ');
+        document.getElementById('greeting-text').textContent = 'Welcome back, ' + d.display;
+
+        var now = new Date();
+        document.getElementById('date-text').textContent = now.toLocaleDateString('en-US', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+
+        // Reveal each card by the permission it needs.
+        function show(id){ var el = document.getElementById(id); if (el) el.classList.remove('hidden'); }
+        if (can('tickets'))         show('card-tickets');
+        if (can('analytics'))       show('card-analytics');
+        if (can('manage_users') || can('manage_roles')) show('card-users');
+        if (can('system_settings')) show('card-settings');
+
+        // Stats need the `dashboard` permission (already required above).
+        // Paint cached numbers instantly, then refresh silently in the background.
+        renderCachedStats();
+        loadStats(token);
+        setInterval(function() { loadStats(token); }, 60000);
+      })
+      .catch(function() { window.location.href = '/login.html'; });
+    });
+
+    function applyStats(d) {
+      document.getElementById('stat-today').textContent = d.today || 0;
+      document.getElementById('stat-week').textContent  = d.this_week || 0;
+      document.getElementById('stat-month').textContent = d.this_month || 0;
+      document.getElementById('stat-total').textContent = d.total || 0;
+    }
+
+    function renderCachedStats() {
+      // Show the last known counts immediately so the cards never sit on "—"
+      // while the (slow) sheet query runs.
+      try {
+        var c = JSON.parse(localStorage.getItem(STATS_CACHE_KEY) || 'null');
+        if (c) applyStats(c);
+      } catch (e) {}
+    }
+
+    function _localISO(d) {
+      return d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+    }
+
+    function loadStats(token) {
+      // Ticket counts come directly from techSupport.tickets. HEAD + exact count
+      // avoids downloading rows and the four independent ranges run in parallel.
+      fetch(SERVER_URL + '/api/config', {cache:'no-store'})
+      .then(function(r) { return r.json(); })
+      .then(function(cfg) {
+        if (!cfg.supabase_url || !cfg.supabase_publishable_key) throw new Error('Supabase is not configured');
+        var now = new Date();
+        var today = _localISO(now);
+        var week = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        week.setDate(week.getDate() - ((week.getDay() + 6) % 7));
+        var month = new Date(now.getFullYear(), now.getMonth(), 1);
+        var tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1);
+        function count(since, before) {
+          var query = '?select=id' + (since ? '&ticket_date=gte.' + encodeURIComponent(since) : '') +
+            (before ? '&ticket_date=lt.' + encodeURIComponent(before) : '');
+          return fetch(cfg.supabase_url.replace(/\/$/,'') + '/rest/v1/tickets' + query, {
+            method:'HEAD', cache:'no-store',
+            headers:{'apikey':cfg.supabase_publishable_key,'Authorization':'Bearer '+token,
+              'Accept-Profile':'techSupport','Prefer':'count=exact'}
+          }).then(function(r){
+            if (!r.ok) throw new Error('Ticket count HTTP '+r.status);
+            var range=r.headers.get('content-range')||'*/0';
+            return parseInt(range.split('/').pop(),10)||0;
+          });
+        }
+        var upper=_localISO(tomorrow);
+        return Promise.all([count(today,upper),count(_localISO(week),upper),
+          count(_localISO(month),upper),count('','')]);
+      })
+      .then(function(counts) {
+        var s = { today:counts[0], this_week:counts[1], this_month:counts[2], total:counts[3] };
+        applyStats(s);
+        try { localStorage.setItem(STATS_CACHE_KEY, JSON.stringify(s)); } catch (e) {}
+      })
+      .catch(function(){});
+    }
+  </script>
+<script>
+/* ZZ2 theme toggle - button shows the CURRENT mode; tooltip names the action */
+(function(){
+  function isDark(){return document.documentElement.getAttribute('data-theme')==='dark';}
+  function syncBtn(){var b=document.getElementById('themeToggle');if(!b)return;var d=isDark();
+    b.textContent=d?'\ud83c\udf19':'\u2600\ufe0f';b.title=d?'Switch to light mode':'Switch to dark mode';}
+  window.zz2ToggleTheme=function(){var next=isDark()?'light':'dark';
+    if(next==='dark')document.documentElement.setAttribute('data-theme','dark');
+    else document.documentElement.removeAttribute('data-theme');
+    try{localStorage.setItem('zz2-theme',next);}catch(e){}
+    syncBtn();if(window.zz2OnThemeChange)try{window.zz2OnThemeChange(next);}catch(e){}};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',syncBtn);else syncBtn();
+})();
+</script>
+</body>
+</html>

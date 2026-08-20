@@ -1,0 +1,82 @@
+[
+  {
+    "created": "2026-08-07T23:37:44Z", 
+    "predicted_num": 3, 
+    "attempts": 24, 
+    "params": {
+      "status": "", 
+      "product": "I", 
+      "resolution": "", 
+      "notes": "", 
+      "client": "", 
+      "tech": "henrique.ribeiro@zz2.com.br", 
+      "vehicle": "", 
+      "action": "newticket", 
+      "serial": "", 
+      "issue": ""
+    }, 
+    "action": "newticket", 
+    "id": "1786145864394-55899cfb"
+  }, 
+  {
+    "created": "2026-08-07T23:45:46Z", 
+    "predicted_num": null, 
+    "attempts": 0, 
+    "params": {
+      "status": "", 
+      "product": "IT3-EVO", 
+      "issue": "", 
+      "notes": "", 
+      "client": "ABT Electronics", 
+      "tech": "henrique.ribeiro@zz2.com.br", 
+      "ticketNum": "3", 
+      "vehicle": "", 
+      "action": "updateticket", 
+      "serial": "", 
+      "resolution": ""
+    }, 
+    "action": "updateticket", 
+    "id": "1786146346763-04d530f2"
+  }, 
+  {
+    "created": "2026-08-07T23:46:06Z", 
+    "predicted_num": null, 
+    "attempts": 0, 
+    "params": {
+      "action": "deleteticket", 
+      "ticketNum": "3"
+    }, 
+    "action": "deleteticket", 
+    "id": "1786146366867-13272d58"
+  }, 
+  {
+    "created": "2026-08-07T23:46:27Z", 
+    "predicted_num": 7388, 
+    "attempts": 0, 
+    "params": {
+      "status": "", 
+      "product": "", 
+      "resolution": "", 
+      "notes": "", 
+      "client": "ABT Electronics", 
+      "tech": "henrique.ribeiro@zz2.com.br", 
+      "vehicle": "", 
+      "action": "newticket", 
+      "serial": "", 
+      "issue": ""
+    }, 
+    "action": "newticket", 
+    "id": "1786146387210-615a696d"
+  }, 
+  {
+    "created": "2026-08-07T23:46:59Z", 
+    "predicted_num": null, 
+    "attempts": 0, 
+    "params": {
+      "action": "deleteticket", 
+      "ticketNum": "7388"
+    }, 
+    "action": "deleteticket", 
+    "id": "1786146419638-cc5cdc4e"
+  }
+]

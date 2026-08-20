@@ -1,0 +1,702 @@
+{
+  "IT3-PCM31A": {
+    "dip_image": "", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT3-PCM31A/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-FCL": {
+    "dip_image": "/images/ITZ-FCL/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-FCL/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ZW-GMLCv2": {
+    "dip_image": "/images/ZW-GMLCv2/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ZW-GMLCv2/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "DZZ MERCEDES": {
+    "dip_image": "", 
+    "switch_button": "", 
+    "wiring_image": "/images/DZZ MERCEDES/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ZW-RAM": {
+    "dip_image": "/images/ZW-RAM/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ZW-RAM/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT3-SYM": {
+    "dip_image": "/images/IT3-SYM/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT3-SYM/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ZW-GM": {
+    "dip_image": "/images/ZW-GM/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ZW-GM/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-GX1-A": {
+    "dip_image": "/images/ITZ-GX1-A/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-GX1-A/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITB-EVO": {
+    "dip_image": "/images/ITB-EVO/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITB-EVO/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-NTG3": {
+    "dip_image": "/images/ITZ-NTG3/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-NTG3/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-BNT-A": {
+    "dip_image": "/images/ITZ-BNT-A/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-BNT-A/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-NTG4-A": {
+    "dip_image": "/images/ITZ-NTG4-A/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-NTG4-A/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-BNT": {
+    "dip_image": "/images/ITZ-BNT/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-BNT/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-NTG4-SLS": {
+    "dip_image": "/images/ITZ-NTG4-SLS/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-NTG4-SLS/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITB-RMC": {
+    "dip_image": "/images/ITB-RMC/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITB-RMC/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-JGC": {
+    "dip_image": "/images/ITZ-JGC/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-JGC/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-ALFA-A": {
+    "dip_image": "/images/ITZ-ALFA-A/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-ALFA-A/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ZW-FSD": {
+    "dip_image": "/images/ZW-FSD/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ZW-FSD/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-TOY": {
+    "dip_image": "/images/ITZ-TOY/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-TOY/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ZW-FRD": {
+    "dip_image": "/images/ZW-FRD/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ZW-FRD/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT2-RMC": {
+    "dip_image": "/images/IT2-RMC/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT2-RMC/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-LR12-C": {
+    "dip_image": "/images/ITZ-LR12-C/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-LR12-C/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT3-NTG45": {
+    "dip_image": "/images/IT3-NTG45/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT3-NTG45/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT3-EVO": {
+    "dip_image": "/images/IT3-EVO/dip.jpg",
+    "switch_button": "MENU button",
+    "wiring_image": "/images/IT3-EVO/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "/images/IT3-EVO/misc.jpg", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": "OEM BT Channel — ZZPLAY → Setup → scroll to bottom → 'Use Car's BT Channel' ON"
+  }, 
+  "ITZ-CCC": {
+    "dip_image": "/images/ITZ-CCC/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-CCC/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-ACURA-A": {
+    "dip_image": "/images/ITZ-ACURA-A/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-ACURA-A/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-NTG6": {
+    "dip_image": "/images/ITZ-NTG6/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-NTG6/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-NTG4": {
+    "dip_image": "/images/ITZ-NTG4/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-NTG4/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-CDR31-A": {
+    "dip_image": "/images/ITZ-CDR31-A/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-CDR31-A/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT3-LEX19": {
+    "dip_image": "/images/IT3-LEX19/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT3-LEX19/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-LR15T": {
+    "dip_image": "/images/ITZ-LR15T/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-LR15T/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT3-LEX15": {
+    "dip_image": "/images/IT3-LEX15/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT3-LEX15/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT2-INF-Q": {
+    "dip_image": "/images/IT2-INF-Q/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT2-INF-Q/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT3-LEX17": {
+    "dip_image": "/images/IT3-LEX17/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT3-LEX17/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-RMC": {
+    "dip_image": "/images/ITZ-RMC/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-RMC/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-MCL": {
+    "dip_image": "/images/ITZ-MCL/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-MCL/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-NTG3-A": {
+    "dip_image": "/images/ITZ-NTG3-A/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-NTG3-A/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ZW-GMLC-EV": {
+    "dip_image": "/images/ZW-GMLC-EV/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ZW-GMLC-EV/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-MYLINK": {
+    "dip_image": "/images/ITZ-MYLINK/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-MYLINK/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-PTC4": {
+    "dip_image": "/images/ITZ-PTC4/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-PTC4/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-488-F12": {
+    "dip_image": "/images/ITZ-488-F12/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-488-F12/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT3-AUDI": {
+    "dip_image": "/images/IT3-AUDI/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT3-AUDI/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-LRB": {
+    "dip_image": "/images/ITZ-LRB/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-LRB/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT2-MAS-QTG": {
+    "dip_image": "/images/IT2-MAS-QTG/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT2-MAS-QTG/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT2-LR15": {
+    "dip_image": "/images/IT2-LR15/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT2-LR15/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT3-NTG5": {
+    "dip_image": "/images/IT3-NTG5/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT3-NTG5/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-ACH": {
+    "dip_image": "/images/ITZ-ACH/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-ACH/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT3-NBT": {
+    "dip_image": "/images/IT3-NBT/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT3-NBT/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-HON": {
+    "dip_image": "/images/ITZ-HON/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-HON/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-CCC-A": {
+    "dip_image": "/images/ITZ-CCC-A/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-CCC-A/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT2-JGC": {
+    "dip_image": "/images/IT2-JGC/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT2-JGC/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-NIF": {
+    "dip_image": "/images/ITZ-NIF/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-NIF/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT2-INF-Q2": {
+    "dip_image": "/images/IT2-INF-Q2/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT2-INF-Q2/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-TRG": {
+    "dip_image": "/images/ITZ-TRG/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-TRG/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT2-BNT": {
+    "dip_image": "/images/IT2-BNT/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT2-BNT/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-NTG35-A": {
+    "dip_image": "/images/ITZ-NTG35-A/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-NTG35-A/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-LR15-A": {
+    "dip_image": "/images/ITZ-LR15-A/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-LR15-A/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-SYNC2": {
+    "dip_image": "/images/ITZ-SYNC2/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-SYNC2/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-458": {
+    "dip_image": "/images/ITZ-458/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-458/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-PCM4-C": {
+    "dip_image": "/images/ITZ-PCM4-C/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-PCM4-C/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-GX-A": {
+    "dip_image": "/images/ITZ-GX-A/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-GX-A/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT3-PCM3": {
+    "dip_image": "/images/IT3-PCM3/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT3-PCM3/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT2-INF-Q70": {
+    "dip_image": "/images/IT2-INF-Q70/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT2-INF-Q70/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT3-VOLVO": {
+    "dip_image": "/images/IT3-VOLVO/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT3-VOLVO/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT2-LR12": {
+    "dip_image": "/images/IT2-LR12/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT2-LR12/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT3-CIC": {
+    "dip_image": "/images/IT3-CIC/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT3-CIC/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "DZZ BMW": {
+    "dip_image": "", 
+    "switch_button": "", 
+    "wiring_image": "/images/DZZ BMW/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "DZZ AUDI": {
+    "dip_image": "", 
+    "switch_button": "", 
+    "wiring_image": "/images/DZZ AUDI/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "IT2-MYLINK": {
+    "dip_image": "/images/IT2-MYLINK/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/IT2-MYLINK/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }, 
+  "ITZ-TOY2": {
+    "dip_image": "/images/ITZ-TOY2/dip.jpg", 
+    "switch_button": "", 
+    "wiring_image": "/images/ITZ-TOY2/wiring.jpg", 
+    "vehicle": "", 
+    "misc_image": "", 
+    "notes": "", 
+    "manual": "", 
+    "audio_method": ""
+  }
+}

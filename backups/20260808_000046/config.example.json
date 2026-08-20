@@ -1,0 +1,22 @@
+{
+  "auto_resolve_days": 7,
+  "auto_resolve_enabled": true,
+  "backup_include_media": true,
+  "backup_keep": 30,
+  "kits_csv": "https://docs.google.com/spreadsheets/d/e/REPLACE/pub?gid=0&single=true&output=csv",
+  "pane_refresh_interval": 30,
+  "poll_interval": 15,
+  "reconcile_days": 2,
+  "reconcile_interval": 300,
+  "secret_key": "CHANGE_ME_long_random_string",
+  "session_ttl_days": 7.0,
+  "supabase_service_key": "CHANGE_ME_sb_secret_...",
+  "supabase_publishable_key": "CHANGE_ME_sb_publishable_...",
+  "supabase_url": "https://REPLACE.supabase.co",
+  "customer_history_schema": "zoho",
+  "troubleshooting_csv": "https://docs.google.com/spreadsheets/d/e/REPLACE/pub?gid=0&single=true&output=csv",
+  "webapp_url": "https://script.google.com/macros/s/REPLACE_WITH_YOUR_APPS_SCRIPT_EXEC_URL/exec",
+  "work_end": "20:00",
+  "work_start": "09:30",
+  "work_window_enabled": false
+}

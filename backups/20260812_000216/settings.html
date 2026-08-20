@@ -1,0 +1,913 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+  <link rel="icon" type="image/jpeg" href="/images/favicon.jpg">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>/* zz2 theme: apply saved choice before paint; default stays light */(function(){try{var t=localStorage.getItem('zz2-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
+<title>ZZ2 System Settings</title>
+<style>
+  :root{
+    --ink:#22262c; --bg:#eef0f3; --card:#fff; --line:#e5e7eb; --line-soft:#eef1f4;
+    --muted:#6b7280; --muted-2:#9ca3af; --brand:#ffcd00; --accent:#6366f1;
+    --ok:#10b981; --warn:#f59e0b; --bad:#ef4444;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:13px}
+
+  .topbar{background:var(--ink);color:#fff;display:flex;align-items:center;gap:12px;
+    padding:0 16px;height:56px;border-bottom:3px solid var(--brand)}
+  .brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:#fff}
+  .brand .logo{height:30px;width:auto;display:block}
+  .brand .t{font-weight:600;font-size:15px;letter-spacing:.02em;color:var(--brand)}
+  .topbar .spacer{flex:1}
+  .topbar .who{font-size:12px;color:#c7cbd1}
+  .tb-btn{appearance:none;border:1px solid #3a4049;background:#2b3037;color:#e5e7eb;font:inherit;
+    font-size:13px;padding:7px 13px;border-radius:7px;cursor:pointer;white-space:nowrap}
+  .tb-btn:hover{background:#343a42}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:20px 16px 60px}
+  .sec-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--muted);margin:26px 4px 10px}
+  .sec-title:first-of-type{margin-top:6px}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 14px}
+  .stat .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .stat .v{font-size:20px;font-weight:700;margin-top:5px;line-height:1.15}
+  .stat .v small{font-size:12px;font-weight:600;color:var(--muted)}
+  .stat .sub{font-size:11px;color:var(--muted-2);margin-top:3px}
+  .bar{height:6px;border-radius:4px;background:#eceef1;margin-top:9px;overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:4px;background:var(--accent)}
+  .bar.ok > i{background:var(--ok)} .bar.warn > i{background:var(--warn)} .bar.bad > i{background:var(--bad)}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .card .hd{padding:11px 14px;border-bottom:1px solid var(--line-soft);font-weight:600;font-size:13px;
+    display:flex;align-items:center;gap:8px}
+  .card .bd{padding:6px 0}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+    font-weight:700;padding:8px 14px;border-bottom:1px solid var(--line-soft)}
+  td{padding:9px 14px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  .kv td:first-child{color:var(--muted);width:200px;white-space:nowrap}
+  .kv td:last-child{font-family:var(--mono);font-size:12px;word-break:break-all}
+
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;
+    padding:3px 9px;border-radius:20px}
+  .pill .dot{width:7px;height:7px;border-radius:50%}
+  .pill.up{background:#e7f8f0;color:#0a7a52} .pill.up .dot{background:var(--ok)}
+  .pill.down{background:#fde8e8;color:#b42318} .pill.down .dot{background:var(--bad)}
+  .pill.exp{background:#fef3e2;color:#92600a}
+  .role-badge{background:#f1f3f5;color:#6b7280;padding:2px 8px;border-radius:20px;font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.04em}
+
+  .actions{display:flex;flex-wrap:wrap;gap:10px}
+  .act{appearance:none;border:1px solid var(--line);background:#fff;color:var(--ink);font:inherit;
+    font-size:13px;font-weight:600;padding:11px 15px;border-radius:9px;cursor:pointer;
+    display:flex;align-items:center;gap:8px;transition:border-color .12s,background .12s}
+  .act:hover{border-color:var(--accent);background:#fafaff}
+  .act:disabled{opacity:.55;cursor:default}
+  .mini{appearance:none;border:1px solid var(--line);background:#fff;color:var(--accent);font:inherit;font-size:12px;font-weight:600;padding:3px 10px;border-radius:6px;cursor:pointer}
+  .mini:hover{border-color:var(--accent);background:#fafaff}
+  .mini:disabled{opacity:.55;cursor:default}
+  .act.warn{border-color:#f3c0c0;color:#b91c1c}
+  .act.warn:hover{border-color:#dc2626;background:#fff7f7}
+  .bk-overlay{position:fixed;inset:0;background:rgba(15,18,22,.5);display:none;align-items:center;justify-content:center;z-index:2000;padding:24px}
+  .bk-overlay.open{display:flex}
+  .bk-box{background:var(--card);border-radius:12px;width:min(760px,96vw);max-height:86vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .bk-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:13px}
+  .bk-body{padding:16px;overflow:auto}
+  .act .ic{font-size:15px}
+  .act small{display:block;font-weight:500;color:var(--muted);font-size:11px;margin-top:1px}
+  .act.brand{border-color:#e6b800;background:var(--brand);color:#22262c}
+  .act.brand small{color:#6b5a00}
+  .act.brand:hover{filter:brightness(.97)}
+  .rev{appearance:none;border:1px solid var(--line);background:#fff;color:var(--bad);font:inherit;
+    font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:6px;cursor:pointer}
+  .rev:hover{border-color:var(--bad);background:#fff5f5}
+  .rev:disabled{opacity:.4;cursor:default;color:var(--muted-2)}
+
+  .logbox{font-family:var(--mono);font-size:11.5px;line-height:1.55;color:#cdd3da;background:#1b1f24;
+    padding:12px 14px;max-height:280px;overflow:auto;white-space:pre-wrap;word-break:break-word;border-radius:0 0 10px 10px}
+  .logbox .empty{color:#7c828b}
+
+  .err{background:#fde8e8;color:#b42318;border:1px solid #f6c9c4;border-radius:10px;padding:16px;margin:24px}
+  .muted{color:var(--muted)}
+  #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:#22262c;color:#fff;padding:10px 18px;border-radius:9px;font-size:13px;font-weight:500;
+    opacity:0;pointer-events:none;transition:all .2s;z-index:100000;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  #toast.bad{background:#b42318}
+  #updated{font-size:11px;color:var(--muted-2);margin-left:8px}
+  html{scroll-behavior:smooth}
+  .subnav{position:sticky;top:0;z-index:50;display:flex;gap:4px;flex-wrap:wrap;background:var(--bg);
+    padding:10px 0 8px;margin:-4px 0 2px;border-bottom:1px solid var(--line)}
+  .subnav a{font-size:12px;font-weight:600;color:var(--muted);text-decoration:none;padding:6px 11px;
+    border-radius:7px;white-space:nowrap}
+  .subnav a:hover{background:#e4e7ec;color:var(--ink)}
+  .subnav a.active{background:var(--ink);color:#fff}
+  h2.grp{font-size:16px;font-weight:700;letter-spacing:.01em;margin:30px 2px 4px;padding-top:6px;
+    scroll-margin-top:56px;display:flex;align-items:baseline;gap:8px}
+  h2.grp:first-of-type{margin-top:6px}
+  .cfg-card{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .cfg-grp + .cfg-grp{border-top:1px solid var(--line-soft)}
+  .cfg-grp .ghd{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--muted);padding:14px 16px 4px}
+  .cfg-row{display:flex;align-items:center;gap:14px;padding:9px 16px;flex-wrap:wrap}
+  .cfg-row .lbl{flex:1 1 240px;min-width:200px}
+  .cfg-row .lbl .nm{font-size:13px;font-weight:600}
+  .cfg-row .lbl .ds{font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.42}
+  .cfg-row .ctl{flex:0 0 auto;display:flex;align-items:center;gap:8px}
+  .cfg-row input[type=number],.cfg-row input[type=text],.cfg-row input[type=time]{font:inherit;font-size:13px;
+    padding:7px 10px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);width:124px}
+  .cfg-row input[type=text]{width:360px;max-width:62vw;font-family:var(--mono);font-size:12px}
+  .cfg-row input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.12)}
+  .cfg-row .unit{font-size:12px;color:var(--muted)}
+  .cfg-row.ro .ctl{font-family:var(--mono);font-size:12px;color:var(--muted);word-break:break-all;
+    flex:1 1 300px;justify-content:flex-end;text-align:right}
+  .switch{position:relative;width:42px;height:24px;flex:0 0 auto;cursor:pointer;display:inline-block}
+  .switch input{opacity:0;width:0;height:0;position:absolute}
+  .switch .sl{position:absolute;inset:0;background:#cbd0d6;border-radius:24px;transition:.18s}
+  .switch .sl:before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;
+    border-radius:50%;transition:.18s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  .switch input:checked + .sl{background:var(--ok)}
+  .switch input:checked + .sl:before{transform:translateX(18px)}
+  .cfg-foot{display:flex;align-items:center;gap:12px;padding:13px 16px;border-top:1px solid var(--line);
+    background:#fafbfc;flex-wrap:wrap}
+  .btn-save{appearance:none;border:1px solid #e6b800;background:var(--brand);color:#22262c;font:inherit;
+    font-size:13px;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer}
+  .btn-save:hover{filter:brightness(.97)} .btn-save:disabled{opacity:.55;cursor:default}
+  .btn-ghost{appearance:none;border:1px solid var(--line);background:#fff;color:var(--muted);font:inherit;
+    font-size:13px;font-weight:600;padding:9px 14px;border-radius:8px;cursor:pointer}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--ink)}
+  .cfg-foot .hint{font-size:11.5px;color:var(--muted)}
+
+  /* ===== ZZ2 dark theme + responsive - ADDITIVE ONLY ===== */
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --ink:#e6e8ec; --bg:#0f1216; --card:#1b1f25; --line:#2a2f37; --line-soft:#23272e;
+    --muted:#9aa3ad; --muted-2:#79828d; --accent:#818cf8;
+    --ok:#34d399; --warn:#fbbf24; --bad:#f87171;
+    --shadow:0 1px 2px rgba(0,0,0,.45),0 1px 3px rgba(0,0,0,.55);
+  }
+  /* auto surface overrides */
+  [data-theme="dark"] .topbar{background:#15181d}
+  [data-theme="dark"] .bar{background:#1f242b}
+  [data-theme="dark"] .pill.up{background:#181c22;color:#e6e8ec}
+  [data-theme="dark"] .pill.down{background:#1f242b;color:#e6e8ec}
+  [data-theme="dark"] .pill.exp{background:#181c22;color:#e6e8ec}
+  [data-theme="dark"] .role-badge{background:#181c22}
+  [data-theme="dark"] .act{background:#1b1f25}
+  [data-theme="dark"] .act:hover{background:#181c22}
+  [data-theme="dark"] .mini{background:#1b1f25}
+  [data-theme="dark"] .mini:hover{background:#181c22}
+  [data-theme="dark"] .act.warn:hover{background:#181c22}
+  [data-theme="dark"] .rev{background:#1b1f25}
+  [data-theme="dark"] .rev:hover{background:#181c22}
+  [data-theme="dark"] .err{background:#1f242b;color:#e6e8ec}
+  [data-theme="dark"] .subnav a:hover{background:#1f242b}
+  [data-theme="dark"] .subnav a.active{background:#15181d}
+  [data-theme="dark"] .cfg-row input[type=number], [data-theme="dark"] .cfg-row input[type=text], [data-theme="dark"] .cfg-row input[type=time]{background:#1b1f25}
+  [data-theme="dark"] .switch .sl:before{background:#1b1f25}
+  [data-theme="dark"] .cfg-foot{background:#181c22}
+  [data-theme="dark"] .btn-ghost{background:#1b1f25}
+
+  .tb-toggle{appearance:none;border:1px solid #3a4049;background:#2b3037;color:#e5e7eb;font:inherit;
+    font-size:15px;line-height:1;width:34px;height:34px;border-radius:8px;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .tb-toggle:hover{background:#343a42}
+
+  @media (max-width:640px){
+    .topbar{padding:0 10px;gap:8px}
+    .brand .t{display:none}
+  }
+</style>
+</head>
+<body>
+<!-- ZZ2 shared navigation menu -->
+<style>
+  .zz2-burger{appearance:none;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);color:#fff;width:38px;height:34px;border-radius:7px;cursor:pointer;font-size:18px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;padding:0;transition:background .15s;margin-right:6px}
+  .zz2-burger:hover{background:rgba(255,205,0,0.28)}
+  .zz2-nav-overlay{position:fixed;inset:0;background:rgba(10,12,15,0.5);opacity:0;visibility:hidden;transition:opacity .2s;z-index:99998}
+  .zz2-nav-overlay.show{opacity:1;visibility:visible}
+  .zz2-nav{position:fixed;top:0;left:0;height:100%;width:264px;max-width:82vw;background:#22262c;border-right:2px solid #ffcd00;transform:translateX(-100%);transition:transform .22s ease;z-index:99999;display:flex;flex-direction:column;box-shadow:2px 0 18px rgba(0,0,0,0.35);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+  .zz2-nav.open{transform:translateX(0)}
+  .zz2-nav-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,0.08)}
+  .zz2-nav-title{color:#fff;font-size:15px;font-weight:600;letter-spacing:.02em}
+  .zz2-nav-title b{color:#ffcd00;font-weight:600}
+  .zz2-nav-x{appearance:none;background:none;border:none;color:#9ca3af;font-size:26px;line-height:1;cursor:pointer;padding:0 4px;transition:color .15s}
+  .zz2-nav-x:hover{color:#fff}
+  .zz2-nav-links{padding:8px 0;overflow-y:auto}
+  .zz2-nav-link{display:flex;align-items:center;gap:12px;padding:13px 20px;color:#d6dade;text-decoration:none;font-size:14px;font-weight:500;border-left:3px solid transparent;transition:background .14s,color .14s}
+  .zz2-nav-link:hover{background:rgba(255,205,0,0.10);color:#fff}
+  .zz2-nav-link .i{font-size:16px;width:20px;text-align:center;flex:0 0 auto}
+  .zz2-nav-link.active{background:rgba(255,205,0,0.14);color:#ffcd00;border-left-color:#ffcd00;cursor:default}
+  .zz2-nav-link.active:hover{background:rgba(255,205,0,0.14)}
+
+/* zz2-mobile-base */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+@media (max-width: 640px) {
+  input, select, textarea { font-size: 16px !important; }   /* no focus-zoom on iOS */
+  img, svg, video { max-width: 100%; }
+}
+
+/* zz2-mobile-settings */
+@media (max-width: 640px) {
+  .cfg-row { align-items: stretch; }
+  .cfg-row .lbl { flex: 1 1 100%; min-width: 0; }
+  .cfg-row .ctl { width: 100%; justify-content: flex-start; }
+  .cfg-row input[type=text] { width: 100%; max-width: none; }
+  .kv td:first-child { width: auto; min-width: 110px; white-space: normal; }
+}
+</style>
+<div class="zz2-nav-overlay" id="zz2NavOverlay"></div>
+<nav class="zz2-nav" id="zz2Nav" aria-hidden="true">
+  <div class="zz2-nav-head">
+    <span class="zz2-nav-title">ZZ2 <b>Navigation</b></span>
+    <button class="zz2-nav-x" id="zz2NavClose" aria-label="Close menu">&times;</button>
+  </div>
+  <div class="zz2-nav-links">
+    <a class="zz2-nav-link" href="/dashboard.html" data-perm="dashboard" data-page="dashboard"><span class="i">⬡</span>Dashboard</a>
+    <a class="zz2-nav-link" href="/index.html" data-perm="" data-page="index"><span class="i">🔧</span>Kit &amp; Ticket Tool</a>
+    <a class="zz2-nav-link" href="/tickets.html" data-perm="tickets" data-page="tickets"><span class="i">🗂️</span>Tickets</a>
+    <a class="zz2-nav-link" href="/analytics.html" data-perm="analytics" data-page="analytics"><span class="i">📊</span>Analytics</a>
+    <a class="zz2-nav-link" href="/users.html" data-perm="manage_users|manage_roles" data-page="users"><span class="i">👥</span>Users &amp; Roles</a>
+    <a class="zz2-nav-link" href="/settings.html" data-perm="system_settings" data-page="settings"><span class="i">⚙️</span>System Settings</a>
+  </div>
+</nav>
+<script>
+(function(){
+  function curPage(){ var f=(location.pathname.split('/').pop()||'').toLowerCase(); if(!f) return 'index'; return f.replace('.html',''); }
+  window.zz2NavToggle=function(open){
+    var nav=document.getElementById('zz2Nav'), ov=document.getElementById('zz2NavOverlay');
+    if(!nav) return;
+    var show=(open===undefined)?!nav.classList.contains('open'):!!open;
+    nav.classList.toggle('open',show); if(ov) ov.classList.toggle('show',show);
+    nav.setAttribute('aria-hidden',show?'false':'true');
+  };
+  window.zz2BuildNav=function(perms){
+    perms=perms||[];
+    function has(spec){ if(!spec) return true; return spec.split('|').some(function(p){return perms.indexOf(p)>=0;}); }
+    var cp=curPage(), links=document.querySelectorAll('#zz2Nav .zz2-nav-link');
+    for(var i=0;i<links.length;i++){
+      var el=links[i], perm=el.getAttribute('data-perm'), page=el.getAttribute('data-page');
+      el.style.display=has(perm)?'flex':'none';
+      if(page===cp){ el.classList.add('active'); el.removeAttribute('href'); }
+      else el.classList.remove('active');
+    }
+  };
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'||e.key==='Esc') zz2NavToggle(false); });
+  function wire(){ var ov=document.getElementById('zz2NavOverlay'), x=document.getElementById('zz2NavClose');
+    if(ov) ov.addEventListener('click',function(){zz2NavToggle(false);});
+    if(x) x.addEventListener('click',function(){zz2NavToggle(false);}); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',wire); else wire();
+})();
+</script>
+<!-- /ZZ2 shared navigation menu -->
+
+<header class="topbar">
+  <button class="zz2-burger" onclick="zz2NavToggle()" aria-label="Open menu">&#9776;</button>
+  <a class="brand" href="dashboard.html" title="Back to dashboard">
+    <img class="logo" src="/images/zz2-logo.png" alt="ZZ2">
+    <span class="t">System Settings</span>
+  </a>
+  <span class="spacer"></span>
+  <button class="tb-toggle" id="themeToggle" onclick="zz2ToggleTheme()" title="Switch to dark mode" aria-label="Switch color theme">☀️</button>
+  <span class="who" id="who"></span>
+  <button class="tb-btn" id="btn-refresh" onclick="load()">&#8635; Refresh</button>
+  <button class="tb-btn" id="btn-logout" onclick="signOut()">Sign Out</button>
+</header>
+
+<div class="wrap" id="app" style="display:none">
+
+  <nav class="subnav" id="subnav">
+    <a href="#sec-health" class="active">Health</a>
+    <a href="#sec-sync">Sync &amp; store</a>
+    <a href="#sec-config">Settings</a>
+    <a href="#sec-security">Security</a>
+    <a href="#sec-system">Backups &amp; files</a>
+  </nav>
+
+  <h2 class="grp" id="sec-health">System health <span id="updated"></span></h2>
+  <div class="sec-title">Server &amp; host</div>
+  <div class="grid" id="g-server"></div>
+  <div style="margin-top:12px" id="g-workers"></div>
+
+  <h2 class="grp" id="sec-sync">Sync &amp; store</h2>
+  <div class="sec-title">Ticket store</div>
+  <div class="grid" id="g-store"></div>
+
+  <div class="sec-title">Failed writes <span id="dead-badge"></span></div>
+  <div class="card"><div class="bd" style="padding:14px 16px">
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.55;margin-bottom:10px">
+      Ticket saves that exhausted their retries to the Google Sheet. The local store already reflects
+      these, so they're the rows where the store and the sheet can diverge. <b>Replay</b> re-queues them
+      for the write-behind worker; <b>Clear</b> discards them (a rebuild will still resync from the sheet).
+    </div>
+    <div class="actions">
+      <button class="act" id="dead-refresh" onclick="loadDead(this)"><span class="ic">&#8635;</span><span>Refresh<small>list failed writes</small></span></button>
+      <button class="act brand" id="dead-replay" style="display:none" onclick="replayDead('',this)"><span class="ic">&#9654;</span><span>Replay all<small>re-queue every failed write</small></span></button>
+      <button class="act" id="dead-clear" style="display:none" onclick="clearDead(this)"><span class="ic">&#128465;</span><span>Clear all<small>discard the list</small></span></button>
+    </div>
+    <div id="dead-result" style="margin-top:12px"></div>
+  </div></div>
+
+  <div class="sec-title">Maintenance</div>
+  <div class="actions" id="g-actions"></div>
+
+  <div class="sec-title">Auto-resolve stale tickets</div>
+  <div class="card"><div class="bd" style="padding:14px 16px">
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.55;margin-bottom:12px">
+      Tickets with a <b>blank status</b> or a <b>&ldquo;Waiting for customer feedback&rdquo;</b> status that are older
+      than <b id="ar-days">7</b> days get marked <b>Resolved</b> in the Google Sheet. Anything newer is left untouched,
+      so active work is never closed. This runs automatically each night; change the threshold under
+      <a href="#sec-config" style="color:var(--accent);text-decoration:none">Settings</a>.
+    </div>
+    <div class="actions">
+      <button class="act" id="ar-preview" onclick="arPreview(this)"><span class="ic">&#128269;</span><span>Preview<small>count, change nothing</small></span></button>
+      <button class="act brand" id="ar-apply" style="display:none" onclick="arApply(this)"><span class="ic">&#10003;</span><span>Apply now<small>write Resolved to the sheet</small></span></button>
+    </div>
+    <div id="ar-result" style="margin-top:12px"></div>
+  </div></div>
+
+  <h2 class="grp" id="sec-config">Settings <span class="muted" style="font-size:12px;font-weight:400">&middot; super-admin &middot; applied live, no restart</span></h2>
+  <div id="cfg-form"></div>
+
+  <h2 class="grp" id="sec-security">Security &amp; access</h2>
+  <div class="sec-title">Login security</div>
+  <div id="g-security"></div>
+
+  <div class="sec-title">Active sessions</div>
+  <div class="card">
+    <div class="hd">Signed-in users <span class="muted" id="sess-count" style="font-weight:400"></span></div>
+    <div class="bd" style="padding:0"><table><thead><tr>
+      <th>User</th><th>Role</th><th>IP</th><th>Signed in</th><th>Expires</th><th>Status</th><th></th>
+    </tr></thead><tbody id="g-sessions"></tbody></table></div>
+  </div>
+
+  <h2 class="grp" id="sec-system">Backups &amp; files</h2>
+  <div class="sec-title">Backups</div>
+  <div class="card">
+    <div class="hd">Snapshots <span class="muted" id="bk-count" style="font-weight:400"></span></div>
+    <div class="bd" style="padding:0"><table><thead><tr><th>Snapshot</th><th>Label</th><th>Size</th><th>Created</th><th></th></tr></thead><tbody id="g-backups"></tbody></table></div>
+  </div>
+
+  <div class="bk-overlay" id="bk-modal">
+    <div class="bk-box">
+      <div class="bk-head"><b id="bk-modal-title"></b><button class="btn-ghost" onclick="closeBk()">Close</button></div>
+      <div class="bk-body" id="bk-modal-body"></div>
+    </div>
+  </div>
+
+  <div class="sec-title">Data files</div>
+  <div class="card"><div class="bd" style="padding:0"><table><thead><tr>
+    <th>File</th><th>Size</th><th>Modified</th>
+  </tr></thead><tbody id="g-files"></tbody></table></div></div>
+
+  <div class="sec-title">Recent activity</div>
+  <div class="card">
+    <div class="hd">Server log <span class="muted" style="font-weight:400">&middot; last 40 lines</span></div>
+    <div class="logbox" id="g-log"></div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+const AUTH_KEY='zz2_auth_token';
+let TOKEN = localStorage.getItem(AUTH_KEY) || '';
+const HJSON = ()=>({'Content-Type':'application/json','Authorization':'Bearer '+TOKEN});
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---- formatters ---- */
+function fmtDur(s){ if(s==null) return '—'; s=Math.floor(s);
+  const d=Math.floor(s/86400); s-=d*86400; const h=Math.floor(s/3600); s-=h*3600; const m=Math.floor(s/60);
+  const p=[]; if(d)p.push(d+'d'); if(h)p.push(h+'h'); p.push(m+'m'); return p.join(' '); }
+function fmtKB(kb){ if(kb==null) return '—'; if(kb<1024) return Math.round(kb)+' KB';
+  const mb=kb/1024; if(mb<1024) return mb.toFixed(1)+' MB'; return (mb/1024).toFixed(2)+' GB'; }
+function fmtBytes(b){ if(b==null) return '—'; return fmtKB(b/1024); }
+function fmtTime(e){ if(!e) return '—'; const d=new Date(e*1000); if(isNaN(d)) return '—'; return d.toLocaleString(); }
+function ago(e){ if(!e) return '—'; let s=Date.now()/1000-e;
+  if(s<0) s=0; if(s<60) return Math.floor(s)+'s ago'; if(s<3600) return Math.floor(s/60)+'m ago';
+  if(s<86400) return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago'; }
+function isoNice(v){ if(!v) return '—'; const d=new Date(v); if(isNaN(d)) return esc(v); return d.toLocaleString(); }
+
+function statCard(k,v,sub){ return '<div class="stat"><div class="k">'+esc(k)+'</div><div class="v">'+v+
+  '</div>'+(sub?'<div class="sub">'+sub+'</div>':'')+'</div>'; }
+function barCard(k,v,sub,pct,cls){ pct=Math.max(0,Math.min(100,pct||0));
+  return '<div class="stat"><div class="k">'+esc(k)+'</div><div class="v">'+v+'</div>'+
+    (sub?'<div class="sub">'+sub+'</div>':'')+'<div class="bar '+(cls||'')+'"><i style="width:'+pct+'%"></i></div></div>'; }
+function tone(pct){ return pct>=90?'bad':pct>=75?'warn':'ok'; }
+
+let LAST=null;
+let _cfgBuilt=false;
+
+function render(d){
+  LAST=d;
+  $('#updated').textContent='updated '+new Date().toLocaleTimeString();
+
+  /* server + host */
+  const sv=d.server||{}, h=d.host||{}, st=d.storage||{};
+  const memUsedMB = (h.mem_used_kb||0)/1024, memTotMB=(h.mem_total_kb||0)/1024;
+  const g1=[
+    statCard('Process uptime', fmtDur(sv.process_uptime_sec), 'since '+fmtTime(sv.started)),
+    statCard('Python', esc(sv.python||'—'), 'PID '+esc(sv.pid)),
+    barCard('CPU load', (h.cpu_pct==null?'—':h.cpu_pct+'<small>%</small>'), 'single core busy', h.cpu_pct||0, tone(h.cpu_pct||0)),
+    barCard('System memory', (h.mem_pct||0)+'<small>%</small>',
+            Math.round(memUsedMB)+' / '+Math.round(memTotMB)+' MB', h.mem_pct, tone(h.mem_pct)),
+    statCard('This process', fmtKB(h.proc_rss_kb), 'resident memory'),
+    statCard('Load average', (h.load||[]).map(x=>x.toFixed(2)).join('  ') || '—', '1m · 5m · 15m'),
+    barCard('Disk ('+ '/' +')', (st.pct||0)+'<small>%</small>',
+            fmtBytes(st.used)+' / '+fmtBytes(st.total), st.pct, tone(st.pct)),
+    statCard('Disk free', fmtBytes(st.free), 'available'),
+    statCard('System uptime', fmtDur(h.uptime_sec), 'host')
+  ];
+  $('#g-server').innerHTML=g1.join('');
+
+  /* workers */
+  const th=sv.threads||{};
+  const worker=(name,ok)=>'<span class="pill '+(ok?'up':'down')+'"><span class="dot"></span>'+name+'</span>';
+  $('#g-workers').innerHTML='<div class="card"><div class="hd">Background workers</div>'+
+    '<div class="bd" style="padding:13px 14px;display:flex;gap:10px;flex-wrap:wrap">'+
+    worker('Nightly scheduler', th.scheduler)+
+    worker('Ticket poller', th.poller)+
+    worker('Write-behind queue', th.write_behind)+'</div></div>';
+
+  /* store */
+  const s=d.store||{};
+  const g2=[
+    statCard('Tickets in store', (s.ticket_count!=null? s.ticket_count.toLocaleString():'—'),
+             fmtKB(s.file_size_kb)+' on disk'),
+    statCard('Pending writes', s.pending_writes||0,
+             (s.pending_deletes? s.pending_deletes+' deletes queued':'queue empty')),
+    statCard('Failed writes', (s.dead_letters? '<span style="color:#dc2626">'+s.dead_letters+'</span>':'0'),
+             (s.dead_letters? 'need replay or clear':'none')),
+    statCard('Active sessions', s.sessions_active||0, 'signed in now'),
+    statCard('Last nightly rebuild', esc(s.last_nightly||'—'), 'full re-pull'),
+    statCard('Last reconcile', ago(s.last_reconcile), fmtTime(s.last_reconcile)),
+    statCard('Last poll', ago(s.last_poll), (s.poll_added_total||0)+' added since start'),
+    statCard('Store generated', isoNice(s.generated), 'snapshot time'),
+    statCard('CSV cache', s.csv_cache||0, 'cached sheets')
+  ];
+  $('#g-store').innerHTML=g2.join('');
+
+  /* actions */
+  $('#g-actions').innerHTML=[
+    '<button class="act brand" onclick="act(\'/api/system/rebuild\',\'Analytics rebuilt\',this)"><span class="ic">&#8635;</span><span>Rebuild store<small>full re-pull from sheet</small></span></button>',
+    '<button class="act" onclick="act(\'/api/system/reconcile\',\'Reconciled\',this)"><span class="ic">&#128260;</span><span>Reconcile now<small>sync recent window</small></span></button>',
+    '<button class="act" onclick="act(\'/api/system/backup\',\'Backup created\',this)"><span class="ic">&#128190;</span><span>Run backup<small>full snapshot (code + data)</small></span></button>',
+    '<button class="act" onclick="act(\'/api/system/clear-expired\',\'Expired sessions cleared\',this)"><span class="ic">&#129529;</span><span>Clear expired<small>purge dead sessions</small></span></button>',
+    '<button class="act warn" onclick="restartServer(this)"><span class="ic">&#9211;</span><span>Restart server<small>re-exec the process</small></span></button>'
+  ].join('');
+
+  /* config form -- built once so the 12s auto-refresh never clobbers an edit */
+  renderConfig(d.config||{});
+  if((d.config||{}).auto_resolve_days) $('#ar-days').textContent=d.config.auto_resolve_days;
+
+  /* sessions */
+  const ss=d.sessions||[];
+  $('#sess-count').textContent='· '+ss.length;
+  $('#g-sessions').innerHTML = ss.length ? ss.map(x=>{
+    const status = x.expired ? '<span class="pill exp">expired</span>'
+                 : (x.current ? '<span class="pill up"><span class="dot"></span>this device</span>'
+                              : '<span class="pill up"><span class="dot"></span>active</span>');
+    const rev = x.current
+      ? '<button class="rev" disabled title="Your own session">&mdash;</button>'
+      : '<button class="rev" onclick="revoke(\''+esc(x.sid)+'\')">Sign out</button>';
+    return '<tr><td><b>'+esc(x.display||x.username)+'</b><br><span class="muted">'+esc(x.username)+'</span></td>'+
+      '<td><span class="role-badge">'+esc((x.role||'').replace('_',' '))+'</span></td>'+
+      '<td class="muted">'+esc(x.ip||'—')+'</td>'+
+      '<td>'+fmtTime(x.login_time)+'</td>'+
+      '<td>'+fmtTime(x.expires)+'</td>'+
+      '<td>'+status+'</td>'+
+      '<td style="text-align:right">'+rev+'</td></tr>';
+  }).join('') : '<tr><td colspan="7" class="muted" style="padding:16px 14px">No active sessions.</td></tr>';
+
+  /* files */
+  const fs=d.data_files||[];
+  $('#g-files').innerHTML=fs.map(f=>'<tr><td style="font-family:var(--mono)">'+esc(f.name)+'</td>'+
+    '<td>'+(f.size_kb==null?'<span class="muted">missing</span>':fmtKB(f.size_kb))+'</td>'+
+    '<td class="muted">'+(f.mtime?fmtTime(f.mtime):'—')+'</td></tr>').join('');
+
+  /* security */
+  const sec=d.security||{};
+  const pt=sec.plaintext||{};
+  let secHtml='';
+  if(pt.count>0){
+    secHtml+='<div class="card" style="border-color:#f6c9c4;background:#fff7f6;margin-bottom:12px"><div class="bd" style="padding:13px 14px">'+
+      '<b style="color:#b42318">&#9888; '+pt.count+' of '+pt.total+' accounts still use plaintext passwords</b>'+
+      '<div class="muted" style="margin-top:5px">'+(pt.users||[]).map(esc).join(', ')+
+      '<br>Run <code>python server.py --hash-password</code> to migrate each account to a hash.</div></div></div>';
+  }
+  const locked=sec.locked||[], failing=sec.failing||[];
+  secHtml+='<div class="card"><div class="hd">Login security <span class="muted" style="font-weight:400">&middot; locks after '+(sec.max_fails||5)+' fails ('+(sec.lockout_min||5)+' min)</span></div>';
+  if(locked.length||failing.length){
+    secHtml+='<div class="bd" style="padding:0"><table><thead><tr><th>Account</th><th>Failed attempts</th><th>Status</th><th></th></tr></thead><tbody>';
+    locked.forEach(x=>{ secHtml+='<tr><td><b>'+esc(x.username)+'</b></td><td>'+x.count+'</td>'+
+      '<td><span class="pill exp">locked &middot; '+Math.ceil(x.remaining_sec/60)+'m left</span></td>'+
+      '<td style="text-align:right"><button class="rev" style="color:var(--accent);border-color:var(--line)" onclick="unlock(\''+esc(x.username)+'\')">Unlock</button></td></tr>'; });
+    failing.forEach(x=>{ secHtml+='<tr><td><b>'+esc(x.username)+'</b></td><td>'+x.count+'</td>'+
+      '<td><span class="muted">failed attempts</span></td><td></td></tr>'; });
+    secHtml+='</tbody></table></div>';
+  } else {
+    secHtml+='<div class="bd" style="padding:14px"><span class="muted">No lockouts or failed logins.</span></div>';
+  }
+  secHtml+='</div>';
+  $('#g-security').innerHTML=secHtml;
+
+  /* backups */
+  const bk=d.backups||{};
+  $('#bk-count').textContent='\u00b7 '+(bk.count||0)+' kept';
+  const recent=bk.recent||[];
+  $('#g-backups').innerHTML = recent.length ? recent.map(b=>'<tr><td style="font-family:var(--mono)">'+esc(b.name)+
+    (b.has_code?' <span style="background:#eef0ff;color:#4f46e5;font-size:10px;font-weight:700;padding:1px 6px;border-radius:6px">code</span>':'')+'</td>'+
+    '<td class="muted">'+esc(b.label||'\u2014')+'</td>'+
+    '<td>'+fmtBytes(b.size)+'</td><td class="muted">'+(b.mtime?fmtTime(b.mtime):'\u2014')+'</td>'+
+    '<td style="text-align:right;white-space:nowrap"><button class="mini" onclick="bkFiles(\''+esc(b.name)+'\')">View / restore</button> '+
+    '<button class="mini" onclick="bkDownload(\''+esc(b.name)+'\')">&#8595; zip</button></td></tr>').join('')
+    : '<tr><td colspan="5" class="muted" style="padding:16px 14px">No backups yet.</td></tr>';
+
+  /* log */
+  const lg=d.recent_log||[];
+  $('#g-log').innerHTML = lg.length ? lg.map(esc).join('\n') : '<span class="empty">No recent log entries.</span>';
+
+  /* failed-writes badge + button visibility */
+  const dl=(d.store||{}).dead_letters||0;
+  $('#dead-badge').innerHTML = dl ? '<span style="color:#dc2626;font-weight:700">&middot; '+dl+' need attention</span>' : '<span class="muted" style="font-weight:400">&middot; none</span>';
+  $('#dead-replay').style.display = dl ? '' : 'none';
+  $('#dead-clear').style.display  = dl ? '' : 'none';
+}
+
+/* ---- editable configuration form ---- */
+function _cfRow(inner,nm,ds){
+  return '<div class="cfg-row"><div class="lbl"><div class="nm">'+nm+'</div>'+
+    (ds&&ds.trim()?'<div class="ds">'+ds+'</div>':'')+'</div><div class="ctl">'+inner+'</div></div>';
+}
+function cfNum(id,nm,ds,val,mn,mx,st,unit){
+  return _cfRow('<input type="number" id="'+id+'" value="'+esc(val)+'" min="'+mn+'" max="'+mx+'" step="'+(st||1)+'">'+
+    (unit?'<span class="unit">'+unit+'</span>':''),nm,ds);
+}
+function cfText(id,nm,ds,val){ return _cfRow('<input type="text" id="'+id+'" value="'+esc(val)+'" spellcheck="false">',nm,ds); }
+function cfTime(id,nm,ds,val){ return _cfRow('<input type="time" id="'+id+'" value="'+esc(val)+'">',nm,ds); }
+function cfSwitch(id,nm,ds,on){
+  return _cfRow('<label class="switch"><input type="checkbox" id="'+id+'"'+(on?' checked':'')+'><span class="sl"></span></label>',nm,ds);
+}
+function cfRO(nm,val){ return '<div class="cfg-row ro"><div class="lbl"><div class="nm">'+nm+'</div></div><div class="ctl">'+esc(val)+'</div></div>'; }
+function renderConfig(c){
+  if(_cfgBuilt) return;                 // build once; rebuilt only after a save / revert
+  _cfgBuilt=true;
+  $('#cfg-form').innerHTML=
+    '<div class="cfg-card">'+
+      '<div class="cfg-grp"><div class="ghd">Auto-resolve</div>'+
+        cfSwitch('cf_ar_en','Run nightly','Mark stale tickets Resolved automatically each night.',c.auto_resolve_enabled!==false)+
+        cfNum('cf_ar_days','Resolve after','Blank or &ldquo;waiting for feedback&rdquo; tickets older than this get marked Resolved. (e.g. set 14 for two weeks.)',c.auto_resolve_days||7,1,365,1,'days')+
+      '</div>'+
+      '<div class="cfg-grp"><div class="ghd">Sync &amp; polling</div>'+
+        cfNum('cf_poll','Sheet poll interval','How often the server checks the Google Sheet for new rows.',c.poll_interval||30,5,3600,5,'seconds')+
+        cfNum('cf_pane','Today pane refresh','How often the Today tickets pane reloads in the browser.',c.pane_refresh_interval||30,2,3600,1,'seconds')+
+        cfNum('cf_rec_int','Reconcile interval','How often edits and deletes in the recent window are re-synced.',c.reconcile_interval||300,30,86400,10,'seconds')+
+        cfNum('cf_rec_days','Reconcile window','How many recent days are kept sheet-accurate intraday.',c.reconcile_days||2,1,30,1,'days')+
+      '</div>'+
+      '<div class="cfg-grp"><div class="ghd">Sessions</div>'+
+        cfNum('cf_ttl','Session lifetime','How long a sign-in stays valid before re-login is required.',c.session_ttl_days||7,0.5,90,0.5,'days')+
+      '</div>'+
+      '<div class="cfg-grp"><div class="ghd">Backups</div>'+
+        cfNum('cf_bk_keep','Snapshots to keep','Older full backups beyond this count are pruned. Each snapshot includes the app code and data.',c.backup_keep||30,3,365,1,'kept')+
+        cfSwitch('cf_bk_media','Include images &amp; manuals','Also back up the images/ and manuals/ folders. Off (default) keeps snapshots small; turn on for a complete archive (much larger).',!!c.backup_include_media)+
+      '</div>'+
+      '<div class="cfg-grp"><div class="ghd">Work window <span style="font-weight:500;text-transform:none;letter-spacing:0">&mdash; optional</span></div>'+
+        cfSwitch('cf_ww_en','Enforce work hours','When on, the poller pauses outside these hours to save Apps Script quota. Off (default) = always polling.',!!c.work_window_enabled)+
+        cfTime('cf_ww_start','Start',' ',c.work_start||'09:30')+
+        cfTime('cf_ww_end','End',' ',c.work_end||'20:00')+
+      '</div>'+
+      '<div class="cfg-grp"><div class="ghd">Apps Script backend</div>'+
+        cfText('cf_url','Web app URL','The /exec deployment URL the server proxies to. Update this after redeploying the script.',c.webapp_url||'')+
+        cfRO('Secret key',c.secret_key_set?'\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022 set (edit in config.json)':'(not set)')+
+        cfRO('Base directory',c.base_dir||'\u2014')+
+      '</div>'+
+      '<div class="cfg-foot">'+
+        '<button class="btn-save" id="cfg-save" onclick="saveConfig(this)">Save changes</button>'+
+        '<button class="btn-ghost" onclick="revertConfig()">Revert</button>'+
+        '<span class="hint">Changes apply live &mdash; no restart needed.</span>'+
+      '</div>'+
+    '</div>';
+}
+function revertConfig(){ _cfgBuilt=false; load(); }
+async function saveConfig(btn){
+  const num=id=>{ const v=parseFloat(document.getElementById(id).value); return isNaN(v)?null:v; };
+  const payload={
+    auto_resolve_enabled: document.getElementById('cf_ar_en').checked,
+    auto_resolve_days:    num('cf_ar_days'),
+    poll_interval:        num('cf_poll'),
+    pane_refresh_interval: num('cf_pane'),
+    reconcile_interval:   num('cf_rec_int'),
+    reconcile_days:       num('cf_rec_days'),
+    session_ttl_days:     num('cf_ttl'),
+    backup_keep:          num('cf_bk_keep'),
+    backup_include_media: document.getElementById('cf_bk_media').checked,
+    work_window_enabled:  document.getElementById('cf_ww_en').checked,
+    work_start:           document.getElementById('cf_ww_start').value,
+    work_end:             document.getElementById('cf_ww_end').value,
+    webapp_url:           document.getElementById('cf_url').value.trim()
+  };
+  const old=btn.innerHTML; btn.disabled=true; btn.textContent='Saving\u2026';
+  try{
+    const r=await fetch('/api/system/config',{method:'POST',headers:HJSON(),body:JSON.stringify(payload)});
+    const d=await r.json().catch(()=>({}));
+    if(r.ok&&d.ok){
+      const n=(d.changed||[]).length;
+      toast(n? ('Saved '+n+' change'+(n===1?'':'s')+' \u2713') : 'No changes to save');
+      _cfgBuilt=false; await load();
+    } else toast(d.error||'Save failed',true);
+  }catch(e){ toast('Network error',true); }
+  finally{ btn.disabled=false; btn.innerHTML=old; }
+}
+function initSubnav(){
+  const links=Array.prototype.slice.call(document.querySelectorAll('.subnav a'));
+  const secs=links.map(a=>document.querySelector(a.getAttribute('href')));
+  function spy(){
+    let i=0;
+    for(let k=0;k<secs.length;k++){ if(secs[k] && secs[k].getBoundingClientRect().top<=80) i=k; }
+    links.forEach((a,k)=>a.classList.toggle('active',k===i));
+  }
+  window.addEventListener('scroll',spy,{passive:true}); spy();
+}
+
+let _timer=null;
+async function load(){
+  try{
+    const r=await fetch('/api/system/info',{headers:{'Authorization':'Bearer '+TOKEN}});
+    if(r.status===403){ location.href='/index.html'; return; }
+    if(!r.ok){ toast('Failed to load ('+r.status+')',true); return; }
+    render(await r.json());
+  }catch(e){ toast('Network error',true); }
+}
+
+async function loadDead(btn){
+  if(btn){ btn.disabled=true; }
+  try{
+    const r=await fetch('/api/system/deadletters',{headers:{'Authorization':'Bearer '+TOKEN}});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){ toast(d.error||'Failed to load',true); return; }
+    const items=d.items||[];
+    if(!items.length){ $('#dead-result').innerHTML='<div class="muted" style="padding:6px 2px">No failed writes. The store and the sheet are in sync.</div>'; return; }
+    const rows=items.map(function(it){
+      return '<tr><td class="muted" style="white-space:nowrap">'+esc(it.dead_at||'')+'</td>'+
+        '<td>'+esc(it.action||'')+'</td>'+
+        '<td>'+esc(it.ticketNum||'\u2014')+'</td>'+
+        '<td>'+esc(it.client||'\u2014')+'</td>'+
+        '<td>'+esc(it.product||'\u2014')+'</td>'+
+        '<td class="muted">'+esc(it.reason||'')+'</td>'+
+        '<td><button class="mini" onclick="replayDead(\''+esc(it.id)+'\',this)">Replay</button></td></tr>';
+    }).join('');
+    $('#dead-result').innerHTML='<div style="overflow:auto"><table class="kv" style="width:100%"><thead><tr>'+
+      '<th>Failed at</th><th>Action</th><th>Ticket</th><th>Client</th><th>Kit</th><th>Reason</th><th></th></tr></thead>'+
+      '<tbody>'+rows+'</tbody></table></div>';
+  }catch(e){ toast('Network error',true); }
+  finally{ if(btn){ btn.disabled=false; } }
+}
+async function replayDead(id,btn){
+  if(!id && !confirm('Re-queue every failed write to the sheet?')) return;
+  if(btn){ btn.disabled=true; }
+  try{
+    const r=await fetch('/api/system/deadletters/replay',{method:'POST',headers:HJSON(),body:JSON.stringify({id:id||''})});
+    const d=await r.json().catch(()=>({}));
+    if(r.ok && d.ok){ toast('Re-queued '+(d.replayed||0)+' write'+(d.replayed===1?'':'s')+' \u2713'); loadDead(); load(); }
+    else toast(d.error||'Replay failed',true);
+  }catch(e){ toast('Network error',true); }
+  finally{ if(btn){ btn.disabled=false; } }
+}
+async function clearDead(btn){
+  if(!confirm('Discard all failed writes? A rebuild will still resync from the sheet.')) return;
+  if(btn){ btn.disabled=true; }
+  try{
+    const r=await fetch('/api/system/deadletters/clear',{method:'POST',headers:HJSON(),body:'{}'});
+    const d=await r.json().catch(()=>({}));
+    if(r.ok && d.ok){ toast('Cleared '+(d.cleared||0)+' \u2713'); $('#dead-result').innerHTML=''; load(); }
+    else toast(d.error||'Clear failed',true);
+  }catch(e){ toast('Network error',true); }
+  finally{ if(btn){ btn.disabled=false; } }
+}
+
+async function restartServer(btn){
+  if(!confirm('Restart the server process now?\n\nThe site will be briefly unavailable (a few seconds) while it comes back up. Queued ticket writes, sessions, and lockouts are all preserved.')) return;
+  const old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="ic">&#8987;</span><span>Restarting&hellip;<small>reconnecting</small></span>';
+  try{ await fetch('/api/system/restart',{method:'POST',headers:HJSON(),body:'{}'}); }catch(e){}
+  toast('Restarting server\u2026');
+  let tries=0;
+  const ping=async()=>{
+    tries++;
+    try{
+      const r=await fetch('/login.html?_='+Date.now(),{cache:'no-store'});
+      if(r.ok){ toast('Server is back \u2713'); setTimeout(()=>location.reload(),700); return; }
+    }catch(e){}
+    if(tries<45) setTimeout(ping,1000);
+    else { btn.disabled=false; btn.innerHTML=old; toast('Still waiting \u2014 reload the page manually.',true); }
+  };
+  setTimeout(ping,2500);
+}
+
+async function bkFiles(name){
+  document.getElementById('bk-modal').classList.add('open');
+  document.getElementById('bk-modal-title').textContent=name;
+  const body=document.getElementById('bk-modal-body'); body.innerHTML='<div class="muted">Loading\u2026</div>';
+  try{
+    const r=await fetch('/api/system/backup-info?name='+encodeURIComponent(name),{headers:{'Authorization':'Bearer '+TOKEN}});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.ok){ body.innerHTML='<div class="muted">Could not load this snapshot.</div>'; return; }
+    const m=d.manifest||{}; const files=m.files||[];
+    let h='<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap">'+
+      '<button class="btn-save" onclick="bkRestore(\''+esc(name)+'\',\'all\')">Restore everything</button>'+
+      '<button class="btn-ghost" onclick="bkDownload(\''+esc(name)+'\')">Download .zip</button>'+
+      '<span class="hint">'+files.length+' files \u00b7 '+fmtBytes(m.total_bytes||0)+(m.label?(' \u00b7 '+esc(m.label)):'')+'</span></div>'+
+      '<div class="hint" style="margin-bottom:10px">Restoring code (server.py, *.html) takes effect on the next page load; server.py needs a restart. Your current files are snapshotted first, so a restore is itself reversible.</div>'+
+      '<div style="max-height:42vh;overflow:auto"><table style="width:100%"><tbody>'+
+      files.map(f=>'<tr><td style="font-family:var(--mono);font-size:12px">'+esc(f.path)+'</td>'+
+        '<td class="muted" style="text-align:right;white-space:nowrap">'+fmtBytes(f.size)+'</td>'+
+        '<td style="text-align:right"><button class="mini" onclick="bkRestore(\''+esc(name)+'\',[\''+esc(f.path)+'\'])">Restore</button></td></tr>').join('')+
+      '</tbody></table></div>';
+    body.innerHTML=h;
+  }catch(e){ body.innerHTML='<div class="muted">Network error.</div>'; }
+}
+function closeBk(){ document.getElementById('bk-modal').classList.remove('open'); }
+async function bkRestore(name,files){
+  const what = (files==='all') ? 'ALL files from this snapshot' : (Array.isArray(files)?files.join(', '):files);
+  if(!confirm('Restore '+what+'?\nYour current files are backed up first, so this is reversible.')) return;
+  try{
+    const r=await fetch('/api/system/restore',{method:'POST',headers:HJSON(),body:JSON.stringify({name:name,files:files})});
+    const d=await r.json().catch(()=>({}));
+    if(r.ok&&d.ok){ const c=(d.result||{}).count||0; toast('Restored '+c+' file'+(c===1?'':'s')+' \u2713'); closeBk(); load(); }
+    else toast(d.error||'Restore failed',true);
+  }catch(e){ toast('Network error',true); }
+}
+async function bkDownload(name){
+  toast('Preparing download\u2026');
+  try{
+    const r=await fetch('/api/system/backup-download?name='+encodeURIComponent(name),{headers:{'Authorization':'Bearer '+TOKEN}});
+    if(!r.ok){ toast('Download failed',true); return; }
+    const blob=await r.blob();
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='zz2-backup-'+name+'.zip'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),2000); toast('Downloaded \u2713');
+  }catch(e){ toast('Network error',true); }
+}
+
+async function act(path,label,btn){
+  const old = btn ? btn.innerHTML : '';
+  if(btn){ btn.disabled=true; btn.innerHTML='<span class="ic">&#8987;</span><span>Working&hellip;</span>'; }
+  try{
+    const r=await fetch(path,{method:'POST',headers:HJSON(),body:'{}'});
+    const d=await r.json().catch(()=>({}));
+    if(r.ok && d.ok!==false){
+      let extra='';
+      if(d.count!=null) extra=' ('+d.count+' tickets)';
+      else if(d.removed!=null) extra=' ('+d.removed+')';
+      toast(label+extra+' ✓');
+      load();
+    } else toast(d.error||(label+' failed'),true);
+  }catch(e){ toast('Network error',true); }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML=old; } }
+}
+
+async function revoke(sid){
+  if(!confirm('Sign this user out of all their devices?')) return;
+  try{
+    const r=await fetch('/api/system/revoke',{method:'POST',headers:HJSON(),body:JSON.stringify({sid:sid})});
+    const d=await r.json().catch(()=>({}));
+    if(r.ok && d.ok){ toast('Signed out '+(d.revoked||'')); load(); }
+    else toast(d.error||'Could not revoke',true);
+  }catch(e){ toast('Network error',true); }
+}
+
+async function unlock(username){
+  try{
+    const r=await fetch('/api/system/unlock',{method:'POST',headers:HJSON(),body:JSON.stringify({username:username})});
+    const d=await r.json().catch(()=>({}));
+    if(r.ok && d.ok){ toast('Unlocked '+(d.unlocked||username)); load(); }
+    else toast(d.error||'Could not unlock',true);
+  }catch(e){ toast('Network error',true); }
+}
+
+async function arPreview(btn){
+  const old=btn.innerHTML; btn.disabled=true; btn.innerHTML='<span class="ic">&#8987;</span><span>Checking&hellip;</span>';
+  try{
+    const r=await fetch('/api/system/autoresolve',{method:'POST',headers:HJSON(),body:JSON.stringify({apply:false})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||d.error){ toast(d.error||'Preview failed',true); return; }
+    document.getElementById('ar-days').textContent = d.days||7;
+    renderAR(d,false);
+    document.getElementById('ar-apply').style.display = (d.candidates>0)?'flex':'none';
+  }catch(e){ toast('Network error',true); }
+  finally{ btn.disabled=false; btn.innerHTML=old; }
+}
+async function arApply(btn){
+  if(!confirm('Mark these tickets Resolved in the Google Sheet?\nA backup is taken first, then it runs to completion automatically.')) return;
+  btn.disabled=true;
+  let total=0, first=true, guard=0, stuck=false;
+  try{
+    while(guard++ < 1000){
+      btn.innerHTML='<span class="ic">&#8987;</span><span>Resolving&hellip;'+(total?(' '+total):'')+'</span>';
+      const r=await fetch('/api/system/autoresolve',{method:'POST',headers:HJSON(),body:JSON.stringify({apply:true,cont:!first})});
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok||(d.error&&!(d.applied))){ toast(d.error||'Apply failed',true); break; }
+      first=false;
+      total += (d.applied||0);
+      const remaining=d.remaining||0;
+      renderARProgress(total, remaining);
+      if((d.done!==false) && remaining<=0){
+        document.getElementById('ar-apply').style.display='none';
+        toast('Resolved '+total+' tickets \u2713');
+        break;
+      }
+      if((d.applied||0)===0){ stuck=true; toast('Stopped \u2014 '+remaining+' left, no progress',true); break; }
+    }
+    load();
+  }catch(e){ toast('Network error \u2014 progress is saved, click to resume',true); }
+  finally{
+    btn.disabled=false;
+    if(document.getElementById('ar-apply').style.display!=='none')
+      btn.innerHTML='<span class="ic">&#10003;</span><span>'+(stuck?'Retry':'Resume')+'<small>finish remaining</small></span>';
+  }
+}
+function renderARProgress(total, remaining){
+  const box=document.getElementById('ar-result');
+  const cand=total+remaining, pct=cand?Math.round(100*total/cand):100;
+  const head = remaining>0 ? ('Resolving&hellip; '+total+' done, '+remaining+' to go') : ('Resolved '+total+' ticket'+(total===1?'':'s')+'.');
+  box.innerHTML='<div class="card"><div class="bd" style="padding:12px 14px">'+
+    '<div style="font-weight:600;margin-bottom:8px">'+head+'</div>'+
+    '<div style="height:8px;background:var(--line);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--brand,#4a7cff);transition:width .3s"></div></div>'+
+    '</div></div>';
+}
+function renderAR(d,applied){
+  const box=document.getElementById('ar-result');
+  const n=applied?(d.applied||0):(d.candidates||0);
+  if(!n){ box.innerHTML='<span class="muted">No stale tickets older than '+(d.days||7)+' days &mdash; nothing to do.</span>'; return; }
+  let head;
+  if(applied){
+    const rem=d.remaining||0;
+    head = (d.done===false && rem>0)
+      ? ('Resolved '+n+' so far &mdash; '+rem+' still to go (click Continue).')
+      : ('Resolved '+n+' ticket'+(n===1?'':'s')+'.');
+  } else {
+    head = n+' ticket'+(n===1?'':'s')+' would be resolved';
+  }
+  let h='<div style="font-weight:600;margin-bottom:4px">'+head+'</div>';
+  const sm=d.samples||[];
+  if(sm.length){
+    h+='<table style="margin-top:6px"><thead><tr><th>Ticket</th><th>Date</th><th>Status was</th></tr></thead><tbody>'+
+      sm.map(x=>'<tr><td>'+esc(x.ticket)+'</td><td class="muted">'+esc(x.date)+'</td><td class="muted">'+esc(x.was)+'</td></tr>').join('')+'</tbody></table>';
+    if(n>sm.length) h+='<div class="muted" style="margin-top:6px">&hellip;and '+(n-sm.length)+' more.</div>';
+  }
+  box.innerHTML='<div class="card"><div class="bd" style="padding:12px 14px">'+h+'</div></div>';
+}
+
+function signOut(){
+  fetch('/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:TOKEN})}).catch(()=>{});
+  localStorage.removeItem(AUTH_KEY); location.href='/login.html';
+}
+
+let _toastT=null;
+function toast(msg,bad){ const t=$('#toast'); t.textContent=msg; t.className='show'+(bad?' bad':'');
+  clearTimeout(_toastT); _toastT=setTimeout(()=>t.className='',2600); }
+
+(async function guard(){
+  if(!TOKEN){ location.href='/login.html'; return; }
+  try{
+    const r=await fetch('/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:TOKEN})});
+    const d=await r.json();
+    if(!d.ok){ localStorage.removeItem(AUTH_KEY); location.href='/login.html'; return; }
+    const perms=d.permissions||[];
+    if(window.zz2BuildNav) zz2BuildNav(perms);
+    if(perms.indexOf('system_settings')<0){ location.href='/index.html'; return; }
+    $('#who').textContent=(d.display||'')+' · '+((d.role||'').replace('_',' '));
+    $('#app').style.display='block';
+    await load();
+    initSubnav();
+    _timer=setInterval(load, 12000);
+  }catch(e){
+    document.body.insertAdjacentHTML('beforeend','<div class="err">Could not reach the server.</div>');
+  }
+})();
+</script>
+<script>
+/* ZZ2 theme toggle - button shows the CURRENT mode; tooltip names the action */
+(function(){
+  function isDark(){return document.documentElement.getAttribute('data-theme')==='dark';}
+  function syncBtn(){var b=document.getElementById('themeToggle');if(!b)return;var d=isDark();
+    b.textContent=d?'\ud83c\udf19':'\u2600\ufe0f';b.title=d?'Switch to light mode':'Switch to dark mode';}
+  window.zz2ToggleTheme=function(){var next=isDark()?'light':'dark';
+    if(next==='dark')document.documentElement.setAttribute('data-theme','dark');
+    else document.documentElement.removeAttribute('data-theme');
+    try{localStorage.setItem('zz2-theme',next);}catch(e){}
+    syncBtn();if(window.zz2OnThemeChange)try{window.zz2OnThemeChange(next);}catch(e){}};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',syncBtn);else syncBtn();
+})();
+</script>
+</body>
+</html>
