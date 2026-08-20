@@ -1,0 +1,194 @@
+[
+  {
+    "parent": "",
+    "issue": "No power / black screen",
+    "question": "When does the screen stay black?",
+    "steps": []
+  },
+  {
+    "parent": "No power / black screen",
+    "issue": "No power at any time",
+    "question": "",
+    "steps": [
+      "Confirm the vehicle and kit part number match the installation.",
+      "Inspect the main harness, power connector, fuse, and ground connection.",
+      "Measure constant power, accessory power, and ground with a multimeter.",
+      "Reconnect the original equipment temporarily and confirm the factory system operates.",
+      "Record measured voltages and connector photos before escalating."
+    ]
+  },
+  {
+    "parent": "No power / black screen",
+    "issue": "Black screen after switching to the interface",
+    "question": "",
+    "steps": [
+      "Verify the LVDS input and output cables are connected in the correct direction.",
+      "Compare all DIP-switch positions with the diagram for this exact kit.",
+      "Power the vehicle and interface off, reseat the LVDS cables, then restart.",
+      "Test the factory display path before reconnecting the interface.",
+      "Capture a wiring photo and short video if the screen remains black."
+    ]
+  },
+  {
+    "parent": "",
+    "issue": "No audio / incorrect audio source",
+    "question": "Which audio symptom is present?",
+    "steps": []
+  },
+  {
+    "parent": "No audio / incorrect audio source",
+    "issue": "No sound from CarPlay or Android Auto",
+    "question": "",
+    "steps": [
+      "Confirm the radio is set to the audio source required by the kit.",
+      "Verify the AUX, USB, or fiber-loop connection shown in the wiring diagram.",
+      "Raise phone, interface, and vehicle volume and disable mute.",
+      "Delete the phone pairing, restart the phone, and pair again.",
+      "Test with a second phone and record the result."
+    ]
+  },
+  {
+    "parent": "No audio / incorrect audio source",
+    "issue": "Factory audio works but interface audio is distorted or intermittent",
+    "question": "",
+    "steps": [
+      "Reseat the interface audio connection and inspect it for bent or loose pins.",
+      "Disable phone EQ, sound enhancement, and accessibility audio processing.",
+      "Test at moderate volume with a second cable or second phone.",
+      "Confirm the kit audio method matches the vehicle configuration.",
+      "Document whether calls, music, and navigation prompts are affected equally."
+    ]
+  },
+  {
+    "parent": "",
+    "issue": "CarPlay / Android Auto will not connect",
+    "question": "How is the phone trying to connect?",
+    "steps": []
+  },
+  {
+    "parent": "CarPlay / Android Auto will not connect",
+    "issue": "Wired connection",
+    "question": "",
+    "steps": [
+      "Use a known-good data cable; charge-only cables will not work.",
+      "Connect directly to the kit USB port without an adapter or extension.",
+      "Unlock the phone and approve every CarPlay or Android Auto prompt.",
+      "Remove the vehicle from the phone and the phone from the interface, then reconnect.",
+      "Test with a second supported phone."
+    ]
+  },
+  {
+    "parent": "CarPlay / Android Auto will not connect",
+    "issue": "Wireless connection",
+    "question": "",
+    "steps": [
+      "Enable Bluetooth, Wi-Fi, and CarPlay or Android Auto on the phone.",
+      "Forget the interface in both Bluetooth and Wi-Fi settings.",
+      "Restart the phone and power-cycle the vehicle before pairing again.",
+      "Temporarily disable VPN, personal hotspot, and wireless projection to other vehicles.",
+      "Test wired operation first, then retry wireless pairing."
+    ]
+  },
+  {
+    "parent": "",
+    "issue": "Factory controls are not working",
+    "question": "Which controls are affected?",
+    "steps": []
+  },
+  {
+    "parent": "Factory controls are not working",
+    "issue": "Steering-wheel buttons",
+    "question": "",
+    "steps": [
+      "Confirm the CAN and control connectors are fully seated in the supplied harness.",
+      "Verify the vehicle profile and DIP-switch configuration.",
+      "Test the buttons in the factory menu to separate a vehicle fault from an interface fault.",
+      "Power-cycle the vehicle after changing configuration.",
+      "List each working and non-working button before escalating."
+    ]
+  },
+  {
+    "parent": "Factory controls are not working",
+    "issue": "Knob, touch, or console controller",
+    "question": "",
+    "steps": [
+      "Inspect the controller pass-through connectors and cable direction.",
+      "Confirm the correct controller type is selected in interface settings.",
+      "Test short press, long press, rotation, and directional movement separately.",
+      "Reconnect the factory configuration and verify the controller itself works.",
+      "Record the interface firmware version and a video of the symptom."
+    ]
+  },
+  {
+    "parent": "",
+    "issue": "Camera problem",
+    "question": "What happens when reverse is selected?",
+    "steps": []
+  },
+  {
+    "parent": "Camera problem",
+    "issue": "No camera image",
+    "question": "",
+    "steps": [
+      "Confirm the camera type and voltage requirement before applying power.",
+      "Inspect camera power, ground, video input, and reverse-trigger connections.",
+      "Select the correct factory or aftermarket camera option in interface settings.",
+      "Test the video signal with a known-good source when available.",
+      "Capture the wiring and settings screens before escalating."
+    ]
+  },
+  {
+    "parent": "Camera problem",
+    "issue": "Camera image remains on or switches at the wrong time",
+    "question": "",
+    "steps": [
+      "Verify the reverse trigger is connected to the specified wire and is not constant power.",
+      "Check the camera delay and trigger mode in interface settings.",
+      "Confirm CAN connections and DIP-switch positions.",
+      "Power-cycle the vehicle after changing settings.",
+      "Record when the image appears and disappears relative to gear changes."
+    ]
+  },
+  {
+    "parent": "",
+    "issue": "Intermittent operation / restarting",
+    "question": "When does the failure occur?",
+    "steps": []
+  },
+  {
+    "parent": "Intermittent operation / restarting",
+    "issue": "Failure occurs while driving",
+    "question": "",
+    "steps": [
+      "Inspect all harness locks and strain relief; gently move each connection while testing.",
+      "Monitor power and ground for voltage drop during the failure.",
+      "Remove nonessential USB devices, adapters, and extensions.",
+      "Check for overheating or a module mounted against a hot surface.",
+      "Record the time, vehicle state, and video of the next occurrence."
+    ]
+  },
+  {
+    "parent": "Intermittent operation / restarting",
+    "issue": "Failure occurs during startup",
+    "question": "",
+    "steps": [
+      "Allow the vehicle to shut down completely before retesting.",
+      "Verify constant power, accessory power, CAN, and ground connections.",
+      "Disconnect the phone and USB accessories, then test a clean startup.",
+      "Confirm the interface firmware and vehicle profile.",
+      "Compare cold-start and warm-start behavior."
+    ]
+  },
+  {
+    "parent": "",
+    "issue": "Installation or manual question",
+    "question": "",
+    "steps": [
+      "Confirm the exact kit key and vehicle year/model.",
+      "Open the Manual tab and compare every connector with the wiring diagram.",
+      "Use the DIP Switches tab before changing any switch position.",
+      "Photograph the factory connectors and current installation before disconnecting anything.",
+      "Contact support with the kit key, vehicle details, serial number, and photos if clarification is still needed."
+    ]
+  }
+]

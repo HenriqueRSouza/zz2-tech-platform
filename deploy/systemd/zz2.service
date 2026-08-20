@@ -1,0 +1,96 @@
+# ZZ2 Tech Support Platform
+#
+#   sudo cp deploy/systemd/zz2.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now zz2
+#
+# The hardening directives below are the point of running under systemd rather
+# than `python server.py &` in a telnet session. Even with a remote code
+# execution bug, the process cannot write outside its state directory, cannot
+# gain privileges, and cannot see the rest of the filesystem.
+
+[Unit]
+Description=ZZ2 Tech Support Platform
+Documentation=https://github.com/YOUR-ORG/zz2-tech-support
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=zz2
+Group=zz2
+
+WorkingDirectory=/opt/zz2
+EnvironmentFile=/etc/zz2/zz2.env
+
+ExecStart=/opt/zz2/.venv/bin/gunicorn \
+    --config /opt/zz2/deploy/gunicorn.conf.py \
+    zz2.main:app
+
+ExecReload=/bin/kill -s HUP $MAINPID
+
+# SIGTERM lets the workers stop cleanly: the write-behind queue drains, the
+# poller stops mid-sleep instead of mid-write, and pooled connections close.
+KillSignal=SIGTERM
+KillMode=mixed
+TimeoutStopSec=45
+
+Restart=always
+RestartSec=5
+
+# Give up after 5 restarts in 60s rather than looping forever on a config error.
+# A crash loop that keeps "recovering" hides the failure; a dead unit shows it.
+StartLimitBurst=5
+StartLimitIntervalSec=60
+
+# -- Filesystem ----------------------------------------------------------------
+# The whole filesystem is read-only to this service except the paths listed
+# below. This is what makes a write-anywhere bug unexploitable.
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/zz2
+PrivateTmp=true
+
+# Provided by systemd, owned by the service user, 0750.
+StateDirectory=zz2
+StateDirectoryMode=0750
+
+# -- Privileges ----------------------------------------------------------------
+NoNewPrivileges=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+ProtectProc=invisible
+RestrictSUIDSGID=true
+RestrictRealtime=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+
+# Only the address families the app uses: TCP/IP for Supabase and Apps Script,
+# and a Unix socket for systemd notification.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+# Drop every capability. The service binds a high port as a normal user, so it
+# needs none — not even CAP_NET_BIND_SERVICE.
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+SystemCallArchitectures=native
+
+# -- Resources -----------------------------------------------------------------
+# A bound, not a target. The analytics consolidation is the peak consumer; this
+# leaves generous headroom while stopping a runaway from taking the box down with
+# it — which on a small VPS also means taking sshd down.
+MemoryMax=1G
+TasksMax=256
+LimitNOFILE=8192
+
+[Install]
+WantedBy=multi-user.target

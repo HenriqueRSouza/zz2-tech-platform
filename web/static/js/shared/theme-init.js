@@ -1,0 +1,1 @@
+/* zz2 theme: apply saved choice before paint; default stays light */(function(){try{var t=localStorage.getItem('zz2-theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();

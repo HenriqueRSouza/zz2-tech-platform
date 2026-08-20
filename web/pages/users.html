@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+  <link rel="icon" type="image/jpeg" href="/static/images/favicon.jpg">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/static/js/shared/theme-init.js"></script>
+<script src="/static/js/shared/session.js"></script>
+<title>ZZ2 · Users & Roles</title>
+<link rel="stylesheet" href="/static/css/users.1.css">
+</head>
+<body>
+<!-- ZZ2 shared navigation menu -->
+<link rel="stylesheet" href="/static/css/users.2.css">
+<div class="zz2-nav-overlay" id="zz2NavOverlay"></div>
+<nav class="zz2-nav" id="zz2Nav" aria-hidden="true">
+  <div class="zz2-nav-head">
+    <span class="zz2-nav-title">ZZ2 <b>Navigation</b></span>
+    <button class="zz2-nav-x" id="zz2NavClose" aria-label="Close menu">&times;</button>
+  </div>
+  <div class="zz2-nav-links">
+    <a class="zz2-nav-link" href="/dashboard.html" data-perm="dashboard" data-page="dashboard"><span class="i">⬡</span>Dashboard</a>
+    <a class="zz2-nav-link" href="/index.html" data-perm="" data-page="index"><span class="i">🔧</span>Kit &amp; Ticket Tool</a>
+    <a class="zz2-nav-link" href="/tickets.html" data-perm="tickets" data-page="tickets"><span class="i">🗂️</span>Tickets</a>
+    <a class="zz2-nav-link" href="/analytics.html" data-perm="analytics" data-page="analytics"><span class="i">📊</span>Analytics</a>
+    <a class="zz2-nav-link" href="/users.html" data-perm="manage_users|manage_roles" data-page="users"><span class="i">👥</span>Users &amp; Roles</a>
+    <a class="zz2-nav-link" href="/settings.html" data-perm="system_settings" data-page="settings"><span class="i">⚙️</span>System Settings</a>
+  </div>
+</nav>
+<script src="/static/js/shared/nav.js"></script>
+<!-- /ZZ2 shared navigation menu -->
+
+<header class="topbar">
+  <button class="zz2-burger" onclick="zz2NavToggle()" aria-label="Open menu">☰</button>
+  <a class="brand" href="dashboard.html" title="Back to dashboard">
+    <img class="logo" src="/static/images/zz2-logo.png" alt="ZZ2">
+    <span class="t">Users &amp; Roles</span>
+  </a>
+  <span class="spacer"></span>
+  <button class="tb-toggle" id="themeToggle" onclick="zz2ToggleTheme()" title="Switch to dark mode" aria-label="Switch color theme">☀️</button>
+  <div class="who" id="who">—</div>
+  <button class="tb-btn" id="btn-logout">Sign Out</button>
+</header>
+
+<div id="app">
+  <div class="loading"><div><div class="spinner"></div><div style="color:var(--muted)">Loading…</div></div></div>
+</div>
+<div id="toast"></div>
+
+<!-- User create/edit modal -->
+<div class="overlay" id="user-overlay"><div class="modal">
+  <h2 id="user-modal-title">Add user</h2>
+  <div class="body">
+    <div class="field"><label class="lab">Display name</label><input type="text" id="f-display" placeholder="e.g. Marcus Reyes" autocomplete="off"></div>
+    <div class="field"><label class="lab">Username</label><input type="text" id="f-username" placeholder="e.g. marcus" autocomplete="off"><div class="hint">Lowercase letters, numbers, dot, underscore, hyphen.</div></div>
+    <div class="field" id="field-password"><label class="lab">Password</label><input type="password" id="f-password" placeholder="At least 6 characters" autocomplete="new-password"></div>
+    <div class="field"><label class="lab">Role</label><select id="f-role"></select><div class="hint" id="role-hint"></div></div>
+    <div class="field" id="field-active" style="display:none"><label class="lab">Status</label><div class="toggle-row"><input type="checkbox" id="f-active"><label for="f-active" style="margin:0">Account is active (can sign in)</label></div></div>
+    <div class="field"><label class="lab">Permissions</label><div class="perm-list" id="u-perm-list"></div><div class="hint">Greyed permissions come from the role. Tick extras to grant this person more on top of their role.</div></div>
+    <div class="modal-msg" id="user-msg"></div>
+  </div>
+  <div class="foot"><button class="btn" id="user-cancel">Cancel</button><button class="btn accent" id="user-save">Save</button></div>
+</div></div>
+
+<!-- Password modal -->
+<div class="overlay" id="pw-overlay"><div class="modal" style="max-width:400px">
+  <h2 id="pw-title">Set password</h2>
+  <div class="body">
+    <div class="field"><label class="lab">New password</label><input type="password" id="pw-1" placeholder="At least 6 characters" autocomplete="new-password"></div>
+    <div class="field"><label class="lab">Confirm password</label><input type="password" id="pw-2" placeholder="Re-enter password" autocomplete="new-password"></div>
+    <div class="modal-msg" id="pw-msg"></div>
+  </div>
+  <div class="foot"><button class="btn" id="pw-cancel">Cancel</button><button class="btn accent" id="pw-save">Set password</button></div>
+</div></div>
+
+<!-- Role create/edit modal -->
+<div class="overlay" id="role-overlay"><div class="modal">
+  <h2 id="role-modal-title">New role</h2>
+  <div class="body">
+    <div class="row2">
+      <div class="field"><label class="lab">Role name</label><input type="text" id="r-label" placeholder="e.g. Lead Tech" autocomplete="off"></div>
+      <div class="field" style="max-width:130px"><label class="lab">Level</label><input type="number" id="r-rank" min="1" step="1"><div class="hint" id="rank-hint"></div></div>
+    </div>
+    <div class="field" id="r-key-field"><label class="lab">Role ID</label><input type="text" id="r-key" placeholder="e.g. lead_tech" autocomplete="off"><div class="hint">Permanent identifier. Letters, numbers, underscore.</div></div>
+    <div class="field"><label class="lab">Permissions</label><div class="perm-list" id="r-perm-list"></div><div class="hint">You can only grant permissions you hold yourself.</div></div>
+    <div class="modal-msg" id="role-msg"></div>
+  </div>
+  <div class="foot"><button class="btn" id="role-cancel">Cancel</button><button class="btn accent" id="role-save">Save role</button></div>
+</div></div>
+
+<script src="/static/js/users.3.js"></script>
+<script src="/static/js/shared/theme-toggle.js"></script>
+</body>
+</html>

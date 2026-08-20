@@ -1,0 +1,183 @@
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #1a1d21;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* Subtle grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,205,0,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,205,0,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .card {
+      background: #22262c;
+      border: 1px solid #2e333a;
+      border-radius: 16px;
+      padding: 48px 44px 40px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+      position: relative;
+    }
+
+    .logo-wrap {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo-wrap img {
+      height: 52px;
+      width: auto;
+    }
+
+    .tagline {
+      text-align: center;
+      font-size: 13px;
+      color: #6b7280;
+      margin-top: 8px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .divider {
+      height: 1px;
+      background: #2e333a;
+      margin: 28px 0;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 7px;
+    }
+
+    .field input {
+      width: 100%;
+      background: #1a1d21;
+      border: 1px solid #2e333a;
+      border-radius: 8px;
+      padding: 11px 14px;
+      font-size: 15px;
+      color: #f3f4f6;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .field input:focus {
+      border-color: #ffcd00;
+    }
+
+    .field input::placeholder {
+      color: #4b5563;
+    }
+
+    .login-btn {
+      width: 100%;
+      background: #ffcd00;
+      color: #111;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.15s, transform 0.1s;
+      letter-spacing: 0.01em;
+    }
+
+    .login-btn:hover  { background: #f0c000; }
+    .login-btn:active { transform: scale(0.99); }
+    .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .error-msg {
+      min-height: 20px;
+      font-size: 13px;
+      color: #f87171;
+      text-align: center;
+      margin-top: 12px;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 11px;
+      color: #374151;
+      margin-top: 32px;
+    }
+
+    /* Loading spinner overlay */
+    .spinner {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(34,38,44,0.7);
+      border-radius: 16px;
+      align-items: center;
+      justify-content: center;
+    }
+    .spinner.active { display: flex; }
+    .spinner-ring {
+      width: 36px; height: 36px;
+      border: 3px solid #2e333a;
+      border-top-color: #ffcd00;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===== ZZ2 light theme for login (ADDITIVE) — default shows light; existing design = dark mode ===== */
+    :root{color-scheme:dark}
+  :root:not([data-theme="dark"]){color-scheme:light}
+  :root:not([data-theme="dark"]) body{background:#eef0f3}
+  :root:not([data-theme="dark"]) .card{background:#fff;border-color:#e5e7eb;box-shadow:0 1px 3px rgba(16,24,40,.08),0 8px 24px rgba(16,24,40,.06)}
+  :root:not([data-theme="dark"]) .divider{background:#e5e7eb}
+  :root:not([data-theme="dark"]) .field label{color:#6b7280}
+  :root:not([data-theme="dark"]) .field input{background:#fff;border-color:#e5e7eb;color:#22262c}
+  :root:not([data-theme="dark"]) .field input::placeholder{color:#9ca3af}
+  :root:not([data-theme="dark"]) .error-msg{color:#dc2626}
+  :root:not([data-theme="dark"]) .footer{color:#9ca3af}
+  :root:not([data-theme="dark"]) .spinner{background:rgba(255,255,255,0.72)}
+  :root:not([data-theme="dark"]) .spinner-ring{border-color:#e5e7eb;border-top-color:#ffcd00}
+
+  /* floating theme toggle */
+  #themeToggle{position:fixed;top:14px;right:14px;z-index:1000;appearance:none;
+    border:1px solid rgba(120,130,145,.4);background:rgba(40,44,52,.55);color:#e5e7eb;font:inherit;
+    font-size:16px;line-height:1;width:38px;height:38px;border-radius:10px;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+  :root:not([data-theme="dark"]) #themeToggle{background:rgba(255,255,255,.8);border-color:#d1d5db;color:#22262c;
+    box-shadow:0 1px 3px rgba(16,24,40,.1)}
+  #themeToggle:hover{filter:brightness(1.08)}
+  
+/* zz2-mobile-base */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+@media (max-width: 640px) {
+  input, select, textarea { font-size: 16px !important; }   /* no focus-zoom on iOS */
+  img, svg, video { max-width: 100%; }
+}
+
+/* zz2-mobile-login */
+@media (max-width: 640px) {
+  body { padding: 16px; }
+  .card { padding: 32px 24px 28px; border-radius: 14px; }
+}

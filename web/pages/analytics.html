@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+  <link rel="icon" type="image/jpeg" href="/static/images/favicon.jpg">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/static/js/shared/theme-init.js"></script>
+<script src="/static/js/shared/session.js"></script>
+<title>ZZ2 Tech Support · Analytics</title>
+<script src="/static/vendor/chart.min.js"></script>
+<link rel="stylesheet" href="/static/css/analytics.1.css">
+</head>
+<body>
+<!-- ZZ2 shared navigation menu -->
+<link rel="stylesheet" href="/static/css/analytics.2.css">
+<div class="zz2-nav-overlay" id="zz2NavOverlay"></div>
+<nav class="zz2-nav" id="zz2Nav" aria-hidden="true">
+  <div class="zz2-nav-head">
+    <span class="zz2-nav-title">ZZ2 <b>Navigation</b></span>
+    <button class="zz2-nav-x" id="zz2NavClose" aria-label="Close menu">&times;</button>
+  </div>
+  <div class="zz2-nav-links">
+    <a class="zz2-nav-link" href="/dashboard.html" data-perm="dashboard" data-page="dashboard"><span class="i">⬡</span>Dashboard</a>
+    <a class="zz2-nav-link" href="/index.html" data-perm="" data-page="index"><span class="i">🔧</span>Kit &amp; Ticket Tool</a>
+    <a class="zz2-nav-link" href="/tickets.html" data-perm="tickets" data-page="tickets"><span class="i">🗂️</span>Tickets</a>
+    <a class="zz2-nav-link" href="/analytics.html" data-perm="analytics" data-page="analytics"><span class="i">📊</span>Analytics</a>
+    <a class="zz2-nav-link" href="/users.html" data-perm="manage_users|manage_roles" data-page="users"><span class="i">👥</span>Users &amp; Roles</a>
+    <a class="zz2-nav-link" href="/settings.html" data-perm="system_settings" data-page="settings"><span class="i">⚙️</span>System Settings</a>
+  </div>
+</nav>
+<script src="/static/js/shared/nav.js"></script>
+<!-- /ZZ2 shared navigation menu -->
+
+
+<header class="topbar">
+  <button class="zz2-burger" onclick="zz2NavToggle()" aria-label="Open menu">☰</button>
+  <a class="brand" href="dashboard.html" title="Back to dashboard">
+    <img class="logo" src="/static/images/zz2-logo.png" alt="ZZ2">
+    <span class="t">Analytics</span>
+  </a>
+  <span class="spacer"></span>
+  <button class="tb-toggle" id="themeToggle" onclick="zz2ToggleTheme()" title="Switch to dark mode" aria-label="Switch color theme">☀️</button>
+  <div class="meta" id="meta">—</div>
+  <button class="tb-btn" id="btn-reload">↻ Reload</button>
+  <button class="tb-btn primary" id="btn-rebuild">⟳ Rebuild</button>
+</header>
+
+<div id="app">
+  <div class="loading"><div><div class="spinner"></div><div class="note">Loading analytics…</div></div></div>
+</div>
+<div id="toast"></div>
+
+<script src="/static/js/analytics.3.js"></script>
+<script src="/static/js/analytics.4.js"></script>
+<script src="/static/js/shared/theme-toggle.js"></script>
+</body>
+</html>

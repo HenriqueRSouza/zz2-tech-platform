@@ -1,38 +1,41 @@
-# ============================================================================
-# NEVER COMMIT THESE. They live only on the NAS.
-# Secrets + per-install state. If any of these is ever pushed, treat the
-# secret_key as compromised and rotate it (see RUNBOOK.md).
-# ============================================================================
+# -- Runtime state -------------------------------------------------------------
+# Everything the running application writes. Never in git: it holds ticket text,
+# customer names, drafts and uploaded media.
+var/
+/data/
+*.corrupt
+*.part
 
-# Secrets / auth
-credentials.json
+# -- Secrets -------------------------------------------------------------------
+# The real values live in /etc/zz2/zz2.env on the server, or in a local .env that
+# stays on the machine. deploy/.env.example is the template and IS tracked.
+.env
+.env.*
+!deploy/.env.example
 config.json
+credentials.json
 sessions.json
 login_fails.json
+*.pem
+*.key
 
-# Runtime state / generated data (NAS is the source of truth, not git)
-stats.json
-analytics.json
-analytics_view.json
-pending_writes.json
-dead_letters.json
-roles.json
-
-# Kit/ticket data (managed via the app + Google Sheet, not git)
-kits.json
-troubleshooting.json
-data/
-
-# Per-install runtime dirs
-backups/
-drafts/
-logs/
-**/kit_history/
-
-# Atomic-write temp files + misc
-*.tmp.*
-*.bak
-*.pyc
+# -- Python --------------------------------------------------------------------
 __pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# -- Editors and OS ------------------------------------------------------------
 .DS_Store
-deploy.log
+.idea/
+.vscode/
+*.swp
+*~

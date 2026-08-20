@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+  <link rel="icon" type="image/jpeg" href="/static/images/favicon.jpg">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/static/js/shared/theme-init.js"></script>
+<script src="/static/js/shared/session.js"></script>
+<title>ZZ2 System Settings</title>
+<link rel="stylesheet" href="/static/css/settings.1.css">
+</head>
+<body>
+<!-- ZZ2 shared navigation menu -->
+<link rel="stylesheet" href="/static/css/settings.2.css">
+<div class="zz2-nav-overlay" id="zz2NavOverlay"></div>
+<nav class="zz2-nav" id="zz2Nav" aria-hidden="true">
+  <div class="zz2-nav-head">
+    <span class="zz2-nav-title">ZZ2 <b>Navigation</b></span>
+    <button class="zz2-nav-x" id="zz2NavClose" aria-label="Close menu">&times;</button>
+  </div>
+  <div class="zz2-nav-links">
+    <a class="zz2-nav-link" href="/dashboard.html" data-perm="dashboard" data-page="dashboard"><span class="i">⬡</span>Dashboard</a>
+    <a class="zz2-nav-link" href="/index.html" data-perm="" data-page="index"><span class="i">🔧</span>Kit &amp; Ticket Tool</a>
+    <a class="zz2-nav-link" href="/tickets.html" data-perm="tickets" data-page="tickets"><span class="i">🗂️</span>Tickets</a>
+    <a class="zz2-nav-link" href="/analytics.html" data-perm="analytics" data-page="analytics"><span class="i">📊</span>Analytics</a>
+    <a class="zz2-nav-link" href="/users.html" data-perm="manage_users|manage_roles" data-page="users"><span class="i">👥</span>Users &amp; Roles</a>
+    <a class="zz2-nav-link" href="/settings.html" data-perm="system_settings" data-page="settings"><span class="i">⚙️</span>System Settings</a>
+  </div>
+</nav>
+<script src="/static/js/shared/nav.js"></script>
+<!-- /ZZ2 shared navigation menu -->
+
+<header class="topbar">
+  <button class="zz2-burger" onclick="zz2NavToggle()" aria-label="Open menu">&#9776;</button>
+  <a class="brand" href="dashboard.html" title="Back to dashboard">
+    <img class="logo" src="/static/images/zz2-logo.png" alt="ZZ2">
+    <span class="t">System Settings</span>
+  </a>
+  <span class="spacer"></span>
+  <button class="tb-toggle" id="themeToggle" onclick="zz2ToggleTheme()" title="Switch to dark mode" aria-label="Switch color theme">☀️</button>
+  <span class="who" id="who"></span>
+  <button class="tb-btn" id="btn-refresh" onclick="load()">&#8635; Refresh</button>
+  <button class="tb-btn" id="btn-logout" onclick="signOut()">Sign Out</button>
+</header>
+
+<div class="wrap" id="app" style="display:none">
+
+  <nav class="subnav" id="subnav">
+    <a href="#sec-health" class="active">Health</a>
+    <a href="#sec-sync">Sync &amp; store</a>
+    <a href="#sec-config">Settings</a>
+    <a href="#sec-security">Security</a>
+    <a href="#sec-system">Backups &amp; files</a>
+  </nav>
+
+  <h2 class="grp" id="sec-health">System health <span id="updated"></span></h2>
+  <div class="sec-title">Server &amp; host</div>
+  <div class="grid" id="g-server"></div>
+  <div style="margin-top:12px" id="g-workers"></div>
+
+  <h2 class="grp" id="sec-sync">Sync &amp; store</h2>
+  <div class="sec-title">Ticket store</div>
+  <div class="grid" id="g-store"></div>
+
+  <div class="sec-title">Failed writes <span id="dead-badge"></span></div>
+  <div class="card"><div class="bd" style="padding:14px 16px">
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.55;margin-bottom:10px">
+      Ticket saves that exhausted their retries to the Google Sheet. The local store already reflects
+      these, so they're the rows where the store and the sheet can diverge. <b>Replay</b> re-queues them
+      for the write-behind worker; <b>Clear</b> discards them (a rebuild will still resync from the sheet).
+    </div>
+    <div class="actions">
+      <button class="act" id="dead-refresh" onclick="loadDead(this)"><span class="ic">&#8635;</span><span>Refresh<small>list failed writes</small></span></button>
+      <button class="act brand" id="dead-replay" style="display:none" onclick="replayDead('',this)"><span class="ic">&#9654;</span><span>Replay all<small>re-queue every failed write</small></span></button>
+      <button class="act" id="dead-clear" style="display:none" onclick="clearDead(this)"><span class="ic">&#128465;</span><span>Clear all<small>discard the list</small></span></button>
+    </div>
+    <div id="dead-result" style="margin-top:12px"></div>
+  </div></div>
+
+  <div class="sec-title">Maintenance</div>
+  <div class="actions" id="g-actions"></div>
+
+  <div class="sec-title">Auto-resolve stale tickets</div>
+  <div class="card"><div class="bd" style="padding:14px 16px">
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.55;margin-bottom:12px">
+      Tickets with a <b>blank status</b> or a <b>&ldquo;Waiting for customer feedback&rdquo;</b> status that are older
+      than <b id="ar-days">7</b> days get marked <b>Resolved</b> in the Google Sheet. Anything newer is left untouched,
+      so active work is never closed. This runs automatically each night; change the threshold under
+      <a href="#sec-config" style="color:var(--accent);text-decoration:none">Settings</a>.
+    </div>
+    <div class="actions">
+      <button class="act" id="ar-preview" onclick="arPreview(this)"><span class="ic">&#128269;</span><span>Preview<small>count, change nothing</small></span></button>
+      <button class="act brand" id="ar-apply" style="display:none" onclick="arApply(this)"><span class="ic">&#10003;</span><span>Apply now<small>write Resolved to the sheet</small></span></button>
+    </div>
+    <div id="ar-result" style="margin-top:12px"></div>
+  </div></div>
+
+  <h2 class="grp" id="sec-config">Settings <span class="muted" style="font-size:12px;font-weight:400">&middot; super-admin &middot; applied live, no restart</span></h2>
+  <div id="cfg-form"></div>
+
+  <h2 class="grp" id="sec-security">Security &amp; access</h2>
+  <div class="sec-title">Login security</div>
+  <div id="g-security"></div>
+
+  <div class="sec-title">Sessions</div>
+  <div class="card" id="g-sessions-note"></div>
+
+  <h2 class="grp" id="sec-system">Backups &amp; files</h2>
+  <div class="sec-title">Backups</div>
+  <div class="card">
+    <div class="hd">Snapshots <span class="muted" id="bk-count" style="font-weight:400"></span></div>
+    <div class="bd" style="padding:0"><table><thead><tr><th>Snapshot</th><th>Label</th><th>Size</th><th>Created</th><th></th></tr></thead><tbody id="g-backups"></tbody></table></div>
+  </div>
+
+  <div class="bk-overlay" id="bk-modal">
+    <div class="bk-box">
+      <div class="bk-head"><b id="bk-modal-title"></b><button class="btn-ghost" onclick="closeBk()">Close</button></div>
+      <div class="bk-body" id="bk-modal-body"></div>
+    </div>
+  </div>
+
+  <div class="sec-title">Data files</div>
+  <div class="card"><div class="bd" style="padding:0"><table><thead><tr>
+    <th>File</th><th>Size</th><th>Modified</th>
+  </tr></thead><tbody id="g-files"></tbody></table></div></div>
+
+  <div class="sec-title">Recent activity</div>
+  <div class="card">
+    <div class="hd">Server log <span class="muted" style="font-weight:400">&middot; last 40 lines</span></div>
+    <div class="logbox" id="g-log"></div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script src="/static/js/settings.3.js"></script>
+<script src="/static/js/shared/theme-toggle.js"></script>
+</body>
+</html>

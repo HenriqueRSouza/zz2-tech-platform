@@ -1,0 +1,24 @@
+  .zz2-burger{appearance:none;background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);color:#fff;width:38px;height:34px;border-radius:7px;cursor:pointer;font-size:18px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;padding:0;transition:background .15s;margin-right:6px}
+  .zz2-burger:hover{background:rgba(255,205,0,0.28)}
+  .zz2-nav-overlay{position:fixed;inset:0;background:rgba(10,12,15,0.5);opacity:0;visibility:hidden;transition:opacity .2s;z-index:99998}
+  .zz2-nav-overlay.show{opacity:1;visibility:visible}
+  .zz2-nav{position:fixed;top:0;left:0;height:100%;width:264px;max-width:82vw;background:#22262c;border-right:2px solid #ffcd00;transform:translateX(-100%);transition:transform .22s ease;z-index:99999;display:flex;flex-direction:column;box-shadow:2px 0 18px rgba(0,0,0,0.35);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+  .zz2-nav.open{transform:translateX(0)}
+  .zz2-nav-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,0.08)}
+  .zz2-nav-title{color:#fff;font-size:15px;font-weight:600;letter-spacing:.02em}
+  .zz2-nav-title b{color:#ffcd00;font-weight:600}
+  .zz2-nav-x{appearance:none;background:none;border:none;color:#9ca3af;font-size:26px;line-height:1;cursor:pointer;padding:0 4px;transition:color .15s}
+  .zz2-nav-x:hover{color:#fff}
+  .zz2-nav-links{padding:8px 0;overflow-y:auto}
+  .zz2-nav-link{display:flex;align-items:center;gap:12px;padding:13px 20px;color:#d6dade;text-decoration:none;font-size:14px;font-weight:500;border-left:3px solid transparent;transition:background .14s,color .14s}
+  .zz2-nav-link:hover{background:rgba(255,205,0,0.10);color:#fff}
+  .zz2-nav-link .i{font-size:16px;width:20px;text-align:center;flex:0 0 auto}
+  .zz2-nav-link.active{background:rgba(255,205,0,0.14);color:#ffcd00;border-left-color:#ffcd00;cursor:default}
+  .zz2-nav-link.active:hover{background:rgba(255,205,0,0.14)}
+
+/* zz2-mobile-base */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+@media (max-width: 640px) {
+  input, select, textarea { font-size: 16px !important; }   /* no focus-zoom on iOS */
+  img, svg, video { max-width: 100%; }
+}

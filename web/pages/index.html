@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+  <head>
+  <link rel="icon" type="image/jpeg" href="/static/images/favicon.jpg">
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="/static/js/shared/theme-init.js"></script>
+<script src="/static/js/shared/session.js"></script>
+    <title>ZZ2 Tech Support Flowcharts</title>
+    <link rel="stylesheet" href="/static/css/index.1.css">
+  </head>
+
+  <body>
+<!-- ZZ2 shared navigation menu -->
+<link rel="stylesheet" href="/static/css/index.2.css">
+<div class="zz2-nav-overlay" id="zz2NavOverlay"></div>
+<nav class="zz2-nav" id="zz2Nav" aria-hidden="true">
+  <div class="zz2-nav-head">
+    <span class="zz2-nav-title">ZZ2 <b>Navigation</b></span>
+    <button class="zz2-nav-x" id="zz2NavClose" aria-label="Close menu">&times;</button>
+  </div>
+  <div class="zz2-nav-links">
+    <a class="zz2-nav-link" href="/dashboard.html" data-perm="dashboard" data-page="dashboard"><span class="i">⬡</span>Dashboard</a>
+    <a class="zz2-nav-link" href="/index.html" data-perm="" data-page="index"><span class="i">🔧</span>Kit &amp; Ticket Tool</a>
+    <a class="zz2-nav-link" href="/tickets.html" data-perm="tickets" data-page="tickets"><span class="i">🗂️</span>Tickets</a>
+    <a class="zz2-nav-link" href="/analytics.html" data-perm="analytics" data-page="analytics"><span class="i">📊</span>Analytics</a>
+    <a class="zz2-nav-link" href="/users.html" data-perm="manage_users|manage_roles" data-page="users"><span class="i">👥</span>Users &amp; Roles</a>
+    <a class="zz2-nav-link" href="/settings.html" data-perm="system_settings" data-page="settings"><span class="i">⚙️</span>System Settings</a>
+  </div>
+</nav>
+<script src="/static/js/shared/nav.js"></script>
+<!-- /ZZ2 shared navigation menu -->
+
+    <div class="header">
+      <button class="zz2-burger" onclick="zz2NavToggle()" aria-label="Open menu">☰</button>
+      <div class="logo"><img class="logo-img" src="/static/images/zz2-logo.png" alt="ZZ2" /><span class="logo-text">Tech Support</span></div>
+    <div class="center-group">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search" placeholder="Search by SKU or vehicle..." autocomplete="off" spellcheck="false" />
+      </div>
+      <button id="ticket-create-btn" onclick="ticketPanelOpen()">🎫 Tickets</button>
+      <button id="auth-editkits-btn" class="auth-btn" onclick="window.location.href='/kit-editor.html'" style="display:none;">🔧 Edit Kits</button>
+      <button id="auth-login-btn" class="auth-btn" onclick="showLoginModal()">🔐 Login</button>
+    </div>
+  </div>
+  <div class="account-cluster">
+    <div class="account-row">
+  <button class="tb-toggle" id="themeToggle" onclick="zz2ToggleTheme()" title="Switch to dark mode" aria-label="Switch color theme">☀️</button>
+      <span id="auth-user-label"></span>
+      <button id="auth-logout-btn" class="auth-btn" onclick="authLogout()" style="display:none;">Logout</button>
+      <button class="auth-btn" onclick="loadFromSheets(true)" title="Reload the latest kit data">↻ Refresh kits</button>
+    </div>
+    <span id="last-refresh"></span>
+  </div>
+    <div class="main">
+      <div class="sidebar" id="sidebar"></div>
+      <div class="content" id="content">
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+            <rect x="9" y="3" width="6" height="4" rx="1"/>
+            <path d="M9 12h6M9 16h4"/>
+          </svg>
+          <div style="font-size: 15px; font-weight: 600; color: #aaa">Select a kit to get started</div>
+        </div>
+      </div>
+      </div>
+
+    <!-- Ticket Panel -->
+    <div id="ticket-panel">
+      <div class="ticket-header">
+        <span class="ticket-header-title">🎫 Support</span>
+        <button id="ticket-history-toggle" class="ticket-history-toggle" type="button"
+          aria-expanded="false" aria-controls="customer-history-pane"
+          onclick="toggleCustomerHistory()">◀ History</button>
+        <button class="ticket-close-btn" onclick="ticketPanelClose()">✕</button>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;border-bottom:2px solid #e8e8e8;background:#fff;flex-shrink:0;">
+        <button id="panel-tab-today" class="panel-tab panel-tab-active"
+          onclick="_setActiveTab('today')">📋 Today</button>
+        <button id="panel-tab-search" class="panel-tab"
+          onclick="_setActiveTab('search')">🔍 Search</button>
+        <button id="panel-tab-create" class="panel-tab"
+          onclick="showNewTicketForm()">+ Create</button>
+      </div>
+
+      <!-- Today's Tickets -->
+      <div id="daily-view" style="display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0;">
+        <div style="padding:8px 12px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <input id="daily-filter-input" class="ticket-search-input"
+            placeholder="Filter by tech, client, kit..."
+            oninput="_dailyFilter=this.value;renderDailyTickets()"
+            style="flex:1;font-size:12px;">
+          <select onchange="onDaysFilterChange(this.value)"
+            style="font-size:12px;border:1px solid #ddd;border-radius:6px;padding:5px 8px;background:#fff;color:#464f56;cursor:pointer;outline:none;">
+            <option value="1">Today</option>
+            <option value="2">Last 2 days</option>
+            <option value="5">Last 5 days</option>
+            <option value="10">Last 10 days</option>
+          </select>
+        </div>
+        <div style="padding:4px 12px 2px;display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-shrink:0;">
+          <span id="daily-last-updated" style="font-size:10px;color:#bbb;"></span>
+          <button onclick="var s=document.getElementById('daily-last-updated'); if(s) s.textContent='Refreshing…'; loadTodayTickets(true);"
+            title="Refresh today's tickets now"
+            style="font-size:11px;color:#464f56;background:#fff;border:1px solid #ddd;border-radius:6px;padding:3px 9px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;line-height:1;">↻ Refresh</button>
+        </div>
+        <div id="daily-tickets-list" style="flex:1;overflow-y:auto;padding:6px 10px 10px;min-height:0;">
+          <div style="padding:20px;text-align:center;color:#888;font-size:13px;">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div id="search-view" style="display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0;">
+        <div style="padding:10px 12px;border-bottom:1px solid #f0f0f0;flex-shrink:0;">
+          <div class="ticket-search-box">
+            <input id="ticket-search-input" class="ticket-search-input"
+              placeholder="Ticket #, client, kit, vehicle..."
+              oninput="ticketSearchDebounced()" onkeydown="if(event.key==='Enter'){if(_searchTimer)clearTimeout(_searchTimer);ticketSearch();}">
+            <button class="ticket-search-btn" onclick="ticketSearch()">Search</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:8px;">
+            <span style="font-size:11px;color:#9ca3af;">Scan</span>
+            <select id="search-limit-select" onchange="onSearchLimitChange(this.value)"
+              style="font-size:12px;border:1px solid #ddd;border-radius:6px;padding:4px 8px;background:#fff;color:#464f56;cursor:pointer;outline:none;">
+              <option value="100">last 100 tickets</option>
+              <option value="200">last 200 tickets</option>
+              <option value="300" selected>last 300 tickets</option>
+              <option value="500">last 500 tickets</option>
+              <option value="1000">last 1000 tickets</option>
+              <option value="100000">all tickets (slow)</option>
+            </select>
+          </div>
+        </div>
+        <div id="ticket-search-results" style="flex:1;overflow-y:auto;padding:8px 10px;min-height:0;"></div>
+      </div>
+
+      <!-- Create Ticket -->
+      <div id="ticket-form-view" style="display:none;flex-direction:row;flex:1;overflow:hidden;min-height:0;">
+        <aside id="customer-history-pane" class="customer-history-pane" aria-labelledby="customer-history-heading">
+          <div id="customer-history-heading" class="customer-history-heading">Customer ticket history</div>
+          <div id="customer-history-client" class="customer-history-client">Select a client to view their tickets</div>
+          <div id="customer-history-alert" class="customer-history-alert"></div>
+          <div id="customer-history-content" aria-live="polite">
+            <div class="customer-history-state">Previously created tickets will appear here.</div>
+          </div>
+          <div class="ticket-history-divider"></div>
+          <div class="customer-history-heading">Item / Kit history · All customers</div>
+          <div id="kit-history-name" class="customer-history-client">Enter or select an item/kit — searches all tickets</div>
+          <div id="kit-history-stats" class="kit-history-stats" aria-live="polite">
+            <div class="kit-history-stat">
+              <span class="kit-history-stat-label">Quantity sold · all time</span>
+              <span id="kit-history-sales" class="kit-history-stat-value">—</span>
+            </div>
+            <div class="kit-history-stat">
+              <span class="kit-history-stat-label">Tickets · all time</span>
+              <span id="kit-history-tickets" class="kit-history-stat-value">0</span>
+            </div>
+            <div class="kit-history-stat">
+              <span class="kit-history-stat-label">Ticket rate</span>
+              <span id="kit-history-rate" class="kit-history-stat-value">—</span>
+            </div>
+          </div>
+          <div id="kit-history-content" aria-live="polite">
+            <div class="customer-history-state">Ticket totals by date will appear here.</div>
+          </div>
+        </aside>
+        <div class="ticket-body" style="flex:1;overflow-y:auto;padding:12px 14px;min-height:0;">
+          <div class="ticket-section">
+            <div class="ticket-section-title">Ticket Info</div>
+            <div class="ticket-num-badge" id="ticket-num-display">Auto</div>
+            <div id="ticket-presence-row" style="display:none;align-items:center;gap:5px;margin:2px 0 8px;
+              font-size:11px;color:#888;flex-wrap:wrap;"></div>
+            <div id="ticket-stale-banner" style="display:none;align-items:center;justify-content:space-between;
+              gap:8px;background:#dbeafe;border:1px solid #60a5fa;border-radius:6px;padding:6px 10px;
+              margin-bottom:8px;font-size:12px;color:#1e40af;"></div>
+            <div class="ticket-field">
+              <label class="ticket-label">Tech</label>
+              <input id="ticket-tech" class="ticket-input" type="text" readonly>
+            </div>
+            <div class="ticket-field customer-picker">
+              <label class="ticket-label">Client *</label>
+              <input id="ticket-client" class="ticket-input" type="text" placeholder="Shop or customer name"
+                autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false"
+                aria-controls="ticket-client-dropdown"
+                onfocus="customerPickerOpen()" onblur="customerPickerBlur()"
+                onkeydown="customerPickerKeydown(event)"
+                oninput="this.classList.remove('input-error');customerPickerFilter(this.value);customerHistorySchedule(this.value);dupSchedule();draftSchedule();ticketAutoCreateSchedule();">
+              <div id="ticket-client-dropdown" class="customer-picker-dropdown" role="listbox"></div>
+              <div id="ticket-customer-summary" class="customer-summary" aria-live="polite">
+                <div class="customer-summary-stat">
+                  <span class="customer-summary-label">Products purchased</span>
+                  <span id="ticket-customer-products" class="customer-summary-value">0</span>
+                </div>
+                <div class="customer-summary-stat">
+                  <span class="customer-summary-label">Total RMAs</span>
+                  <span id="ticket-customer-rmas" class="customer-summary-value">0</span>
+                </div>
+                <div class="customer-summary-stat">
+                  <span class="customer-summary-label">Rate</span>
+                  <span id="ticket-customer-rate" class="customer-summary-value">0%</span>
+                </div>
+                <div class="customer-summary-stat">
+                  <span class="customer-summary-label">Client status</span>
+                  <span id="ticket-customer-status" class="customer-summary-value is-good">GOOD</span>
+                </div>
+              </div>
+            </div>
+            <select id="ticket-kit-select" style="display:none;" onchange="ticketOnKitSelect(this.value)"><option value=""></option></select>
+          </div>
+          <div class="ticket-section">
+            <div class="ticket-section-title">Kit Info</div>
+            <div class="ticket-field" style="position:relative;">
+              <label class="ticket-label">Kit — type to search</label>
+              <input id="ticket-product" class="ticket-input" type="text" autocomplete="off"
+                oninput="kitSearchInput(this.value);kitHistorySchedule(this.value);dupSchedule();draftSchedule();ticketAutoCreateSchedule();"
+                onblur="kitSearchBlur()" placeholder="e.g. IT3-NBT, ITZ-JGC...">
+              <div id="kit-search-dropdown" style="display:none;position:absolute;left:0;right:0;top:100%;
+                background:#fff;border:1px solid #ddd;border-radius:0 0 6px 6px;z-index:100;
+                max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+            </div>
+            <div class="ticket-field">
+              <label class="ticket-label">Vehicle</label>
+              <input id="ticket-vehicle" class="ticket-input" type="text" oninput="draftSchedule()">
+            </div>
+            <div class="ticket-field">
+              <label class="ticket-label">Serial #</label>
+              <input id="ticket-serial" class="ticket-input" type="text" oninput="draftSchedule()">
+            </div>
+          </div>
+          <div class="ticket-section">
+            <div class="ticket-section-title">Issue & Resolution</div>
+            <div class="ticket-field">
+              <label class="ticket-label">Issue</label>
+              <textarea id="ticket-issue" class="ticket-textarea" rows="2" oninput="draftSchedule()"></textarea>
+            </div>
+            <div class="ticket-field">
+              <label class="ticket-label">Resolution</label>
+              <textarea id="ticket-resolution" class="ticket-textarea" rows="3" oninput="draftSchedule()"></textarea>
+            </div>
+            <div class="ticket-field">
+              <label class="ticket-label">Status</label>
+              <select id="ticket-status" class="ticket-select" onchange="onStatusChange(this.value)">
+                <option value="">-- Select status --</option>
+                <option>Resolved</option>
+                <option>W.O.E.</option>
+                <option>No Solution</option>
+                <option>Waiting for customer feedback</option>
+                <option>RMA/Return</option>
+                <option>RMA - ADV REP REQ GROUND</option>
+                <option>RMA - ADV REP REQ OVERNIGHT</option>
+                <option>DISTRIBUTOR</option>
+                <option>Field Destroy</option>
+              </select>
+            </div>
+            <div class="ticket-field">
+              <label class="ticket-label">Notes</label>
+              <textarea id="ticket-notes" class="ticket-textarea" rows="3" oninput="draftSchedule()"></textarea>
+            </div>
+          </div>
+          <!-- Duplicate warning -->
+          <div id="ticket-dup-warning" style="display:none;background:#fef3c7;border:1px solid #f59e0b;
+            border-radius:6px;padding:8px 10px;margin-bottom:8px;font-size:12px;color:#92400e;"></div>
+          <!-- Autosave indicator (timer removed) -->
+          <div style="display:flex;min-height:14px;margin-bottom:6px;">
+            <span id="ticket-draft-indicator" style="font-size:11px;color:#10b981;opacity:0;transition:opacity 0.3s;margin-left:auto;"></span>
+          </div>
+          <!-- Action buttons -->
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;">
+            <button id="ticket-save-btn" class="ticket-save-btn" onclick="ticketSave()">Save Ticket</button>
+            <div class="tk-btn-row">
+              <button class="tk-btn" onclick="ticketNew()">+ New</button>
+              <button class="tk-btn" onclick="ticketExit()">Exit ticket</button>
+              <button class="tk-btn tk-btn-danger" onclick="ticketDiscard()">🗑 Discard</button>
+            </div>
+          </div>
+          <div id="ticket-msg" class="ticket-msg" style="margin-top:4px;margin-bottom:12px;"></div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="login-modal" onclick="if(event.target===this)hideLoginModal()">
+      <div class="login-box">
+        <h2>🔐 Tech Login</h2>
+        <input id="login-username" class="login-input" type="text"
+          placeholder="Username" autocomplete="username"
+          onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()">
+        <input id="login-password" class="login-input" type="password"
+          placeholder="Password" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')doLogin()">
+        <button class="login-btn" onclick="doLogin()">Login</button>
+        <div id="login-msg" class="login-msg"></div>
+      </div>
+    </div>
+
+    <!-- Realtime presence/broadcast signaling only (no ticket data goes through this
+         project) -- loaded from CDN; if unreachable the app degrades to no live
+         collaboration and keeps working exactly as before. -->
+    <script src="/static/vendor/supabase.js"></script>
+
+    <script src="/static/js/index.3.js"></script>
+<script src="/static/js/shared/theme-toggle.js"></script>
+</html>

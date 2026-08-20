@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+  <link rel="icon" type="image/jpeg" href="/static/images/favicon.jpg">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/static/js/shared/theme-init.js"></script>
+<script src="/static/js/shared/session.js"></script>
+<title>ZZ2 Kit Editor</title>
+<script src="/static/vendor/pdf.min.js"></script>
+<link rel="stylesheet" href="/static/css/kit-editor.1.css">
+</head>
+<body>
+<!-- ZZ2 shared navigation menu -->
+<link rel="stylesheet" href="/static/css/kit-editor.2.css">
+<div class="zz2-nav-overlay" id="zz2NavOverlay"></div>
+<nav class="zz2-nav" id="zz2Nav" aria-hidden="true">
+  <div class="zz2-nav-head">
+    <span class="zz2-nav-title">ZZ2 <b>Navigation</b></span>
+    <button class="zz2-nav-x" id="zz2NavClose" aria-label="Close menu">&times;</button>
+  </div>
+  <div class="zz2-nav-links">
+    <a class="zz2-nav-link" href="/dashboard.html" data-perm="dashboard" data-page="dashboard"><span class="i">⬡</span>Dashboard</a>
+    <a class="zz2-nav-link" href="/index.html" data-perm="" data-page="index"><span class="i">🔧</span>Kit &amp; Ticket Tool</a>
+    <a class="zz2-nav-link" href="/tickets.html" data-perm="tickets" data-page="tickets"><span class="i">🗂️</span>Tickets</a>
+    <a class="zz2-nav-link" href="/analytics.html" data-perm="analytics" data-page="analytics"><span class="i">📊</span>Analytics</a>
+    <a class="zz2-nav-link" href="/users.html" data-perm="manage_users|manage_roles" data-page="users"><span class="i">👥</span>Users &amp; Roles</a>
+    <a class="zz2-nav-link" href="/settings.html" data-perm="system_settings" data-page="settings"><span class="i">⚙️</span>System Settings</a>
+  </div>
+</nav>
+<script src="/static/js/shared/nav.js"></script>
+<!-- /ZZ2 shared navigation menu -->
+
+<header>
+  <button class="zz2-burger" onclick="zz2NavToggle()" aria-label="Open menu">☰</button>
+  <span class="title">🔧 ZZ2 Kit Editor</span>
+  <span class="pill" id="user-pill"></span>
+  <span class="spacer"></span>
+  <button class="tb-toggle" id="themeToggle" onclick="zz2ToggleTheme()" title="Switch to dark mode" aria-label="Switch color theme">☀️</button>
+  <span class="msg" id="top-msg"></span>
+  <span class="dirty-flag" id="dirty-flag"><span class="dot"></span>Unsaved changes</span>
+  <span id="last-saved" style="color:#cfd6db;font-size:12px;"></span>
+  <button class="btn btn-primary" id="save-btn" onclick="saveCurrent()" style="display:none;">Save Kit</button>
+  <button class="btn btn-ghost" onclick="showHistory()" id="hist-btn" style="display:none;">History</button>
+  <a class="btn btn-ghost" href="/index.html" style="text-decoration:none;">← Back to Tool</a>
+</header>
+
+<div id="app" style="display:none;">
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sidebar-head">
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <button id="mode-kits-btn" class="btn btn-sm btn-primary" style="flex:1;" onclick="setMode('kits')">Kits</button>
+          <button id="mode-bp-btn" class="btn btn-sm btn-grey" style="flex:1;" onclick="setMode('blueprints')">Blueprints</button>
+        </div>
+        <button class="btn btn-primary" id="new-btn" onclick="onNewClick()">+ New Kit</button>
+        <button class="btn btn-grey" id="bulk-apply-btn" onclick="openBulkApply()" style="display:none;" title="Apply a blueprint's issues and steps to many kits at once">⇉ Bulk apply to kits</button>
+        <button class="btn btn-grey" id="coverage-btn" onclick="showCoverage()" title="Find kits with empty trees or branching nodes missing a question heading">&#9888; Tree coverage</button>
+        <input class="kit-search" id="kit-search" placeholder="Search kits & troubleshooting…" oninput="onSearchInput(this.value)">
+      </div>
+      <div class="kit-list" id="kit-list"></div>
+    </div>
+    <div class="main" id="editor">
+      <div class="empty">Select a kit on the left, or create a new one.</div>
+    </div>
+  </div>
+</div>
+
+<div id="denied" class="denied" style="display:none;">
+  <h2>Access restricted</h2>
+  <p>The kit editor is available to admins and super admins only.</p>
+  <p><a href="/index.html">Return to the tool</a></p>
+</div>
+
+<!-- PDF / asset modal -->
+<div class="modal" id="cov-modal">
+  <div class="modal-box">
+    <div class="modal-head"><h2>Troubleshooting tree coverage</h2><button class="btn btn-grey btn-sm" onclick="closeCoverage()">Close</button></div>
+    <div class="modal-body" id="cov-body"><div style="color:#888">Loading&hellip;</div></div>
+  </div>
+</div>
+
+<div class="modal" id="pdf-modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>Manual &amp; Diagram Images</h2>
+      <button class="btn btn-grey btn-sm" onclick="closePdfTool()">Close</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Manual PDF (uploaded as this kit's manual, and used to extract diagram pages)</label>
+        <input type="file" id="pdf-file" accept="application/pdf" onchange="onPdfChosen(this.files[0])">
+      </div>
+      <div class="slots" id="slots"></div>
+      <div class="msg" id="pdf-msg"></div>
+      <div style="margin:10px 0;">
+        <button class="btn btn-primary" id="apply-btn" onclick="applyAssets()" style="display:none;">Save manual + selected pages</button>
+      </div>
+      <div class="pages-grid" id="pages-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Image viewer / rotator -->
+<div class="modal" id="img-modal">
+  <div class="modal-box" style="width:min(720px,94vw);">
+    <div class="modal-head">
+      <h2 id="img-modal-title">Rotate Image</h2>
+      <button class="btn btn-grey btn-sm" onclick="closeImageViewer()">Close</button>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <div style="margin-bottom:10px;display:flex;gap:8px;justify-content:center;">
+        <button class="btn btn-grey" onclick="rotateViewer(-90)">↺ Rotate left</button>
+        <button class="btn btn-grey" onclick="rotateViewer(90)">↻ Rotate right</button>
+        <button class="btn btn-primary" onclick="saveViewerRotation()">Save rotation</button>
+      </div>
+      <div style="overflow:auto;max-height:62vh;">
+        <canvas id="img-canvas" style="max-width:100%;border:1px solid #eee;border-radius:6px;"></canvas>
+      </div>
+      <div class="msg" id="img-msg" style="margin-top:8px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Blueprint apply / bulk apply / new-kit modal (body filled by JS) -->
+<div class="modal" id="bp-modal">
+  <div class="modal-box" style="width:min(820px,96vw);">
+    <div class="modal-head"><h2 id="bp-modal-title">Blueprint</h2><button class="btn btn-grey btn-sm" onclick="closeBpModal()">Close</button></div>
+    <div class="modal-body" id="bp-modal-body"></div>
+  </div>
+</div>
+
+<!-- Live tech-view preview -->
+<div class="modal" id="prev-modal">
+  <div class="modal-box" style="width:min(560px,94vw);">
+    <div class="modal-head"><h2 id="prev-title">Preview as a tech sees it</h2><button class="btn btn-grey btn-sm" onclick="closePreview()">Close</button></div>
+    <div class="modal-body" id="prev-body"></div>
+  </div>
+</div>
+
+<!-- Kit history with one-click restore -->
+<div class="modal" id="hist-modal">
+  <div class="modal-box" style="width:min(620px,94vw);">
+    <div class="modal-head"><h2 id="hist-title">History</h2><button class="btn btn-grey btn-sm" onclick="closeHistModal()">Close</button></div>
+    <div class="modal-body" id="hist-body"></div>
+  </div>
+</div>
+
+<script src="/static/js/kit-editor.3.js"></script>
+<script src="/static/js/shared/theme-toggle.js"></script>
+</body>
+</html>

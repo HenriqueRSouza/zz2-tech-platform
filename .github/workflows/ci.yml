@@ -1,0 +1,80 @@
+name: CI
+
+# Runs on every push and pull request. The same checks deploy.sh runs on the
+# server before it restarts the service — the point is to find a failure here
+# rather than during a deploy window.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  # A new push supersedes an in-flight run on the same ref.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest ruff
+
+      - name: Lint
+        run: ruff check zz2/ tests/ scripts/
+
+      - name: Test
+        run: pytest -q
+
+      # Catches the two mismatches that fail silently in a browser: a path the
+      # backend no longer serves, and a payload field it no longer sends.
+      - name: Frontend contract
+        run: python scripts/audit_frontend.py
+
+      - name: Frontend is in sync with legacy/
+        # The pages under web/ are generated. If regenerating them produces a
+        # different result, someone hand-edited web/ instead of legacy/ — which
+        # the next regeneration would silently discard.
+        run: |
+          python scripts/extract_frontend.py > /dev/null
+          python scripts/patch_settings_page.py > /dev/null
+          if ! git diff --quiet -- web/; then
+            echo "::error::web/ differs from what the generators produce."
+            echo "Edit legacy/*.html and re-run the scripts, or update the generators."
+            git diff --stat -- web/
+            exit 1
+          fi
+
+  javascript:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Syntax-check every extracted script
+        # There is no bundler, so a syntax error would otherwise reach the
+        # browser as a blank page with one console message.
+        run: |
+          status=0
+          for file in web/static/js/*.js web/static/js/shared/*.js; do
+            node --check "$file" || { echo "::error file=$file::syntax error"; status=1; }
+          done
+          exit $status

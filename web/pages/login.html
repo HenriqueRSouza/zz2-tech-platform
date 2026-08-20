@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/jpeg" href="/static/images/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/static/js/shared/theme-init.js"></script>
+<script src="/static/js/shared/session.js"></script>
+  <title>ZZ2 Tech Support</title>
+  <link rel="stylesheet" href="/static/css/login.css">
+</head>
+<body>
+<button id="themeToggle" onclick="zz2ToggleTheme()" title="Switch to dark mode" aria-label="Switch color theme">☀️</button>
+  <div class="card">
+    <div class="spinner" id="spinner"><div class="spinner-ring"></div></div>
+
+    <div class="logo-wrap">
+      <img src="/static/images/zz2-logo.png" alt="ZZ2">
+      <div class="tagline">Tech Support Portal</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="username" placeholder="you@company.com"
+        autocomplete="email" autocapitalize="none"
+        onkeydown="if(event.key==='Enter')document.getElementById('password').focus()">
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Enter password"
+        autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <div class="footer">ZZ2 Tech &nbsp;·&nbsp; Internal Use Only</div>
+  </div>
+
+  <script src="/static/vendor/supabase.js"></script>
+  <script src="/static/js/login.2.js"></script>
+<script src="/static/js/shared/theme-toggle.js"></script>
+</body>
+</html>

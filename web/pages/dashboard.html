@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/jpeg" href="/static/images/favicon.jpg">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/static/js/shared/theme-init.js"></script>
+<script src="/static/js/shared/session.js"></script>
+  <title>ZZ2 Admin Dashboard</title>
+  <link rel="stylesheet" href="/static/css/dashboard.1.css">
+</head>
+<body>
+<!-- ZZ2 shared navigation menu -->
+<link rel="stylesheet" href="/static/css/dashboard.2.css">
+<div class="zz2-nav-overlay" id="zz2NavOverlay"></div>
+<nav class="zz2-nav" id="zz2Nav" aria-hidden="true">
+  <div class="zz2-nav-head">
+    <span class="zz2-nav-title">ZZ2 <b>Navigation</b></span>
+    <button class="zz2-nav-x" id="zz2NavClose" aria-label="Close menu">&times;</button>
+  </div>
+  <div class="zz2-nav-links">
+    <a class="zz2-nav-link" href="/dashboard.html" data-perm="dashboard" data-page="dashboard"><span class="i">⬡</span>Dashboard</a>
+    <a class="zz2-nav-link" href="/index.html" data-perm="" data-page="index"><span class="i">🔧</span>Kit &amp; Ticket Tool</a>
+    <a class="zz2-nav-link" href="/tickets.html" data-perm="tickets" data-page="tickets"><span class="i">🗂️</span>Tickets</a>
+    <a class="zz2-nav-link" href="/analytics.html" data-perm="analytics" data-page="analytics"><span class="i">📊</span>Analytics</a>
+    <a class="zz2-nav-link" href="/users.html" data-perm="manage_users|manage_roles" data-page="users"><span class="i">👥</span>Users &amp; Roles</a>
+    <a class="zz2-nav-link" href="/settings.html" data-perm="system_settings" data-page="settings"><span class="i">⚙️</span>System Settings</a>
+  </div>
+</nav>
+<script src="/static/js/shared/nav.js"></script>
+<!-- /ZZ2 shared navigation menu -->
+
+  <div class="header">
+    <div class="header-left"><button class="zz2-burger" onclick="zz2NavToggle()" aria-label="Open menu">☰</button>
+      <img src="/static/images/zz2-logo.png" alt="ZZ2">
+      <span class="header-title">Admin <span>Dashboard</span></span>
+    </div>
+    <div class="header-right">
+  <button class="tb-toggle" id="themeToggle" onclick="zz2ToggleTheme()" title="Switch to dark mode" aria-label="Switch color theme">☀️</button>
+      <span class="user-badge" id="user-name">...</span>
+      <span class="role-badge" id="user-role">...</span>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="greeting">
+      <h1 id="greeting-text">Welcome back</h1>
+      <p id="date-text"></p>
+    </div>
+
+    <!-- Stats row -->
+    <div class="section-title" id="stats-title">Tickets</div>
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-today">—</div>
+        <div class="stat-label">Today</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-week">—</div>
+        <div class="stat-label">This Week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-month">—</div>
+        <div class="stat-label">This Month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-total">—</div>
+        <div class="stat-label">All Time</div>
+      </div>
+    </div>
+
+    <!-- Navigation cards -->
+    <div class="section-title">Navigate</div>
+    <div class="cards">
+
+      <a class="card" href="/index.html" style="--accent:#ffcd00;">
+        <span class="card-icon">🔧</span>
+        <div class="card-title">Kit & Ticket Tool</div>
+        <div class="card-desc">Troubleshoot kits, create and manage support tickets.</div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="card hidden" id="card-tickets" href="/tickets.html" style="--accent:#0ea5e9;">
+        <span class="card-icon">🗂️</span>
+        <div class="card-title">Tickets</div>
+        <div class="card-desc">View every ticket in a spreadsheet, search, edit inline, and add new ones.</div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="card hidden" id="card-analytics" href="/analytics.html" style="--accent:#6366f1;">
+        <span class="card-icon">📊</span>
+        <div class="card-title">Analytics</div>
+        <div class="card-desc">Ticket trends, tech performance, kit trouble scores, RMA tracking.</div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="card hidden" id="card-users" href="/users.html" style="--accent:#10b981;">
+        <span class="card-icon">👥</span>
+        <div class="card-title">Users &amp; Roles</div>
+        <div class="card-desc">Manage accounts, build custom roles, and assign permissions.</div>
+        <span class="card-arrow">→</span>
+      </a>
+
+      <a class="card hidden" id="card-settings" href="/settings.html" style="--accent:#f59e0b;">
+        <span class="card-icon">⚙️</span>
+        <div class="card-title">System Settings</div>
+        <div class="card-desc">Server status, backups, logs, and system configuration.</div>
+        <span class="card-arrow">→</span>
+      </a>
+
+    </div>
+  </div>
+
+  <script src="/static/js/dashboard.3.js"></script>
+<script src="/static/js/shared/theme-toggle.js"></script>
+</body>
+</html>

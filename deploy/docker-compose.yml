@@ -1,0 +1,67 @@
+# ZZ2 Tech Support Platform — Docker Compose.
+#
+#   cp deploy/.env.example deploy/.env   # then fill it in
+#   docker compose -f deploy/docker-compose.yml up -d
+#
+# An alternative to the systemd unit, not a companion: run one or the other.
+# Compose is the easier path on a VPS that already runs other containers;
+# systemd is the leaner one on a box dedicated to this service.
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      args:
+        BUILD: ${ZZ2_BUILD:-compose}
+    image: zz2:latest
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    # Loopback only. Put nginx (host or container) in front to terminate TLS —
+    # publishing this straight to 0.0.0.0 exposes the app over plain HTTP.
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    volumes:
+      - zz2-data:/var/lib/zz2
+
+    # -- Hardening -------------------------------------------------------------
+    # The container equivalents of the systemd unit's directives. Same intent: a
+    # code-execution bug should find nothing to write and no privileges to gain.
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    # A bound, not a target. Leaves headroom for the analytics consolidation
+    # while stopping a runaway from taking the host down with it.
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=4).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  zz2-data:
+    # The only stateful thing in this deployment. Back this up; everything else
+    # is rebuildable from git.
+    driver: local
