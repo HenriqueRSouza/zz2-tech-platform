@@ -96,12 +96,32 @@ export ZZ2_ENABLE_BACKGROUND_WORKERS=false
 export ZZ2_LOG_JSON=false
 ```
 
+Or skip all of that — the dev runner fills in safe defaults for anything
+missing, so it starts with no configuration at all:
+
 ```bash
-.venv/bin/python -m zz2.main
+./scripts/run_dev.sh
 ```
 
 Then open http://127.0.0.1:8080/. Interactive API docs are at `/docs` — disabled
 in production, because they are a complete and accurate map of every endpoint.
+
+**Signing in locally.** The login form talks to Supabase, so it cannot succeed
+against a placeholder project. To explore the app without one, mint a token
+signed with the local JWT secret:
+
+```bash
+.venv/bin/python scripts/dev_token.py --browser
+```
+
+Paste the output into the browser console. Pass `--role tech` to see the app as a
+technician. The script refuses to run when `ZZ2_ENVIRONMENT=production`, because
+it bypasses authentication entirely.
+
+With placeholder credentials the pages, kit editor, catalogue, troubleshooting
+trees, drafts, roles, settings and backups all work. Ticket create/edit/search,
+customer history, item sales and the Users page need a reachable Supabase
+project.
 
 ---
 

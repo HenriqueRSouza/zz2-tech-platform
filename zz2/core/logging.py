@@ -107,6 +107,10 @@ class JsonFormatter(logging.Formatter):
     _RESERVED = frozenset(
         vars(logging.LogRecord("", 0, "", 0, "", (), None)).keys()
         | {"request_id", "actor", "message", "asctime", "taskName"}
+        # uvicorn attaches `color_message`: the same text with ANSI escape codes
+        # in it. Useful on a terminal, noise in a structured log — and the escape
+        # bytes make the file unpleasant to grep.
+        | {"color_message"}
     )
 
     def format(self, record: logging.LogRecord) -> str:
@@ -143,6 +147,13 @@ class TextFormatter(logging.Formatter):
         )
 
     def format(self, record: logging.LogRecord) -> str:
+        # Belt and braces: the handler filter supplies these, but a formatter
+        # that raises breaks logging itself, which is the worst place for a bug.
+        if not hasattr(record, "request_id"):
+            record.request_id = "-"
+        if not hasattr(record, "actor"):
+            record.actor = "-"
+
         line = super().format(record)
         extras = " ".join(
             f"{key}={value}"
@@ -167,23 +178,46 @@ def configure_logging(*, level: str = "INFO", json_output: bool = True) -> None:
         # Rotation matters more than it looks: an unbounded log on a small VPS
         # disk eventually fills the partition, and a full disk takes the whole
         # service down (atomic writes need room for the temp file).
-        file_handler = logging.handlers.RotatingFileHandler(
-            path, maxBytes=20 * 1024 * 1024, backupCount=10, encoding="utf-8", delay=True
-        )
-        file_handler.setFormatter(formatter)
-        target.addHandler(file_handler)
+        handlers: list[logging.Handler] = [
+            logging.handlers.RotatingFileHandler(
+                path, maxBytes=20 * 1024 * 1024, backupCount=10,
+                encoding="utf-8", delay=True,
+            ),
+            logging.StreamHandler(),
+        ]
 
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(formatter)
-        target.addHandler(stream_handler)
+        # Filters go on the HANDLERS, not on the logger. A logger's filters apply
+        # only to records logged through that logger; a handler's apply to every
+        # record reaching it — including records from the third-party loggers
+        # wired to these handlers below.
+        #
+        # Two consequences, and both are why this placement matters:
+        #   * uvicorn's records arrive without `request_id`, so the text
+        #     formatter's `%(request_id)s` raised KeyError inside logging.
+        #   * uvicorn logs request URLs. Without redaction on the handler, a
+        #     credential in one would be written verbatim.
+        for handler in handlers:
+            handler.setFormatter(formatter)
+            handler.addFilter(ContextFilter())
+            handler.addFilter(RedactionFilter())
+            target.addHandler(handler)
 
-        target.addFilter(ContextFilter())
-        target.addFilter(RedactionFilter())
+    # Route uvicorn's own records through our handlers, so they are formatted,
+    # redacted and rotated the same way.
+    #
+    # `propagate = False` is required, not tidiness: uvicorn installs its own
+    # handler on the root logger, so without this every startup line appears
+    # twice — once formatted by us and once by uvicorn.
+    for name in ("uvicorn", "uvicorn.error"):
+        third_party = logging.getLogger(name)
+        third_party.handlers = list(logger.handlers)
+        third_party.propagate = False
 
-    # uvicorn's own access log is redundant: the RequestLogMiddleware records the
-    # same requests with a request id and an actor attached.
-    logging.getLogger("uvicorn.access").disabled = True
-    logging.getLogger("uvicorn.error").handlers = logger.handlers
+    # uvicorn's access log is redundant: RequestContextMiddleware records the
+    # same requests with a request id and the authenticated actor attached.
+    access_logger = logging.getLogger("uvicorn.access")
+    access_logger.disabled = True
+    access_logger.propagate = False
 
 
 def audit(event: str, **fields: Any) -> None:

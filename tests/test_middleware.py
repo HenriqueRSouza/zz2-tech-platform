@@ -179,3 +179,67 @@ class TestRequestContext:
         assert body["request_id"]
         assert "simulated bug" not in response.text
         assert "Traceback" not in response.text
+
+
+class TestThirdPartyLogRecords:
+    """Records from uvicorn and other libraries pass through our handlers.
+
+    Both of these were live bugs: the text formatter raised ``KeyError:
+    'request_id'`` on every uvicorn record, and — more importantly — credentials
+    in a third-party record were not redacted, because the filters were attached
+    to our loggers rather than to the handlers.
+    """
+
+    def test_a_record_without_request_context_renders(self, settings_env,
+                                                      data_dir) -> None:
+        import logging
+
+        from zz2.core.logging import configure_logging, logger
+
+        configure_logging(level="INFO", json_output=False)
+
+        # Exactly how uvicorn's records arrive: a different logger, wired to our
+        # handlers, with none of our context attributes set.
+        third_party = logging.getLogger("uvicorn.error")
+        third_party.handlers = logger.handlers
+        third_party.setLevel(logging.INFO)
+
+        third_party.info("Uvicorn running on http://127.0.0.1:8080")
+
+        from zz2.paths import SERVER_LOG
+
+        contents = SERVER_LOG.read_text(encoding="utf-8")
+        assert "Uvicorn running" in contents
+        assert "KeyError" not in contents
+
+    def test_credentials_in_a_third_party_record_are_redacted(self, settings_env,
+                                                              data_dir) -> None:
+        import logging
+
+        from zz2.core.logging import configure_logging, logger
+        from zz2.paths import SERVER_LOG
+
+        configure_logging(level="INFO", json_output=True)
+
+        third_party = logging.getLogger("uvicorn.error")
+        third_party.handlers = logger.handlers
+        third_party.setLevel(logging.INFO)
+
+        third_party.info("GET /api/proxy?action=recent&key=live-secret-value")
+
+        contents = SERVER_LOG.read_text(encoding="utf-8")
+        assert "live-secret-value" not in contents
+        assert "[REDACTED]" in contents
+
+    def test_both_formatters_survive_a_bare_record(self, settings_env,
+                                                   data_dir) -> None:
+        """A formatter that raises breaks logging itself — the worst place for a
+        bug, because the failure hides every other failure."""
+        import logging
+
+        from zz2.core.logging import JsonFormatter, TextFormatter
+
+        bare = logging.LogRecord("other.lib", logging.INFO, "f.py", 1,
+                                 "plain message", (), None)
+        assert "plain message" in JsonFormatter().format(bare)
+        assert "plain message" in TextFormatter().format(bare)
