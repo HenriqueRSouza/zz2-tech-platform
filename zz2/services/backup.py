@@ -254,17 +254,29 @@ class BackupService:
         else:
             requested = {path for path in wanted if path in available}
 
-        targets = [path for path in sorted(requested) if self._safe_relative(path)]
+        targets: list[str] = []
+        for path in sorted(requested):
+            validated = self._safe_relative(path)
+            if validated is not None:
+                targets.append(validated)
         if not targets:
             raise ValidationError("No valid files to restore.")
 
         self.run(label="pre-restore")
 
+        data_root = DATA_DIR.resolve()
         restored: list[str] = []
         failed: list[dict[str, str]] = []
         for relative in targets:
             source = root / relative
             target = DATA_DIR / relative
+            # Belt and braces: confirm the joined path really is inside the data
+            # directory. _safe_relative should guarantee it, but a restore writes
+            # to the filesystem and must not depend on one function staying right.
+            if data_root != target.resolve().parent \
+               and data_root not in target.resolve().parents:
+                failed.append({"path": relative, "error": "outside the data directory"})
+                continue
             try:
                 target.parent.mkdir(parents=True, exist_ok=True, mode=0o750)
                 staged = target.with_name(f".{target.name}.restore")
@@ -353,19 +365,38 @@ class BackupService:
         return candidate
 
     @staticmethod
-    def _safe_relative(relative: str) -> bool:
-        """Whether a manifest path is safe to write under the data directory.
+    def _safe_relative(relative: str) -> str | None:
+        """Validate a manifest path, returning it cleaned or ``None``.
 
-        Manifest contents are data too — a snapshot could be restored from an
-        older build, or hand-edited — so a path from one is validated exactly as
-        a request parameter would be.
+        Manifest contents are data: a snapshot can be restored from an older
+        build or hand-edited, so a path out of one is validated exactly as a
+        request parameter would be.
+
+        Returns the cleaned path rather than a boolean so the caller joins the
+        *validated* value. Joining the original is what made an earlier version of
+        this unsafe: ``strip("/")`` removed the leading slash before the
+        absoluteness check, so ``"/etc/passwd"`` passed — and
+        ``Path("/var/lib/zz2") / "/etc/passwd"`` is ``Path("/etc/passwd")``,
+        because pathlib discards the left operand when the right one is absolute.
         """
-        cleaned = (relative or "").replace("\\", "/").strip("/")
-        if not cleaned or cleaned.startswith("/") or ".." in cleaned.split("/"):
-            return False
-        if Path(cleaned).is_absolute():
-            return False
-        return cleaned.split("/", 1)[0] not in EXCLUDED_DIRS
+        raw = (relative or "").replace("\\", "/")
+        # Absoluteness is checked on the ORIGINAL string, before any stripping.
+        if not raw or raw.startswith("/") or Path(raw).is_absolute():
+            return None
+        if "\x00" in raw:
+            return None
+
+        cleaned = raw.strip("/")
+        parts = [part for part in cleaned.split("/") if part]
+        if not parts or any(part in {"..", "."} for part in parts):
+            return None
+        # A component that is only whitespace is never a real target here, and it
+        # would create a file nobody can name at a shell prompt.
+        if any(not part.strip() for part in parts):
+            return None
+        if parts[0] in EXCLUDED_DIRS:
+            return None
+        return "/".join(parts)
 
     def _buckets(self) -> tuple[list[str], list[str]]:
         """``(full, singles)`` snapshot names, each oldest first."""

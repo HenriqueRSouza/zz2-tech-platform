@@ -8,6 +8,7 @@ in production.
 from __future__ import annotations
 
 import base64
+from pathlib import Path
 
 import pytest
 
@@ -460,3 +461,74 @@ class TestAssetCaching:
         second = app.get("/login.html",
                          headers={"If-None-Match": first.headers["ETag"]})
         assert second.status_code == 304
+
+
+class TestStoredDataIsNotTrusted:
+    """State files are inputs too.
+
+    ``kits.json`` and a backup manifest are operator-editable and restorable, so
+    a hostile value can reach a path join without any HTTP request being
+    involved. Both places validate rather than trusting their own storage.
+    """
+
+    def test_mirror_skips_a_kit_whose_stored_key_is_unsafe(self, data_dir) -> None:
+        from zz2.repositories.kits import KitCatalogRepository
+        from zz2.services.mirror import MirrorService
+
+        catalog = KitCatalogRepository()
+        # Written directly, bypassing the repository's own validation — exactly
+        # what a hand-edited file or an older build could leave behind.
+        catalog.kits.write({
+            "../../etc": {"vehicle": "hostile"},
+            "ITZ-OK": {"vehicle": "fine"},
+        })
+        catalog.trees.write({"../../etc": [], "ITZ-OK": []})
+
+        _generation, batches = MirrorService(catalog)._snapshot()
+        manuals = next(rows for table, _conflict, rows in batches
+                       if table == "manual_assets")
+
+        assert all(".." not in row["kit_key"] for row in manuals)
+        assert all(".." not in row["local_path"] for row in manuals)
+
+    def test_restore_rejects_a_manifest_path_that_escapes(self, data_dir) -> None:
+        from zz2.services.backup import BackupService
+
+        service = BackupService()
+
+        # "/etc/passwd" is the important one: pathlib discards the left operand
+        # of a join when the right one is absolute, so DATA_DIR / "/etc/passwd"
+        # is "/etc/passwd" — an arbitrary file write.
+        for hostile in ("../../etc/passwd", "/etc/passwd", "//etc/passwd",
+                        "backups/x", "cache/x", "logs/x", ".tmp/x",
+                        "a/../../b", "a/./b", "", "  ", "x\x00y"):
+            assert service._safe_relative(hostile) is None, hostile
+
+        assert service._safe_relative("store/kits.json") == "store/kits.json"
+        assert service._safe_relative("roles.json") == "roles.json"
+        assert service._safe_relative("media/images/ITZ-X/wiring.jpg") == \
+            "media/images/ITZ-X/wiring.jpg"
+
+    def test_restore_refuses_an_absolute_manifest_path(self, data_dir) -> None:
+        """End to end: a snapshot whose manifest names an absolute path must not
+        write outside the data directory."""
+        import json
+
+        from zz2.core.jsonstore import write_json
+        from zz2.paths import BACKUPS_DIR
+        from zz2.services.backup import BackupService
+
+        snapshot = BACKUPS_DIR / "20260101_000000"
+        snapshot.mkdir(parents=True)
+        (snapshot / "payload").write_text("pwned", encoding="utf-8")
+        write_json(snapshot / "manifest.json", {
+            "created": "2026-01-01T00:00:00Z", "label": "hostile",
+            "ts": "20260101_000000", "file_count": 1, "total_bytes": 5,
+            "files": [{"path": "/tmp/zz2-should-not-exist", "size": 5, "sha256": ""}],
+        })
+        assert json  # the import is used by write_json's serialisation path
+
+        with pytest.raises(Exception) as caught:
+            BackupService().restore("20260101_000000", "all", actor="root")
+        assert "No valid files" in str(caught.value)
+        assert not Path("/tmp/zz2-should-not-exist").exists()

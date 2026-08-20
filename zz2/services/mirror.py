@@ -26,6 +26,7 @@ from typing import Any
 from zz2.core.errors import UpstreamError
 from zz2.core.events import Event, KitCatalogChanged, bus
 from zz2.core.logging import logger
+from zz2.core.text import safe_key
 from zz2.gateways.supabase import supabase
 from zz2.paths import MANUALS_DIR
 from zz2.repositories.kits import KitCatalogRepository
@@ -179,7 +180,17 @@ class MirrorService:
         restore knows what to look for. Uploading tens of megabytes of PDF to a
         metadata table would be the wrong tool.
         """
-        directory = MANUALS_DIR / kit_key
+        # Validated even though it came from our own kits.json. That file is
+        # operator-editable and restorable from a backup, so a key like "../.."
+        # is reachable without any request being involved — and this method walks
+        # a directory and hashes every file in it.
+        validated_key = safe_key(kit_key)
+        if not validated_key:
+            logger.warning("skipping mirror of kit with an unsafe key",
+                           extra={"kit": repr(kit_key)[:64]})
+            return []
+
+        directory = MANUALS_DIR / validated_key
         if not directory.is_dir():
             return []
 
@@ -198,12 +209,12 @@ class MirrorService:
                 size = entry.stat().st_size
             except OSError as exc:
                 logger.warning("could not hash manual",
-                               extra={"kit": kit_key, "file": entry.name,
+                               extra={"kit": validated_key, "file": entry.name,
                                       "reason": str(exc)})
             rows.append({
-                "kit_key": kit_key,
+                "kit_key": validated_key,
                 "filename": entry.name,
-                "local_path": f"manuals/{kit_key}/{entry.name}",
+                "local_path": f"manuals/{validated_key}/{entry.name}",
                 "size_bytes": size,
                 "sha256": digest,
                 **stamp,

@@ -38,6 +38,9 @@ ignore = ["S101", "B008"]
 # The migration scripts embed literal HTML and JavaScript that must match the
 # source byte-for-byte; reflowing those lines would break the match.
 "scripts/*.py" = ["E501", "S108"]
+# S108: one test asserts that a hostile backup manifest naming an absolute /tmp
+#       path does NOT get written. The literal path is the assertion.
+"tests/*.py" = ["S108"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

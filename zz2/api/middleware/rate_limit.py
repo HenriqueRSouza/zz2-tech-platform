@@ -19,6 +19,7 @@ ticket writes a minute from one client is not.
 
 from __future__ import annotations
 
+import hashlib
 import threading
 import time
 from collections import OrderedDict
@@ -136,6 +137,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if authorization.lower().startswith("bearer "):
             token = authorization[7:].strip()
             if token:
-                return "t:" + str(hash(token) & 0xFFFFFFFF)
+                # A truncated digest, not the token and not builtins.hash(): the
+                # former must never be stored, and the latter is a 64-bit value
+                # truncated to 32 here, where collisions would silently make two
+                # users share a budget.
+                digest = hashlib.blake2b(token.encode("utf-8"), digest_size=8)
+                return "t:" + digest.hexdigest()
         return "ip:" + (getattr(request.state, "client_ip", None)
                         or (request.client.host if request.client else "-"))

@@ -79,11 +79,25 @@ class RedactionFilter(logging.Filter):
 
 
 class ContextFilter(logging.Filter):
-    """Attach the ambient request id and actor to every record."""
+    """Attach the ambient request id and actor to every record.
+
+    ``actor`` is filled in only when the caller did not supply one. This is not a
+    detail: :func:`audit` passes the acting username explicitly, and an earlier
+    version of this filter overwrote it with the ambient value — which silently
+    stripped the actor from every audit record.
+
+    The ambient value is also unreliable on its own. FastAPI runs ``def``
+    endpoints and their dependencies in a worker thread with a *copied* context,
+    so a ``ContextVar.set`` inside a sync dependency is invisible to the caller.
+    Explicit beats ambient here, and the request-scoped principal on
+    ``request.state`` is what the access log uses.
+    """
 
     def filter(self, record: logging.LogRecord) -> bool:
-        record.request_id = request_id_var.get()
-        record.actor = actor_var.get()
+        if not getattr(record, "request_id", None):
+            record.request_id = request_id_var.get()
+        if not getattr(record, "actor", None):
+            record.actor = actor_var.get()
         return True
 
 
@@ -114,13 +128,28 @@ class JsonFormatter(logging.Formatter):
 
 
 class TextFormatter(logging.Formatter):
-    """Readable single line, for local development."""
+    """Readable single line, for local development.
+
+    Structured fields are appended as ``key=value`` rather than dropped. A
+    ``authz.denied`` line that does not say *which* permission, or a ``request``
+    line without the status, is barely worth writing — and in text mode the
+    ``extra`` dict is invisible unless the formatter renders it.
+    """
 
     def __init__(self) -> None:
         super().__init__(
             fmt="%(asctime)s %(levelname)-7s [%(request_id)s] %(actor)s %(name)s: %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
+
+    def format(self, record: logging.LogRecord) -> str:
+        line = super().format(record)
+        extras = " ".join(
+            f"{key}={value}"
+            for key, value in sorted(record.__dict__.items())
+            if key not in JsonFormatter._RESERVED and not key.startswith("_")
+        )
+        return f"{line} {extras}" if extras else line
 
 
 def configure_logging(*, level: str = "INFO", json_output: bool = True) -> None:
@@ -161,8 +190,10 @@ def audit(event: str, **fields: Any) -> None:
     """Record one security-relevant fact.
 
     Args:
-        event: Stable event name, e.g. ``"login.success"``, ``"config.changed"``.
-        **fields: Structured context. Credentials are scrubbed by the filter, but
-            do not pass them in the first place.
+        event: Stable event name, e.g. ``"ticket.created"``, ``"config.changed"``.
+        **fields: Structured context. Pass ``actor`` for anything a person did —
+            an audit record without one answers "what happened" but not "who",
+            which is the question an audit log exists for. Credentials are
+            scrubbed by the filter, but do not pass them in the first place.
     """
     audit_logger.info(event, extra={"event": event, **fields})

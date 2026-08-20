@@ -66,27 +66,7 @@ def current_principal(
     return principal
 
 
-def optional_principal(
-    request: Request,
-    authorization: Annotated[str | None, Header()] = None,
-) -> Principal | None:
-    """Resolve the caller if credentials are present, otherwise ``None``.
-
-    For endpoints that serve both signed-in and anonymous callers. A *malformed*
-    token still fails: silently treating it as anonymous would mask an expired
-    session as a permissions problem.
-    """
-    token = auth_service.token_from_header(authorization)
-    if not token:
-        return None
-    principal = auth_service.authenticate(token)
-    actor_var.set(principal.username)
-    request.state.principal = principal
-    return principal
-
-
 CurrentPrincipal = Depends(current_principal)
-OptionalPrincipal = Depends(optional_principal)
 
 
 # -- Authorization -------------------------------------------------------------
@@ -105,26 +85,6 @@ class RequirePermission:
                  request: Request) -> Principal:
         if not principal.has(self.permission):
             record_denial(principal, self.permission.value, request.url.path)
-            raise PermissionDenied()
-        return principal
-
-
-class RequireAnyPermission:
-    """Dependency asserting at least one of several permissions.
-
-    For pages that legitimately serve two audiences — the dashboard is reachable
-    with ``dashboard`` or with ``analytics`` — where requiring both would lock out
-    a role that should see it.
-    """
-
-    def __init__(self, *permissions: Permission) -> None:
-        self.permissions = permissions
-
-    def __call__(self, principal: Annotated[Principal, CurrentPrincipal],
-                 request: Request) -> Principal:
-        if not principal.has_any(*self.permissions):
-            record_denial(principal, "|".join(p.value for p in self.permissions),
-                          request.url.path)
             raise PermissionDenied()
         return principal
 
@@ -191,10 +151,8 @@ def get_dead_letters() -> DeadLetterRepository:
 
 
 TicketStore = Annotated[TicketStoreRepository, Depends(get_ticket_store)]
-Catalog = Annotated[KitCatalogRepository, Depends(get_catalog)]
 Roles = Annotated[RoleRepository, Depends(get_roles)]
 Stats = Annotated[StatsRepository, Depends(get_stats)]
 Drafts = Annotated[DraftRepository, Depends(get_drafts)]
-KitHistory = Annotated[KitHistoryRepository, Depends(get_kit_history)]
 PendingWrites = Annotated[PendingWriteRepository, Depends(get_pending_writes)]
 DeadLetters = Annotated[DeadLetterRepository, Depends(get_dead_letters)]

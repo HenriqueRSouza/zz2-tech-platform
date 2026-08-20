@@ -110,6 +110,24 @@ class FakeSupabase:
     def delete_where(self, table: str, filter_query: str) -> None:
         self.calls.append(("DELETE", f"{table}?{filter_query}", None))
 
+    def fetch_user(self, access_token: str) -> dict[str, Any]:
+        """Stand in for /auth/v1/user.
+
+        Present so the *remote* verification path is exercised rather than
+        exploding with AttributeError. Decodes the test token without verifying
+        it — verification is the real gateway's job, and the local path already
+        covers signature and expiry.
+        """
+        from jose import jwt
+
+        claims = jwt.get_unverified_claims(access_token)
+        return {
+            "id": claims.get("sub"),
+            "email": claims.get("email"),
+            "app_metadata": claims.get("app_metadata") or {},
+            "user_metadata": claims.get("user_metadata") or {},
+        }
+
 
 class FakeSupabaseAdmin:
     """In-memory stand-in for the Supabase Auth Admin API."""

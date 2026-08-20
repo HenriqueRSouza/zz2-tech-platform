@@ -47,8 +47,10 @@ _item_sales_cache: TTLCache[str, dict[str, Any]] = TTLCache(ITEM_SALES_TTL, max_
 class CustomerService:
     """Customer and item queries against the read-only ERP schema."""
 
-    def __init__(self) -> None:
-        self._schema = get_settings().customer_history_schema
+    @property
+    def _schema(self) -> str:
+        """The ERP schema name, read at use time rather than captured."""
+        return get_settings().customer_history_schema
 
     # -- Customer picker -------------------------------------------------------
     def summaries(self) -> dict[str, Any]:

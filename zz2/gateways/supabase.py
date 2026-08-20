@@ -29,7 +29,7 @@ import httpx
 from zz2.core.errors import NotConfigured, UpstreamError
 from zz2.core.logging import logger
 from zz2.gateways.http import get_client
-from zz2.settings import get_settings
+from zz2.settings import Settings, get_settings
 
 Method = Literal["GET", "POST", "PATCH", "DELETE"]
 
@@ -37,8 +37,10 @@ Method = Literal["GET", "POST", "PATCH", "DELETE"]
 class SupabaseGateway:
     """Server-side Supabase access."""
 
-    def __init__(self) -> None:
-        self._settings = get_settings()
+    @property
+    def _settings(self) -> Settings:
+        """Read at use time. See the note in :class:`zz2.services.auth.AuthService`."""
+        return get_settings()
 
     # -- Guards ----------------------------------------------------------------
     @property
@@ -255,8 +257,9 @@ class SupabaseAdminGateway:
     """Effectively forever — a hundred years. Supabase has no "disabled" flag, so a
     deactivated account is a banned one, and the ban is what makes it reversible."""
 
-    def __init__(self) -> None:
-        self._settings = get_settings()
+    @property
+    def _settings(self) -> Settings:
+        return get_settings()
 
     def _headers(self) -> dict[str, str]:
         key = self._settings.supabase_service_key.get_secret_value()

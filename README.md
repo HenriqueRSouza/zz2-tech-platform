@@ -67,7 +67,7 @@ web/            pages, stylesheets, scripts, vendored libraries
 deploy/         systemd unit, nginx config, gunicorn config, Docker, deploy scripts
 scripts/        one-off migration and audit tooling
 sql/            Supabase schema setup, run once per project
-tests/          654 tests, including a parity suite against the old server
+tests/          668 tests, including a parity suite against the old server
 legacy/         the original server.py and pages — reference, and the source the
                 extraction script regenerates the frontend from
 ```
@@ -183,7 +183,7 @@ Two things it cannot do for you:
 ## Development
 
 ```bash
-.venv/bin/python -m pytest              # 654 tests, ~7 seconds
+.venv/bin/python -m pytest              # 668 tests, ~7 seconds
 .venv/bin/ruff check zz2/ tests/ scripts/
 .venv/bin/python scripts/audit_frontend.py
 ```

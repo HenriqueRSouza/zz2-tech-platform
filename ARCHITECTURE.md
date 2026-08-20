@@ -327,5 +327,5 @@ rather than after up to a full poll interval — the monolith's loops were
 | Locking | one global `threading.Lock` | per-document reentrant locks |
 | Secrets | `config.json` in the web root | process environment |
 | Identity | hand-rolled PBKDF2 + JSON files | Supabase Auth |
-| Tests | none | 654 |
+| Tests | none | 668 |
 | Shutdown | `pkill` | graceful, queue drains |

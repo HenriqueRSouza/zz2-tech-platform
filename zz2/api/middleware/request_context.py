@@ -87,6 +87,12 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
             # Query strings are not logged. They can carry customer names and
             # ticket identifiers, and logging them would recreate the leak that
             # accepting ``?token=`` caused in the first place.
+            #
+            # The actor is read from request.state, which the authorization
+            # dependency mutates in place. A ContextVar would not work: sync
+            # dependencies run in a worker thread with a copied context, so a
+            # `set()` there never reaches this frame.
+            principal = getattr(request.state, "principal", None)
             logger.info(
                 "request",
                 extra={
@@ -95,6 +101,7 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
                     "status": response.status_code,
                     "duration_ms": round(duration_ms, 1),
                     "ip": request.state.client_ip,
+                    "actor": principal.username if principal is not None else "-",
                 },
             )
         return response

@@ -38,7 +38,7 @@ from zz2.core.text import as_text
 from zz2.domain.permissions import Principal, parse_permissions
 from zz2.gateways.supabase import supabase
 from zz2.repositories.roles import RoleRepository
-from zz2.settings import get_settings
+from zz2.settings import Settings, get_settings
 
 PRINCIPAL_CACHE_TTL = 60.0
 """Seconds a resolved principal is reused.
@@ -57,7 +57,18 @@ class AuthService:
 
     def __init__(self, roles: RoleRepository | None = None) -> None:
         self._roles = roles or RoleRepository()
-        self._settings = get_settings()
+
+    @property
+    def _settings(self) -> Settings:
+        """Settings read at use time, not captured in ``__init__``.
+
+        This object is a module-level singleton constructed at import, so a
+        snapshot taken in the constructor would freeze whatever configuration
+        happened to exist when the module was first imported. ``get_settings`` is
+        memoised, so reading it per call costs nothing — and it makes the service
+        respond to a reconfiguration instead of silently ignoring one.
+        """
+        return get_settings()
 
     # -- Public API ------------------------------------------------------------
     @staticmethod
