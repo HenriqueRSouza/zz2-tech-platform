@@ -35,6 +35,7 @@ from zz2.core.errors import PayloadTooLarge, ValidationError
 from zz2.core.events import MediaChanged, bus
 from zz2.core.logging import audit
 from zz2.core.text import safe_filename, safe_key
+from zz2.gateways.storage import storage_gateway
 from zz2.paths import IMAGES_DIR, MANUALS_DIR
 from zz2.settings import get_settings
 
@@ -226,13 +227,20 @@ class UploadService:
         :func:`~zz2.core.text.safe_filename` first, which reduces it to one path
         component of allowlisted characters.
         """
-        directory = MANUALS_DIR / kit_key
-        directory.mkdir(parents=True, exist_ok=True, mode=0o750)
-
         safe = safe_filename(filename or f"{kit_key}.pdf", fallback=f"{kit_key}.pdf")
         if not safe.lower().endswith(".pdf"):
             safe = f"{safe}.pdf"
 
+        # Storage is durable and therefore written first. A successful local
+        # write followed by a failed remote write would recreate the exact
+        # server-only state this integration is meant to eliminate.
+        if storage_gateway.configured:
+            storage_gateway.upload_manual(kit_key, safe, data)
+
+        # Keep a local cache for fast repeat reads, backups and resilience during
+        # a temporary Storage outage. It is no longer the only copy.
+        directory = MANUALS_DIR / kit_key
+        directory.mkdir(parents=True, exist_ok=True, mode=0o750)
         self._write_atomically(directory / safe, data)
         return StoredUpload(UploadKind.MANUAL, safe, None)
 

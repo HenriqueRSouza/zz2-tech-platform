@@ -19,10 +19,11 @@ import shutil
 import time
 from typing import Any
 
-from zz2.core.errors import Conflict, NotFound, ValidationError
+from zz2.core.errors import Conflict, NotFound, UpstreamError, ValidationError
 from zz2.core.events import MediaChanged, bus
 from zz2.core.logging import audit, logger
 from zz2.core.text import as_text, safe_key
+from zz2.gateways.storage import storage_gateway
 from zz2.paths import IMAGES_DIR, MANUALS_DIR
 from zz2.repositories.kit_history import KitHistoryRepository
 from zz2.repositories.kits import KitCatalogRepository
@@ -288,6 +289,15 @@ class KitService:
                 logger.warning("kit media copy failed",
                                extra={"source": source, "target": target,
                                       "root": root.name, "reason": str(exc)})
+
+        manual = as_text(record.get("manual"))
+        if manual and storage_gateway.configured:
+            try:
+                storage_gateway.copy_manual(source, target, manual)
+            except (NotFound, UpstreamError) as exc:
+                logger.warning("kit Storage manual copy failed",
+                               extra={"source": source, "target": target,
+                                      "reason": exc.log_detail or exc.message})
 
         for kind in IMAGE_KINDS:
             field = f"{kind}_image"

@@ -588,7 +588,7 @@ function renderConfig(c){
       '</div>'+
       '<div class="cfg-grp"><div class="ghd">Apps Script backend</div>'+
         cfText('cf_url','Web app URL','The /exec deployment URL the server proxies to. Update this after redeploying the script.',c.webapp_url||'')+
-        cfRO('Secret key',c.secret_key_set?'\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022 set (edit in config.json)':'(not set)')+
+        cfRO('Apps Script secret',c.secret_key_set?'\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022 set (configured in the environment)':'(not set)')+
         cfRO('Base directory',c.base_dir||'\u2014')+
       '</div>'+
       '<div class="cfg-foot">'+

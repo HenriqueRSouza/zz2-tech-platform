@@ -175,10 +175,9 @@ class MirrorService:
     def _manual_rows(kit_key: str, stamp: dict[str, Any]) -> list[dict[str, Any]]:
         """Metadata for a kit's manual files.
 
-        File *metadata* only — size and SHA-256, never contents. The mirror
-        records which manuals exist and whether the local copy still matches, so a
-        restore knows what to look for. Uploading tens of megabytes of PDF to a
-        metadata table would be the wrong tool.
+        File *metadata* only — size and SHA-256, never contents. PDF bytes live in
+        Supabase Storage; this table records the matching object path and the
+        local cache checksum.
         """
         # Validated even though it came from our own kits.json. That file is
         # operator-editable and restorable from a backup, so a key like "../.."
@@ -214,7 +213,7 @@ class MirrorService:
             rows.append({
                 "kit_key": validated_key,
                 "filename": entry.name,
-                "local_path": f"manuals/{validated_key}/{entry.name}",
+                "local_path": f"{validated_key}/{entry.name}",
                 "size_bytes": size,
                 "sha256": digest,
                 **stamp,

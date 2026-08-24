@@ -96,6 +96,17 @@ class Settings(BaseSettings):
     supabase_schema: str = "techSupport"
     customer_history_schema: str = "zoho"
 
+    # -- Supabase Storage ------------------------------------------------------
+    supabase_storage_bucket: str = "zz2-manuals"
+    """Private bucket that holds kit PDF manuals."""
+
+    enable_supabase_storage: bool = False
+    """Use Supabase Storage as the durable source for PDF manuals.
+
+    The application still writes a local cache so backups and an upstream
+    outage do not make a manual that was already read locally unavailable.
+    """
+
     # -- Google Apps Script (legacy ticket sheet) ------------------------------
     appscript_url: str = ""
     appscript_secret: SecretStr = SecretStr("")
@@ -160,6 +171,10 @@ class Settings(BaseSettings):
     @property
     def supabase_auth_url(self) -> str:
         return self.supabase_url.rstrip("/") + "/auth/v1/"
+
+    @property
+    def supabase_storage_url(self) -> str:
+        return self.supabase_url.rstrip("/") + "/storage/v1/"
 
     def public_config(self) -> dict[str, str]:
         """The only settings the browser is allowed to see.

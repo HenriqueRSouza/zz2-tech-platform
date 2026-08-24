@@ -36,6 +36,7 @@ from zz2.api.deps import CurrentPrincipal
 from zz2.core.errors import NotFound
 from zz2.core.text import safe_filename, safe_key
 from zz2.domain.permissions import Principal
+from zz2.gateways.storage import storage_gateway
 from zz2.paths import IMAGES_DIR, MANUALS_DIR, PAGES_DIR, STATIC_DIR
 
 router = APIRouter(tags=["pages"])
@@ -200,10 +201,42 @@ def serve_kit_image(
 def serve_kit_manual(
     kit_key: str,
     filename: str,
+    request: Request,
     actor: Annotated[Principal, CurrentPrincipal],
-) -> FileResponse:
-    """Serve a kit's PDF manual. Authenticated, as above."""
-    return _serve_media(MANUALS_DIR, kit_key, filename)
+) -> Response:
+    """Serve a private Storage manual, with the local cache as fallback."""
+    validated_key = safe_key(kit_key)
+    validated_name = safe_filename(filename, fallback="")
+    if not validated_key or not validated_name or not validated_name.lower().endswith(".pdf"):
+        raise NotFound()
+
+    # Local copies are a cache. Prefer them so a manual already read/uploaded
+    # remains available during a temporary Storage outage.
+    try:
+        return _serve_media(MANUALS_DIR, validated_key, validated_name)
+    except NotFound:
+        pass
+
+    if not storage_gateway.configured:
+        raise NotFound()
+
+    stored = storage_gateway.download_manual(
+        validated_key,
+        validated_name,
+        range_header=request.headers.get("range") or "",
+    )
+    return Response(
+        content=stored.content,
+        status_code=stored.status_code,
+        media_type="application/pdf",
+        headers={
+            **stored.headers,
+            "Accept-Ranges": "bytes",
+            "Cache-Control": MEDIA_CACHE_CONTROL,
+            "X-Content-Type-Options": "nosniff",
+            "Content-Disposition": f'inline; filename="{validated_name}"',
+        },
+    )
 
 
 def _serve_media(root: Path, kit_key: str, filename: str) -> FileResponse:

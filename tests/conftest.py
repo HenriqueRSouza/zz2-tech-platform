@@ -28,6 +28,9 @@ from typing import Any
 _TEST_DATA_ROOT = Path(tempfile.mkdtemp(prefix="zz2-tests-"))
 os.environ["ZZ2_DATA_DIR"] = str(_TEST_DATA_ROOT)
 os.environ.setdefault("ZZ2_ENVIRONMENT", "development")
+# Never let a developer's real .env turn an isolated unit test into a Storage
+# upload. Integration-specific tests opt in explicitly with monkeypatch.
+os.environ["ZZ2_ENABLE_SUPABASE_STORAGE"] = "false"
 
 import pytest  # noqa: E402
 
@@ -61,6 +64,7 @@ def settings_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
         "ZZ2_RATE_LIMIT_ENABLED": "false",
         "ZZ2_ENABLE_BACKGROUND_WORKERS": "false",
         "ZZ2_ENABLE_SUPABASE_MIRROR": "false",
+        "ZZ2_ENABLE_SUPABASE_STORAGE": "false",
         "ZZ2_LOG_JSON": "false",
     }.items():
         monkeypatch.setenv(key, value)

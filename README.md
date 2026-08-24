@@ -50,7 +50,7 @@ permissions gate features, rank gates who you may act upon.
 | Web | FastAPI, uvicorn workers under gunicorn |
 | Proxy | nginx, TLS via Let's Encrypt |
 | Identity | Supabase Auth (JWT) |
-| Data | JSON documents on disk, behind a repository layer; Supabase Postgres for tickets and the catalogue mirror |
+| Data | JSON documents on disk, behind a repository layer; Supabase Postgres for tickets/catalogue metadata and private Supabase Storage for PDF manuals |
 | Frontend | Vanilla JavaScript, no build step |
 | Process | systemd, or Docker Compose |
 
@@ -122,6 +122,18 @@ With placeholder credentials the pages, kit editor, catalogue, troubleshooting
 trees, drafts, roles, settings and backups all work. Ticket create/edit/search,
 customer history, item sales and the Users page need a reachable Supabase
 project.
+
+**PDF manuals.** Set `ZZ2_ENABLE_SUPABASE_STORAGE=true` and
+`ZZ2_SUPABASE_STORAGE_BUCKET=zz2-manuals`. The backend creates a private,
+PDF-only bucket on the first upload, stores every manual there, and keeps a local
+cache under `var/media/manuals`. Downloads continue through the authenticated
+`/manuals/<kit>/<filename>` route, so the service key never reaches the browser.
+To migrate existing local PDFs:
+
+```bash
+.venv/bin/python scripts/migrate_manuals_to_storage.py --dry-run
+.venv/bin/python scripts/migrate_manuals_to_storage.py --ensure-bucket
+```
 
 ---
 

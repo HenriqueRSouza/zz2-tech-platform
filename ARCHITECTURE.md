@@ -87,6 +87,7 @@ cannot be reused by a worker.
 |---|---|
 | `http.py` | One pooled `httpx.Client` with mandatory timeouts and redirects disabled. |
 | `supabase.py` | PostgREST access with the service key, plus the Auth Admin API for user management. |
+| `storage.py` | Private Supabase Storage access for durable PDF manual upload, download and kit duplication. |
 | `appscript.py` | Signed calls to the Google Apps Script sheet, with the host pinned. |
 
 ### `services/` — business logic

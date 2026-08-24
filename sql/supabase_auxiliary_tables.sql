@@ -33,11 +33,12 @@ create table if not exists "techSupport".blueprints (
   synced_at timestamptz not null default now()
 );
 
--- PDFs remain on the local server. This table mirrors their metadata/path.
+-- PDF contents live in the private zz2-manuals Storage bucket. This table
+-- mirrors metadata and the object path for catalogue backup/reporting.
 create table if not exists "techSupport".manual_assets (
   kit_key text not null references "techSupport".kits(kit_key) on delete cascade,
   filename text not null,
-  local_path text not null,
+  local_path text not null, -- Storage object path: <kit_key>/<filename>
   size_bytes bigint not null default 0,
   sha256 text not null default '',
   sync_generation bigint not null,

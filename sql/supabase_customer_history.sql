@@ -1,4 +1,4 @@
--- Run once in the Supabase SQL Editor for the project configured in config.json.
+-- Run once in the Supabase SQL Editor for the project configured via ZZ2_SUPABASE_URL.
 -- The `zoho` schema must also be listed under API Settings > Exposed schemas.
 --
 -- Customer performance data is read only by server.py with the server-only

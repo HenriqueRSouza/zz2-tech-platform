@@ -39,7 +39,7 @@ export ZZ2_LOG_JSON="${ZZ2_LOG_JSON:-false}"
 
 # A local signing secret, so scripts/dev_token.py can mint a usable token. Only
 # valid for this machine; a real deployment takes it from Supabase.
-export ZZ2_SUPABASE_JWT_SECRET="${ZZ2_SUPABASE_JWT_SECRET:-local-development-jwt-secret-not-for-production}"
+export ZZ2_SUPABASE_JWT_SECRET="${ZZ2_SUPABASE_JWT_SECRET-local-development-jwt-secret-not-for-production}"
 export ZZ2_SUPABASE_URL="${ZZ2_SUPABASE_URL:-https://placeholder.supabase.co}"
 export ZZ2_SUPABASE_PUBLISHABLE_KEY="${ZZ2_SUPABASE_PUBLISHABLE_KEY:-sb_publishable_placeholder}"
 export ZZ2_SUPABASE_SERVICE_KEY="${ZZ2_SUPABASE_SERVICE_KEY:-sb_secret_placeholder}"
