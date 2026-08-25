@@ -41,7 +41,23 @@ CURRENT_SEED_VERSION = 1
 # the last NAS catalogue here so first boot can initialise the volume without a
 # manual ``docker cp``. It is only consulted for an empty, never-before-seeded
 # catalogue; after that, the Kit Editor remains authoritative.
-INITIAL_CATALOG_DIR = APP_DIR / "seed" / "catalog"
+PACKAGED_CATALOG_DIR = APP_DIR / "seed" / "catalog"
+SYSTEMD_CATALOG_DIR = APP_DIR / "backups" / "20260820_000013" / "data"
+
+
+def initial_catalog_dir() -> Path:
+    """Locate the seed in both supported deployment layouts.
+
+    Docker copies the two documents to ``seed/catalog`` to keep every other
+    backup out of the image. A systemd/source deployment runs from the checkout,
+    where the same documents remain under the last NAS backup.
+    """
+    for candidate in (PACKAGED_CATALOG_DIR, SYSTEMD_CATALOG_DIR):
+        if (candidate / "kits.json").is_file() and (
+            candidate / "troubleshooting.json"
+        ).is_file():
+            return candidate
+    return PACKAGED_CATALOG_DIR
 
 IMAGE_KINDS = ("dip", "wiring", "misc")
 IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
@@ -86,7 +102,7 @@ class CatalogService:
         seed_dir: Path | None = None,
     ) -> None:
         self._catalog = catalog or KitCatalogRepository()
-        self._seed_dir = seed_dir or INITIAL_CATALOG_DIR
+        self._seed_dir = seed_dir or initial_catalog_dir()
 
     # -- Bootstrap -------------------------------------------------------------
     def ensure_initialised(self) -> dict[str, Any]:

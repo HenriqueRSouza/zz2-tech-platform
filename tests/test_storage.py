@@ -422,6 +422,19 @@ class TestInitialCatalogSeed:
         assert len(catalog.trees.get("KIT-ONE")) == 1
         assert catalog.meta.bundle_seeded() is True
 
+    def test_systemd_checkout_falls_back_to_versioned_backup(
+        self, data_dir, monkeypatch,
+    ) -> None:
+        import zz2.services.catalog as catalog_module
+
+        packaged = data_dir / "missing-packaged-seed"
+        systemd_seed = data_dir / "checkout" / "backups" / "snapshot" / "data"
+        self._bundle(systemd_seed)
+        monkeypatch.setattr(catalog_module, "PACKAGED_CATALOG_DIR", packaged)
+        monkeypatch.setattr(catalog_module, "SYSTEMD_CATALOG_DIR", systemd_seed)
+
+        assert catalog_module.initial_catalog_dir() == systemd_seed
+
     def test_bundle_does_not_resurrect_intentionally_deleted_kits(self, data_dir) -> None:
         from zz2.repositories.kits import KitCatalogRepository
         from zz2.services.catalog import CatalogService
