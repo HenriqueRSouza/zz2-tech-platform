@@ -109,12 +109,7 @@
             const { kits, images } = buildKits(parseCSV(kitsText), parseCSV(tsText));
             KITS = kits; IMAGES = images;
           }
-          for (const [key, extra] of Object.entries(KIT_EXTRA)) {
-            if (KITS[key]) {
-              if (extra.dip_switches) KITS[key].dip_switches = extra.dip_switches;
-              if (extra.wiring)       KITS[key].wiring       = extra.wiring;
-            }
-          }
+          applyKitExtras();
           buildSidebar();
           updateLastRefreshed(new Date(timestamp));
           return true;
@@ -2240,12 +2235,7 @@
           saveToCache(kitsText, tsText,
                       kitsContentType.includes('application/json') ? 'json' : 'csv');
 
-          for (const [key, extra] of Object.entries(KIT_EXTRA)) {
-            if (KITS[key]) {
-              if (extra.dip_switches) KITS[key].dip_switches = extra.dip_switches;
-              if (extra.wiring)       KITS[key].wiring       = extra.wiring;
-            }
-          }
+          applyKitExtras();
 
           if (savedKit && KITS[savedKit]) {
             // Resyncing — restore position
@@ -2383,6 +2373,8 @@
           }]
         },
         "IT3-EVO": {
+          switch_button: "MENU button",
+          audio_method: "OEM BT Channel — ZZPLAY → Setup → scroll to bottom → 'Use Car's BT Channel' ON",
           dip_switches: [{
             label: "IT3-EVO — Screen Size",
             count: 8,
@@ -2781,6 +2773,10 @@
           }]
         },
         "DZZ AUDI": {
+          vehicle: "Audi (MIB / MMI / Symphony / RMC)",
+          switch_button: "Touchscreen — tap AUDI icon for OEM system",
+          audio_method: "OEM Bluetooth Audio (recommended) or AUX",
+          notes: "If using factory Bluetooth for calls and music, enable Use Car's BT Channel. Otherwise disable it and select AUX.",
           dip_switches: [{
             label: "DZZ AUDI — Secondary T-Harness Location",
             count: 1,
@@ -3202,6 +3198,21 @@
         },
 
       };
+
+      // Add bundled diagrams and fill known metadata gaps without replacing
+      // values maintained through the Kit Editor. Keeping this in one function
+      // makes fresh API data and localStorage cache behave identically.
+      function applyKitExtras() {
+        for (const [key, extra] of Object.entries(KIT_EXTRA)) {
+          const kit = KITS[key];
+          if (!kit) continue;
+          for (const field of ['vehicle', 'switch_button', 'audio_method', 'notes']) {
+            if (!kit[field] && extra[field]) kit[field] = extra[field];
+          }
+          if (extra.dip_switches) kit.dip_switches = extra.dip_switches;
+          if (extra.wiring)       kit.wiring       = extra.wiring;
+        }
+      }
 
       const sidebar = document.getElementById("sidebar");
       const content = document.getElementById("content");

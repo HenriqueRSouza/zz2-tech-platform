@@ -163,8 +163,40 @@ def check_telemetry_payload() -> int:
     return 0
 
 
+# -- Check 3: bundled kit metadata is applied on every load path ---------------
+def check_kit_extras() -> int:
+    """Catch a silent loss of Switch/Audio/Vehicle metadata.
+
+    The local catalogue intentionally leaves some legacy fields empty and the
+    frontend fills those gaps from ``KIT_EXTRA``. Both the localStorage path and
+    the fresh API path must call the common merger; copying only diagrams makes
+    the page look valid while rendering dashes for the text metadata.
+    """
+    source = (ROOT / "web" / "static" / "js" / "index.3.js").read_text(
+        encoding="utf-8"
+    )
+    calls = source.count("applyKitExtras();")
+    merger_fields = "['vehicle', 'switch_button', 'audio_method', 'notes']"
+    problems: list[str] = []
+    if calls < 2:
+        problems.append(
+            f"applyKitExtras is called {calls} time(s); cache and API paths both need it"
+        )
+    if merger_fields not in source:
+        problems.append("applyKitExtras no longer merges all four metadata fields")
+
+    print(f"kit metadata: common merger called on {calls} load paths")
+    for problem in problems:
+        print(f"  !!  {problem}")
+    if problems:
+        print(f"  {len(problems)} kit metadata problem(s)\n")
+        return 1
+    print("  all load paths apply metadata\n")
+    return 0
+
+
 def main() -> int:
-    status = check_routes() | check_telemetry_payload()
+    status = check_routes() | check_telemetry_payload() | check_kit_extras()
     print("frontend and backend agree." if status == 0
           else "frontend/backend mismatch — see above.")
     return status
