@@ -53,6 +53,45 @@
       // ── localStorage cache ────────────────────────────────────
       const CACHE_KEY = 'zz2_kit_cache_v1';
       const DAILY_CACHE_KEY = 'zz2_daily_cache_v1';
+
+      function _applyLocalCatalog(kitsJson, tsJson) {
+        if (!kitsJson || typeof kitsJson !== 'object' || Array.isArray(kitsJson)) {
+          throw new Error('Invalid kit catalogue returned by server');
+        }
+        if (Object.keys(kitsJson).length === 0) {
+          throw new Error('Kit catalogue is empty on the server. Import the VPS data directory and try again.');
+        }
+
+        KITS = {};
+        for (const [key, k] of Object.entries(kitsJson)) {
+          KITS[key] = {
+            vehicle:       k.vehicle || '',
+            switch_button: k.switch_button || '',
+            audio_method:  k.audio_method || '',
+            notes:         k.notes || '',
+            nodes:         [],
+          };
+        }
+        IMAGES = {};
+        for (const [key, k] of Object.entries(kitsJson)) {
+          const imgs = {};
+          function _resolveImg(u) {
+            if (!u) return '';
+            if (u.startsWith('/images/')) return SERVER_URL + u;
+            return driveToImg(u);
+          }
+          if (k.dip_image)    imgs.dip    = _resolveImg(k.dip_image);
+          if (k.wiring_image) imgs.wiring = _resolveImg(k.wiring_image);
+          if (k.misc_image)   imgs.misc   = _resolveImg(k.misc_image);
+          if (k.manual)       imgs.manual = k.manual;
+          if (Object.keys(imgs).length > 0) IMAGES[key] = imgs;
+        }
+        for (const [key, issues] of Object.entries(tsJson || {})) {
+          if (!KITS[key]) continue;
+          KITS[key].nodes = _buildNodesFromLocal(issues);
+        }
+      }
+
       function loadFromCache() {
         try {
           if (typeof localStorage === 'undefined') return false;
@@ -61,8 +100,15 @@
           const parsed = JSON.parse(raw);
           if (!parsed || !parsed.kitsText || !parsed.tsText) return false;
           const { kitsText, tsText, timestamp } = parsed;
-          const { kits, images } = buildKits(parseCSV(kitsText), parseCSV(tsText));
-          KITS = kits; IMAGES = images;
+          // The compatibility API used to return CSV and now returns local JSON.
+          // Detect old caches by content so a cache written by either generation
+          // remains usable across a deploy.
+          if (parsed.format === 'json' || kitsText.trim().startsWith('{')) {
+            _applyLocalCatalog(JSON.parse(kitsText), JSON.parse(tsText));
+          } else {
+            const { kits, images } = buildKits(parseCSV(kitsText), parseCSV(tsText));
+            KITS = kits; IMAGES = images;
+          }
           for (const [key, extra] of Object.entries(KIT_EXTRA)) {
             if (KITS[key]) {
               if (extra.dip_switches) KITS[key].dip_switches = extra.dip_switches;
@@ -74,9 +120,9 @@
           return true;
         } catch(e) { return false; }
       }
-      function saveToCache(kitsText, tsText) {
+      function saveToCache(kitsText, tsText, format) {
         try {
-          const data = JSON.stringify({ kitsText, tsText, timestamp: Date.now() });
+          const data = JSON.stringify({ kitsText, tsText, format: format || 'csv', timestamp: Date.now() });
           localStorage.setItem(CACHE_KEY, data);
         } catch(e) {
           // localStorage unavailable (private mode, security policy, etc.) — ignore
@@ -2178,35 +2224,7 @@
             const kitsJson = await kitsResp.json();
             const tsJson   = await tsResp.json();
             // Local JSON is already parsed - apply directly
-            KITS = {};
-            for (const [key, k] of Object.entries(kitsJson)) {
-              KITS[key] = {
-                vehicle:       k.vehicle || '',
-                switch_button: k.switch_button || '',
-                audio_method:  k.audio_method || '',
-                notes:         k.notes || '',
-                nodes:         [],
-              };
-            }
-            IMAGES = {};
-            for (const [key, k] of Object.entries(kitsJson)) {
-              const imgs = {};
-              function _resolveImg(u) {
-                if (!u) return '';
-                if (u.startsWith('/images/')) return SERVER_URL + u;
-                return driveToImg(u);
-              }
-              if (k.dip_image)    imgs.dip    = _resolveImg(k.dip_image);
-              if (k.wiring_image) imgs.wiring = _resolveImg(k.wiring_image);
-              if (k.misc_image)   imgs.misc   = _resolveImg(k.misc_image);
-              if (k.manual)       imgs.manual = k.manual;
-              if (Object.keys(imgs).length > 0) IMAGES[key] = imgs;
-            }
-            // Apply troubleshooting nodes from ts JSON
-            for (const [key, issues] of Object.entries(tsJson)) {
-              if (!KITS[key]) continue;
-              KITS[key].nodes = _buildNodesFromLocal(issues);
-            }
+            _applyLocalCatalog(kitsJson, tsJson);
             kitsText = JSON.stringify(kitsJson);
             tsText   = JSON.stringify(tsJson);
             console.log('[ZZ2] Loaded from local files (' + Object.keys(KITS).length + ' kits)');
@@ -2219,7 +2237,8 @@
             console.log('[ZZ2] Loaded from Google Sheets (' + Object.keys(KITS).length + ' kits)');
           }
 
-          saveToCache(kitsText, tsText);
+          saveToCache(kitsText, tsText,
+                      kitsContentType.includes('application/json') ? 'json' : 'csv');
 
           for (const [key, extra] of Object.entries(KIT_EXTRA)) {
             if (KITS[key]) {

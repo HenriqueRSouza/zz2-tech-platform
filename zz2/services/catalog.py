@@ -28,7 +28,7 @@ from typing import Any
 from zz2.core.errors import StorageError
 from zz2.core.logging import logger
 from zz2.core.text import as_text, safe_key
-from zz2.paths import IMAGES_DIR, MANUALS_DIR
+from zz2.paths import APP_DIR, IMAGES_DIR, MANUALS_DIR
 from zz2.repositories.kits import KitCatalogRepository
 
 STANDARD_TREE_FILE = (
@@ -36,6 +36,12 @@ STANDARD_TREE_FILE = (
 )
 
 CURRENT_SEED_VERSION = 1
+
+# A new Docker volume has no mutable catalogue yet. The production image ships
+# the last NAS catalogue here so first boot can initialise the volume without a
+# manual ``docker cp``. It is only consulted for an empty, never-before-seeded
+# catalogue; after that, the Kit Editor remains authoritative.
+INITIAL_CATALOG_DIR = APP_DIR / "seed" / "catalog"
 
 IMAGE_KINDS = ("dip", "wiring", "misc")
 IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
@@ -74,8 +80,13 @@ def fresh_standard_tree() -> list[dict[str, Any]]:
 class CatalogService:
     """Ensures the local kit catalogue exists and reports on its health."""
 
-    def __init__(self, catalog: KitCatalogRepository | None = None) -> None:
+    def __init__(
+        self,
+        catalog: KitCatalogRepository | None = None,
+        seed_dir: Path | None = None,
+    ) -> None:
         self._catalog = catalog or KitCatalogRepository()
+        self._seed_dir = seed_dir or INITIAL_CATALOG_DIR
 
     # -- Bootstrap -------------------------------------------------------------
     def ensure_initialised(self) -> dict[str, Any]:
@@ -88,6 +99,19 @@ class CatalogService:
 
         kits = self._catalog.kits.all()
         trees = self._catalog.trees.all()
+
+        # Docker creates the persistent data volume empty. Earlier builds then
+        # wrote ``{}`` to kits.json during startup, so checking file existence is
+        # not enough to repair an already-affected VPS. The durable marker lets
+        # us seed that empty catalogue once while still respecting a later,
+        # intentional deletion of every kit in the editor.
+        if not kits and not self._catalog.meta.bundle_seeded():
+            seeded = self._seed_from_bundle()
+            if seeded is not None:
+                kits, trees = seeded
+                self._catalog.meta.mark_bundle_seeded()
+                logger.info("seeded initial kit catalogue",
+                            extra={"kits": len(kits), "source": str(self._seed_dir)})
 
         if not kits_existed:
             inferred = self._infer_kits_from_disk()
@@ -124,6 +148,37 @@ class CatalogService:
             self._seed_standard_blueprint()
 
         return {"kits": len(kits), "troubleshooting": len(trees)}
+
+    def _seed_from_bundle(
+        self,
+    ) -> tuple[dict[str, Any], dict[str, Any]] | None:
+        """Copy the packaged migration catalogue into an empty data directory.
+
+        Both documents are validated before either is written. A missing seed is
+        normal for development/source installs; an invalid seed is a build error
+        and is surfaced instead of silently starting with no kits.
+        """
+        kits_path = self._seed_dir / "kits.json"
+        trees_path = self._seed_dir / "troubleshooting.json"
+        if not kits_path.is_file() and not trees_path.is_file():
+            return None
+
+        try:
+            with kits_path.open(encoding="utf-8") as handle:
+                kits = json.load(handle)
+            with trees_path.open(encoding="utf-8") as handle:
+                trees = json.load(handle)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise StorageError(log_detail=f"initial catalogue bundle: {exc}") from exc
+
+        if not isinstance(kits, dict) or not kits:
+            raise StorageError(log_detail="initial kits bundle is not a non-empty object")
+        if not isinstance(trees, dict):
+            raise StorageError(log_detail="initial troubleshooting bundle is not an object")
+
+        self._catalog.kits.write(kits)
+        self._catalog.trees.write(trees)
+        return kits, trees
 
     def _infer_kits_from_disk(self) -> dict[str, dict[str, Any]]:
         """Build kit records from the media directories present on disk."""

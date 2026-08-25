@@ -1,6 +1,7 @@
 # -- Runtime state -------------------------------------------------------------
 # Everything the running application writes. Never in git: it holds ticket text,
 # customer names, drafts and uploaded media.
+/Assets/
 var/
 /data/
 *.corrupt

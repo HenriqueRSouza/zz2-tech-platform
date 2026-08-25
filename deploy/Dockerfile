@@ -41,6 +41,9 @@ COPY --from=builder /opt/venv /opt/venv
 WORKDIR /opt/zz2
 COPY --chown=root:root zz2/ ./zz2/
 COPY --chown=root:root web/ ./web/
+# Imported once into an empty persistent volume by CatalogService.
+COPY --chown=root:root backups/20260820_000013/data/kits.json ./seed/catalog/kits.json
+COPY --chown=root:root backups/20260820_000013/data/troubleshooting.json ./seed/catalog/troubleshooting.json
 COPY --chown=root:root deploy/gunicorn.conf.py ./deploy/gunicorn.conf.py
 
 # Application code stays root-owned and read-only to the service user: the

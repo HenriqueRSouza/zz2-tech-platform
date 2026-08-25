@@ -156,6 +156,15 @@ class CatalogMetaRepository(JsonDocumentRepository[dict]):
             document["troubleshooting_seed_version"] = version
             document["seeded_at"] = int(time.time())
 
+    def bundle_seeded(self) -> bool:
+        """Whether the packaged first-install catalogue has been imported."""
+        return bool(self.read().get("initial_catalog_seeded"))
+
+    def mark_bundle_seeded(self) -> None:
+        with self.mutate() as document:
+            document["initial_catalog_seeded"] = True
+            document["initial_catalog_seeded_at"] = int(time.time())
+
 
 class KitCatalogRepository:
     """Facade over kits, trees and blueprints.

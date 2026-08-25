@@ -1,0 +1,54 @@
+# Keep the Docker build context small and prevent local secrets or runtime data
+# from ever being sent to the Docker daemon.
+.git
+.github
+.claude
+.env
+.env.*
+!.env.example
+.venv
+venv
+__pycache__
+*.py[cod]
+*.egg-info
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov
+dist
+build
+
+# Local/project material that is not required by the production image.
+/Assets
+/backups/*
+# Only the catalogue seed enters the build context. Other backups can contain
+# tickets/customer data and must never enter the image.
+!/backups/20260820_000013
+/backups/20260820_000013/*
+!/backups/20260820_000013/data
+/backups/20260820_000013/data/*
+!/backups/20260820_000013/data/kits.json
+!/backups/20260820_000013/data/troubleshooting.json
+/cache
+/drafts
+/legacy
+/manuals
+/scripts
+/sql
+/tests
+/var
+
+# Documentation and local metadata.
+*.md
+.DS_Store
+.idea
+.vscode
+
+# The image copies only the runtime files from deploy/.
+/deploy/.env
+/deploy/deploy.sh
+/deploy/docker-compose.yml
+/deploy/nginx
+/deploy/smoke_test.sh
+/deploy/systemd

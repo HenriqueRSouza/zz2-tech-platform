@@ -182,7 +182,23 @@ frontend contract audit, restarts, waits for the health endpoint to report the n
 build, and **rolls back** if it does not.
 
 Docker Compose is an alternative to systemd — one or the other, not both. See
-`deploy/docker-compose.yml`.
+`deploy/docker-compose.yml`. The complete first-install, HTTPS, update, rollback
+and diagnostic procedure is in [`DEPLOY_VPS.md`](DEPLOY_VPS.md). On a VPS with
+Docker Engine and the Compose plugin already installed, the short path is:
+
+```bash
+sudo git clone https://github.com/HenriqueRSouza/zz2-tech-platform.git /opt/zz2
+cd /opt/zz2
+sudo cp deploy/.env.example deploy/.env
+sudo nano deploy/.env                       # domain and real credentials
+sudo ./deploy/start_docker.sh
+sudo ./deploy/configure_nginx.sh suporte.example.com.br admin@example.com
+```
+
+The Compose port is bound only to the VPS loopback interface. The nginx helper
+creates the HTTP bootstrap configuration, requests the certificate, and then
+installs the hardened HTTPS proxy. Persisted application data lives in the named
+volume `zz2-data`; include that volume in the VPS backup policy.
 
 ---
 

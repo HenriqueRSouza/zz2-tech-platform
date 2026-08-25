@@ -20,6 +20,18 @@ services:
     env_file:
       - .env
 
+    # Inside a container the process must listen on every container interface.
+    # This does not expose it publicly: the host-side mapping below remains
+    # restricted to the VPS loopback interface.
+    environment:
+      ZZ2_HOST: 0.0.0.0
+      # The shell deployment scripts set this to the current commit. Keeping it
+      # here (rather than only as an image build arg) makes /healthz identify the
+      # code that is actually serving requests.
+      ZZ2_BUILD: ${ZZ2_BUILD:-compose}
+
+    init: true
+
     # Loopback only. Put nginx (host or container) in front to terminate TLS —
     # publishing this straight to 0.0.0.0 exposes the app over plain HTTP.
     ports:
@@ -65,3 +77,4 @@ volumes:
     # The only stateful thing in this deployment. Back this up; everything else
     # is rebuildable from git.
     driver: local
+    name: zz2-data

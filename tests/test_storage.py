@@ -387,3 +387,55 @@ class TestDraftRepository:
         written = list(DRAFTS_DIR.glob("*.json"))
         assert len(written) == 1
         assert written[0].parent == DRAFTS_DIR
+
+
+class TestInitialCatalogSeed:
+    @staticmethod
+    def _bundle(path) -> None:
+        path.mkdir(parents=True)
+        (path / "kits.json").write_text(json.dumps({
+            "KIT-ONE": {"vehicle": "Test vehicle", "notes": "seeded"},
+        }), encoding="utf-8")
+        (path / "troubleshooting.json").write_text(json.dumps({
+            "KIT-ONE": [{
+                "issue": "No audio", "parent": "", "steps": ["Check power"],
+            }],
+        }), encoding="utf-8")
+
+    def test_existing_empty_volume_is_repaired_from_bundle(self, data_dir) -> None:
+        from zz2.repositories.kits import KitCatalogRepository
+        from zz2.services.catalog import CatalogService
+
+        seed_dir = data_dir / "seed"
+        self._bundle(seed_dir)
+        catalog = KitCatalogRepository()
+        # Reproduce the affected VPS: the old startup already created empty
+        # files and stamped the troubleshooting seed version.
+        catalog.kits.write({})
+        catalog.trees.write({})
+        catalog.meta.mark_seeded()
+
+        summary = CatalogService(seed_dir=seed_dir).ensure_initialised()
+
+        assert summary["kits"] == 1
+        assert catalog.kits.get("KIT-ONE")["vehicle"] == "Test vehicle"
+        assert len(catalog.trees.get("KIT-ONE")) == 1
+        assert catalog.meta.bundle_seeded() is True
+
+    def test_bundle_does_not_resurrect_intentionally_deleted_kits(self, data_dir) -> None:
+        from zz2.repositories.kits import KitCatalogRepository
+        from zz2.services.catalog import CatalogService
+
+        seed_dir = data_dir / "seed"
+        self._bundle(seed_dir)
+        service = CatalogService(seed_dir=seed_dir)
+        service.ensure_initialised()
+
+        catalog = KitCatalogRepository()
+        catalog.kits.write({})
+        catalog.trees.write({})
+
+        summary = service.ensure_initialised()
+
+        assert summary["kits"] == 0
+        assert catalog.kits.all() == {}
