@@ -165,6 +165,14 @@ class CatalogMetaRepository(JsonDocumentRepository[dict]):
             document["initial_catalog_seeded"] = True
             document["initial_catalog_seeded_at"] = int(time.time())
 
+    def media_seeded(self) -> bool:
+        return bool(self.read().get("initial_media_seeded"))
+
+    def mark_media_seeded(self) -> None:
+        with self.mutate() as document:
+            document["initial_media_seeded"] = True
+            document["initial_media_seeded_at"] = int(time.time())
+
 
 class KitCatalogRepository:
     """Facade over kits, trees and blueprints.

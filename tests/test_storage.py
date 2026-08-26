@@ -435,6 +435,30 @@ class TestInitialCatalogSeed:
 
         assert catalog_module.initial_catalog_dir() == systemd_seed
 
+    def test_legacy_diagrams_are_copied_once_for_systemd(self, data_dir) -> None:
+        from zz2.paths import IMAGES_DIR
+        from zz2.repositories.kits import KitCatalogRepository
+        from zz2.services.catalog import CatalogService
+
+        seed_dir = data_dir / "seed"
+        media_seed = data_dir / "checkout" / "legacy" / "images"
+        self._bundle(seed_dir)
+        source = media_seed / "KIT-ONE" / "dip.jpg"
+        source.parent.mkdir(parents=True)
+        source.write_bytes(b"diagram")
+
+        service = CatalogService(seed_dir=seed_dir, media_seed_dir=media_seed)
+        summary = service.ensure_initialised()
+        target = IMAGES_DIR / "KIT-ONE" / "dip.jpg"
+
+        assert summary["media_seeded"] == 1
+        assert target.read_bytes() == b"diagram"
+        assert KitCatalogRepository().meta.media_seeded() is True
+
+        target.unlink()
+        assert service.ensure_initialised()["media_seeded"] == 0
+        assert not target.exists(), "an intentional later deletion must stay deleted"
+
     def test_bundle_does_not_resurrect_intentionally_deleted_kits(self, data_dir) -> None:
         from zz2.repositories.kits import KitCatalogRepository
         from zz2.services.catalog import CatalogService

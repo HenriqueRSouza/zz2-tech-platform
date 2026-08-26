@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import copy
 import json
+import shutil
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -43,6 +44,8 @@ CURRENT_SEED_VERSION = 1
 # catalogue; after that, the Kit Editor remains authoritative.
 PACKAGED_CATALOG_DIR = APP_DIR / "seed" / "catalog"
 SYSTEMD_CATALOG_DIR = APP_DIR / "backups" / "20260820_000013" / "data"
+PACKAGED_IMAGES_DIR = APP_DIR / "seed" / "images"
+SYSTEMD_IMAGES_DIR = APP_DIR / "legacy" / "images"
 
 
 def initial_catalog_dir() -> Path:
@@ -58,6 +61,15 @@ def initial_catalog_dir() -> Path:
         ).is_file():
             return candidate
     return PACKAGED_CATALOG_DIR
+
+
+def initial_images_dir() -> Path:
+    """Locate the legacy diagrams in Docker and systemd layouts."""
+    for candidate in (PACKAGED_IMAGES_DIR, SYSTEMD_IMAGES_DIR):
+        if candidate.is_dir():
+            return candidate
+    return PACKAGED_IMAGES_DIR
+
 
 IMAGE_KINDS = ("dip", "wiring", "misc")
 IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")
@@ -100,9 +112,11 @@ class CatalogService:
         self,
         catalog: KitCatalogRepository | None = None,
         seed_dir: Path | None = None,
+        media_seed_dir: Path | None = None,
     ) -> None:
         self._catalog = catalog or KitCatalogRepository()
         self._seed_dir = seed_dir or initial_catalog_dir()
+        self._media_seed_dir = media_seed_dir or initial_images_dir()
 
     # -- Bootstrap -------------------------------------------------------------
     def ensure_initialised(self) -> dict[str, Any]:
@@ -163,7 +177,12 @@ class CatalogService:
         if not self._catalog.blueprints.exists():
             self._seed_standard_blueprint()
 
-        return {"kits": len(kits), "troubleshooting": len(trees)}
+        media_seeded = self._seed_media_from_checkout(kits)
+        return {
+            "kits": len(kits),
+            "troubleshooting": len(trees),
+            "media_seeded": media_seeded,
+        }
 
     def _seed_from_bundle(
         self,
@@ -195,6 +214,45 @@ class CatalogService:
         self._catalog.kits.write(kits)
         self._catalog.trees.write(trees)
         return kits, trees
+
+    def _seed_media_from_checkout(self, kits: dict[str, Any]) -> int:
+        """Copy legacy diagrams once into the mutable media directory.
+
+        The catalogue references ``/images/<kit>/<kind>.jpg``. Those bytes lived
+        beside the old monolith and were not part of the JSON migration, so a
+        fresh VPS rendered valid tabs whose images all returned 404. Only known
+        kit keys and the three server-owned diagram names are considered.
+        """
+        if self._catalog.meta.media_seeded() or not self._media_seed_dir.is_dir():
+            return 0
+
+        copied = 0
+        for key in kits:
+            validated = safe_key(key)
+            if not validated:
+                continue
+            source_dir = self._media_seed_dir / validated
+            if not source_dir.is_dir():
+                continue
+            target_dir = IMAGES_DIR / validated
+            for kind in IMAGE_KINDS:
+                for extension in IMAGE_EXTENSIONS:
+                    source = source_dir / f"{kind}{extension}"
+                    if not source.is_file():
+                        continue
+                    target_dir.mkdir(parents=True, exist_ok=True, mode=0o750)
+                    target = target_dir / source.name
+                    if not target.is_file():
+                        shutil.copy2(source, target)
+                        target.chmod(0o640)
+                        copied += 1
+                    break
+
+        self._catalog.meta.mark_media_seeded()
+        if copied:
+            logger.info("seeded legacy kit diagrams",
+                        extra={"files": copied, "source": str(self._media_seed_dir)})
+        return copied
 
     def _infer_kits_from_disk(self) -> dict[str, dict[str, Any]]:
         """Build kit records from the media directories present on disk."""

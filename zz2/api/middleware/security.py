@@ -61,6 +61,9 @@ def _content_security_policy(supabase_origin: str) -> str:
         "img-src 'self' data: blob:",
         "font-src 'self' data:",
         f"connect-src {' '.join(connect)}",
+        # Official legacy manuals are embedded from the ZZ2-owned Drive folder.
+        # No other external frame origin is allowed.
+        "frame-src 'self' https://drive.google.com",
         "object-src 'none'",
         "base-uri 'none'",
         "form-action 'self'",

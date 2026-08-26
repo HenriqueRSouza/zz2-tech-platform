@@ -3199,6 +3199,66 @@
 
       };
 
+      // Public manuals published by ZZ2. Store only the allowlisted Drive file
+      // id; links are built locally so arbitrary catalogue text can never turn
+      // into an external iframe URL.
+      const OFFICIAL_MANUALS = {
+        "DZZ AUDI": "1uBAdnwKN76SHvxYgjDJyQK6SOj6fkWlR",
+        "DZZ BMW": "1v_M6SE_gMIqCE2WHgt0krO2WbHXWFbOW",
+        "DZZ MERCEDES": "1CA0vEvwGfaM7nlnGVAAKGN_pMGtcQrO2",
+        "IT2-JGC": "1d_EdvDr1eF-YLef3pON9p3SCRd2VyT5E",
+        "IT2-MAS-QTG": "1qrlXlCquYUmc9YV9pl295D2xP861paiT",
+        "IT3-AUDI": "1TgTB_ONoWfSUBmiDEGSoDYQ_J4y0FJ73",
+        "IT3-CIC": "1X2DphOFYE8pdSK9P3xDcYpR5io9KL7Z1",
+        "IT3-LEX15": "18bwgmMHhZLsX47SXTBi6qxMU-rV91sjA",
+        "IT3-LEX17": "18bwgmMHhZLsX47SXTBi6qxMU-rV91sjA",
+        "IT3-LEX19": "18bwgmMHhZLsX47SXTBi6qxMU-rV91sjA",
+        "IT3-NBT": "1XeKIiloIuZU2DvwPZQEUPXsrGhtiTBxI",
+        "IT3-NTG45": "1uKDh3qK9Ko1gsngvYijIol4Kn_PCHNQ1",
+        "IT3-NTG5": "1vSq80VWuaT33YsRnP-ZK0THgwCLnjkQG",
+        "IT3-PCM3": "1yZH-kVuVIZKH35GJnVg27F--mQK79tPp",
+        "IT3-PCM31A": "1DFl62Ks7AAZh_v1VlSuQ9M_MWxJuWpAn",
+        "IT3-SYM": "1_iz9q0_7r0apAgJfvZSuMHJ8ZJ84j8zc",
+        "IT3-VOLVO": "11ceaWR3lt1kakhZokZQuruLbYjefolMC",
+        "ITB-EVO": "1XDsL4eLnwOjkm6UHnAmy-nroWIraZX0N",
+        "ITB-RMC": "16WOjh0kCq1G-en88ucxGMDDp_741SD4m",
+        "ITZ-458": "1TdLJ32d9YJOS-tJgicLa-mLLmWUbGhPX",
+        "ITZ-ACH": "117nn51sVZzFaFc728J22aYyx3wkJNUjl",
+        "ITZ-ACURA-A": "1_H2Nv3RkWLY5K62SOtQIw6btMu2FycXd",
+        "ITZ-ALFA-A": "1dZtEKGHLMSZNt3Ja7kbKiljlXtsA7zNx",
+        "ITZ-BNT": "1zzhH2c1JYVtoG_sbABbn2BhWS3TjHH_i",
+        "ITZ-BNT-A": "1zzhH2c1JYVtoG_sbABbn2BhWS3TjHH_i",
+        "ITZ-CDR31-A": "1AhNqGeheyX7rKjqPDgRa1nYAzVembVUb",
+        "ITZ-FCL": "1foQGkRnSLxHhWrNcEgpa4INB_t-yoCae",
+        "ITZ-GX1-A": "10gxTiwwTYi6e8sNPXFE4AScu554o33K3",
+        "ITZ-HON": "1OYA0BxbqsUcdOaYjxn84knVXZqq3ExVv",
+        "ITZ-JGC": "1d_EdvDr1eF-YLef3pON9p3SCRd2VyT5E",
+        "ITZ-LR12-C": "1RwNmngxD0slJuMwidPiH8LY3jm2kexHM",
+        "ITZ-LR15T": "1VQ_NcD2hDF1huC9XMb_urlVDN6Hn39d2",
+        "ITZ-LRB": "160JuU_HtM3VlXeLa9VHEh7BtrH14dvYn",
+        "ITZ-MCL": "1UNfjsNdGIlOYMScsPUicueGRTytzoC--",
+        "ITZ-MYLINK": "1llX5vgZW3dV3_e2QVfmIYyJTglOmBMPR",
+        "ITZ-NIF": "1OxTZi0ZN4J4jXTXPqP_v5soS677d_2QB",
+        "ITZ-NTG3": "13VXSg9uTLJePtmY5hi6t5XmIlvXfcFTn",
+        "ITZ-NTG3-A": "13VXSg9uTLJePtmY5hi6t5XmIlvXfcFTn",
+        "ITZ-NTG35-A": "1_1m8kk2WzfjWqb3j0YP846IwvpnrjSF0",
+        "ITZ-NTG4": "1eG4ouuvCS820pMb7PGEotDDoW69vFE3H",
+        "ITZ-NTG4-A": "1n6cjryMg42n6iRiSV8hTLWwqeesi0dA-",
+        "ITZ-NTG4-SLS": "1n6cjryMg42n6iRiSV8hTLWwqeesi0dA-",
+        "ITZ-NTG6": "18wQ2-Whr0n4_jtr2PZsvxDhf9pfZFquG",
+        "ITZ-PCM4-C": "1yI8zc8loxkGvsw6WBVaWRg-quwARVU5u",
+        "ITZ-PTC4": "1bth_2ajVjPdMVowF-GYKisJ30M_-5FKD",
+        "ITZ-RMC": "1VdQbwJve2YGQ1mzdr4318d2nq0dP-zbF",
+        "ITZ-SYNC2": "1ZBeV6LicGPwcOzxZT40KYmIEfw_CcfoC",
+        "ITZ-TOY2": "1Oufe17b_u04GpY6cq0BPFumbWMmK9S1t",
+        "ITZ-TRG": "1cLMWZ3zLrDbrhFtvQEEcvvE6H9WOsbdo",
+        "ZW-FRD": "1gmLut_kzBsgxFb5SIdB-m2GEIUP5aiZq",
+        "ZW-FSD": "1WIqBN7yhEbGWh2K_a86YofALlbpDrar6",
+        "ZW-GM": "1yKdqlbFcBnvuWPYheTlQRVFyNiwSnwyD",
+        "ZW-GMLC-EV": "1oWoMGamNoiimXYBMJFX-WQdNo4Ttgn4X",
+        "ZW-RAM": "14_Pq_LKz5XdRaaBL6VRy7q_NovXKK6VH"
+      };
+
       // Add bundled diagrams and fill known metadata gaps without replacing
       // values maintained through the Kit Editor. Keeping this in one function
       // makes fresh API data and localStorage cache behave identically.
@@ -3211,6 +3271,13 @@
           }
           if (extra.dip_switches) kit.dip_switches = extra.dip_switches;
           if (extra.wiring)       kit.wiring       = extra.wiring;
+        }
+        for (const [key, driveId] of Object.entries(OFFICIAL_MANUALS)) {
+          if (!KITS[key]) continue;
+          if (!IMAGES[key]) IMAGES[key] = {};
+          if (!IMAGES[key].manual) {
+            IMAGES[key].manual = 'https://drive.google.com/file/d/' + driveId + '/preview';
+          }
         }
       }
 
@@ -3606,9 +3673,14 @@
           }
         } else if (activeTab === 'manual') {
           if (kitImgs.manual) {
-            // Manual filename stored in sheet - serve from local manuals/KITNAME/ folder
-            var manualFilename = kitImgs.manual;
-            var manualUrl = SERVER_URL + '/manuals/' + encodeURIComponent(activeKit) + '/' + encodeURIComponent(manualFilename);
+            // Kit Editor manuals are private local/Storage files. Legacy kits
+            // fall back to an allowlisted official ZZ2 Google Drive preview.
+            var manualAsset = kitImgs.manual;
+            var officialManual = /^https:\/\/drive\.google\.com\/file\/d\/[A-Za-z0-9_-]+\/preview$/.test(manualAsset);
+            var manualFilename = officialManual ? activeKit + ' — official manual' : manualAsset;
+            var manualUrl = officialManual
+              ? manualAsset
+              : SERVER_URL + '/manuals/' + encodeURIComponent(activeKit) + '/' + encodeURIComponent(manualAsset);
             mainContent =
               '<a class="manual-open" href="' + manualUrl + '" target="_blank" rel="noopener">' +
                 '<span class="manual-open-ic">📄</span>' +

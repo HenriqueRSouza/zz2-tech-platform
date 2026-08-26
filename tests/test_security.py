@@ -230,6 +230,12 @@ class TestSecurityHeaders:
         assert "https://example.supabase.co" in connect_src
         assert "wss://example.supabase.co" in connect_src
 
+    def test_frames_are_limited_to_self_and_official_manuals(self, app) -> None:
+        policy = app.get("/api/config").headers["Content-Security-Policy"]
+        frame_src = next(part for part in policy.split("; ")
+                         if part.startswith("frame-src"))
+        assert frame_src == "frame-src 'self' https://drive.google.com"
+
     def test_cors_is_not_wildcarded(self, app) -> None:
         """The monolith sent ``Access-Control-Allow-Origin: *`` on every
         response, authenticated ones included."""

@@ -32,7 +32,9 @@ build
 !/backups/20260820_000013/data/troubleshooting.json
 /cache
 /drafts
-/legacy
+/legacy/*
+!/legacy/images
+!/legacy/images/**
 /manuals
 /scripts
 /sql
