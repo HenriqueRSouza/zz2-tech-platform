@@ -128,11 +128,14 @@ project.
 PDF-only bucket on the first upload, stores every manual there, and keeps a local
 cache under `var/media/manuals`. Downloads continue through the authenticated
 `/manuals/<kit>/<filename>` route, so the service key never reaches the browser.
-To migrate existing local PDFs:
+To migrate a directory tree of existing PDFs, name each kit folder after its
+catalogue key. The importer scans recursively, uploads every matching PDF,
+caches it locally, and selects a primary manual in the kit catalogue. Always
+review the dry run first; unmatched folders are reported and left untouched.
 
 ```bash
-.venv/bin/python scripts/migrate_manuals_to_storage.py --dry-run
-.venv/bin/python scripts/migrate_manuals_to_storage.py --ensure-bucket
+.venv/bin/python scripts/migrate_manuals_to_storage.py --root "/path/to/manual-folders" --dry-run
+.venv/bin/python scripts/migrate_manuals_to_storage.py --root "/path/to/manual-folders" --ensure-bucket
 ```
 
 ---

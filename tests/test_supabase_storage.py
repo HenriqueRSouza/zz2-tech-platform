@@ -8,6 +8,11 @@ from typing import Any
 import httpx
 import pytest
 
+from scripts.migrate_manuals_to_storage import (
+    choose_primary,
+    destination_name,
+    discover_manuals,
+)
 from zz2.core.errors import NotFound
 from zz2.gateways.storage import SupabaseStorageGateway
 
@@ -131,3 +136,32 @@ def test_storage_transport_failures_are_not_leaked(storage_settings, monkeypatch
     with pytest.raises(UpstreamError) as caught:
         SupabaseStorageGateway().download_manual("ITZ-X", "manual.pdf")
     assert "secret internal hostname" not in caught.value.message
+
+
+def test_recursive_manual_discovery_matches_flexible_folder_names(tmp_path) -> None:
+    exact = tmp_path / "Audi" / "IT3-AUDI" / "Install.pdf"
+    flexible = tmp_path / "BMW" / "IT3 NBT" / "Manual.pdf"
+    unknown = tmp_path / "Unknown Kit" / "Guide.pdf"
+    for path in (exact, flexible, unknown):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"%PDF-1.7")
+
+    matched, unmatched = discover_manuals(tmp_path, ["IT3-AUDI", "IT3-NBT"])
+
+    assert matched == {"IT3-AUDI": [exact], "IT3-NBT": [flexible]}
+    assert unmatched == [unknown]
+
+
+def test_primary_manual_prefers_exact_kit_filename_then_manual_name(tmp_path) -> None:
+    generic = tmp_path / "01.pdf"
+    named = tmp_path / "Installation Manual.pdf"
+    exact = tmp_path / "IT3-AUDI.pdf"
+
+    assert choose_primary("IT3-AUDI", [generic, named, exact]) == exact
+    assert choose_primary("IT3-AUDI", [generic, named]) == named
+
+
+def test_destination_name_is_safe_for_storage_and_download_route(tmp_path) -> None:
+    manual = tmp_path / "Manual de instalação (Áudio).pdf"
+
+    assert destination_name("IT3-AUDI", manual) == "Manual_de_instala__o___udio_.pdf"
