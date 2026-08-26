@@ -188,13 +188,43 @@ def serve_kit_image(
     kit_key: str,
     filename: str,
     actor: Annotated[Principal, CurrentPrincipal],
-) -> FileResponse:
-    """Serve a kit's wiring or DIP diagram.
+) -> Response:
+    """Serve a kit diagram from local cache or private Supabase Storage.
 
     Authenticated. Diagrams are internal technical documentation, and the
     monolith served them to anyone who could reach the port.
     """
-    return _serve_media(IMAGES_DIR, kit_key, filename)
+    validated_key = safe_key(kit_key)
+    validated_name = safe_filename(filename, fallback="")
+    if (
+        not validated_key
+        or not validated_name
+        or Path(validated_name).suffix.lower() not in MEDIA_EXTENSIONS - {".pdf"}
+    ):
+        raise NotFound()
+
+    try:
+        return _serve_media(IMAGES_DIR, validated_key, validated_name)
+    except NotFound:
+        pass
+
+    if not storage_gateway.configured:
+        raise NotFound()
+
+    stored = storage_gateway.download_image(validated_key, validated_name)
+    return Response(
+        content=stored.content,
+        status_code=stored.status_code,
+        media_type=CONTENT_TYPES.get(
+            Path(validated_name).suffix.lower(), "application/octet-stream"
+        ),
+        headers={
+            **stored.headers,
+            "Cache-Control": MEDIA_CACHE_CONTROL,
+            "X-Content-Type-Options": "nosniff",
+            "Content-Disposition": f'inline; filename="{validated_name}"',
+        },
+    )
 
 
 @router.get("/manuals/{kit_key}/{filename}", include_in_schema=False)

@@ -212,12 +212,33 @@ class UploadService:
         on the media route stop the mismatch from mattering. What it buys is
         certainty that no client-supplied string ever becomes a filename.
         """
+        filename = f"{kind.value}.jpg"
+
+        # Keep newly edited diagrams durable too. Existing installations can
+        # still run with Storage disabled and retain the previous local-only
+        # behaviour.
+        if storage_gateway.configured:
+            storage_gateway.upload_image(
+                kit_key,
+                filename,
+                data,
+                content_type=self._image_content_type(data),
+            )
+
         directory = IMAGES_DIR / kit_key
         directory.mkdir(parents=True, exist_ok=True, mode=0o750)
-
-        filename = f"{kind.value}.jpg"
         self._write_atomically(directory / filename, data)
         return StoredUpload(kind, filename, f"/images/{kit_key}/{filename}")
+
+    @staticmethod
+    def _image_content_type(data: bytes) -> str:
+        if data.startswith(b"\x89PNG\r\n\x1a\n"):
+            return "image/png"
+        if data.startswith((b"GIF87a", b"GIF89a")):
+            return "image/gif"
+        if data.startswith(b"RIFF"):
+            return "image/webp"
+        return "image/jpeg"
 
     def _write_manual(self, kit_key: str, filename: str, data: bytes) -> StoredUpload:
         """Write a PDF manual under a sanitised version of the given name.

@@ -13,8 +13,13 @@ from scripts.migrate_manuals_to_storage import (
     destination_name,
     discover_manuals,
 )
+from tests.conftest import auth_header
 from zz2.core.errors import NotFound
-from zz2.gateways.storage import SupabaseStorageGateway
+from zz2.gateways.storage import (
+    StorageDownload,
+    SupabaseStorageGateway,
+    storage_gateway,
+)
 
 
 @dataclass
@@ -55,7 +60,7 @@ def storage_settings(settings_env, monkeypatch):
     get_settings.cache_clear()
 
 
-def test_bucket_is_created_private_and_pdf_only(storage_settings, monkeypatch) -> None:
+def test_bucket_is_created_private_for_pdf_and_images(storage_settings, monkeypatch) -> None:
     fake = FakeClient([FakeResponse(404), FakeResponse(200)])
     monkeypatch.setattr("zz2.gateways.storage.get_client", lambda: fake)
 
@@ -66,7 +71,9 @@ def test_bucket_is_created_private_and_pdf_only(storage_settings, monkeypatch) -
     assert [call[0] for call in fake.calls] == ["GET", "POST"]
     payload = fake.calls[1][2]["json"]
     assert payload["public"] is False
-    assert payload["allowed_mime_types"] == ["application/pdf"]
+    assert payload["allowed_mime_types"] == [
+        "application/pdf", "image/jpeg", "image/png", "image/gif", "image/webp"
+    ]
 
 
 def test_upload_uses_a_server_authorized_upsert(storage_settings, monkeypatch) -> None:
@@ -102,6 +109,49 @@ def test_download_forwards_pdf_ranges(storage_settings, monkeypatch) -> None:
     assert downloaded.content == b"PDF slice"
     assert downloaded.headers["Content-Range"] == "bytes 0-8/100"
     assert fake.calls[0][2]["headers"]["Range"] == "bytes=0-8"
+
+
+def test_image_upload_and_download_use_the_same_private_bucket(
+    storage_settings, monkeypatch
+) -> None:
+    fake = FakeClient([
+        FakeResponse(200), FakeResponse(200),
+        FakeResponse(200, content=b"jpeg bytes", headers={"etag": "diagram-v1"}),
+    ])
+    monkeypatch.setattr("zz2.gateways.storage.get_client", lambda: fake)
+
+    gateway = SupabaseStorageGateway()
+    gateway.upload_image("IT2-BNT", "wiring.jpg", b"jpeg bytes")
+    downloaded = gateway.download_image("IT2-BNT", "wiring.jpg")
+
+    assert fake.calls[1][1].endswith("/object/zz2-manuals/IT2-BNT/wiring.jpg")
+    assert fake.calls[1][2]["headers"]["Content-Type"] == "image/jpeg"
+    assert fake.calls[2][1].endswith(
+        "/object/authenticated/zz2-manuals/IT2-BNT/wiring.jpg"
+    )
+    assert downloaded.content == b"jpeg bytes"
+
+
+def test_authenticated_image_route_falls_back_to_storage(app, monkeypatch) -> None:
+    monkeypatch.setattr(
+        type(storage_gateway), "configured", property(lambda _gateway: True)
+    )
+    monkeypatch.setattr(
+        type(storage_gateway),
+        "download_image",
+        lambda _gateway, kit, filename: StorageDownload(
+            content=b"\xff\xd8\xffremote diagram",
+            status_code=200,
+            headers={"ETag": "diagram-v1"},
+        ),
+    )
+
+    response = app.get("/images/REMOTE-KIT/dip.jpg", headers=auth_header())
+
+    assert response.status_code == 200
+    assert response.content == b"\xff\xd8\xffremote diagram"
+    assert response.headers["content-type"] == "image/jpeg"
+    assert response.headers["x-content-type-options"] == "nosniff"
 
 
 def test_missing_storage_object_is_a_not_found(storage_settings, monkeypatch) -> None:

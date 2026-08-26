@@ -1,9 +1,9 @@
-"""Supabase Storage gateway for private kit manuals.
+"""Supabase Storage gateway for private kit media.
 
-PDFs live in a private bucket and are accessed only with the server-side service
-key.  Browser requests still pass through the application's authenticated
-``/manuals/<kit>/<file>`` route, so neither the bucket nor its credentials need
-to be public.
+Diagrams and PDFs live in a private bucket and are accessed only with the
+server-side service key. Browser requests still pass through the authenticated
+``/images/<kit>/<file>`` and ``/manuals/<kit>/<file>`` routes, so neither the
+bucket nor its credentials need to be public.
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ _BUCKET_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{1,62}$")
 
 @dataclass(frozen=True, slots=True)
 class StorageDownload:
-    """An object body plus the HTTP metadata needed for PDF range requests."""
+    """An object body plus the HTTP metadata needed by the media response."""
 
     content: bytes
     status_code: int
@@ -32,7 +32,7 @@ class StorageDownload:
 
 
 class SupabaseStorageGateway:
-    """Read and write kit manuals in a private Supabase Storage bucket."""
+    """Read and write kit media in a private Supabase Storage bucket."""
 
     def __init__(self) -> None:
         self._bucket_ready = False
@@ -78,7 +78,7 @@ class SupabaseStorageGateway:
         return str(payload.get("code") or "") if isinstance(payload, dict) else ""
 
     def ensure_bucket(self) -> None:
-        """Create the private PDF-only bucket once, if it does not exist."""
+        """Create the private kit-media bucket once, if it does not exist."""
         if self._bucket_ready:
             return
         with self._bucket_lock:
@@ -98,7 +98,13 @@ class SupabaseStorageGateway:
                             "name": bucket,
                             "public": False,
                             "file_size_limit": get_settings().max_upload_bytes,
-                            "allowed_mime_types": ["application/pdf"],
+                            "allowed_mime_types": [
+                                "application/pdf",
+                                "image/jpeg",
+                                "image/png",
+                                "image/gif",
+                                "image/webp",
+                            ],
                         },
                     )
             except httpx.HTTPError as exc:
@@ -116,12 +122,33 @@ class SupabaseStorageGateway:
 
     def upload_manual(self, kit_key: str, filename: str, data: bytes) -> None:
         """Upload or replace a validated PDF."""
+        self._upload_object(kit_key, filename, data, content_type="application/pdf")
+
+    def upload_image(
+        self,
+        kit_key: str,
+        filename: str,
+        data: bytes,
+        *,
+        content_type: str = "image/jpeg",
+    ) -> None:
+        """Upload or replace a validated diagram image."""
+        self._upload_object(kit_key, filename, data, content_type=content_type)
+
+    def _upload_object(
+        self,
+        kit_key: str,
+        filename: str,
+        data: bytes,
+        *,
+        content_type: str,
+    ) -> None:
         self.ensure_bucket()
         base, key, bucket = self._configuration()
         path = self._object_path(kit_key, filename)
         headers = {
             **self._headers(key),
-            "Content-Type": "application/pdf",
+            "Content-Type": content_type,
             "cache-control": "max-age=300",
             "x-upsert": "true",
         }
@@ -137,7 +164,7 @@ class SupabaseStorageGateway:
             ) from exc
         if response.status_code >= 400:
             raise UpstreamError(
-                "The manual could not be stored. Try again shortly.",
+                "The file could not be stored. Try again shortly.",
                 log_detail=(
                     f"supabase storage upload HTTP {response.status_code}: "
                     f"{response.text[:500]}"
@@ -152,6 +179,22 @@ class SupabaseStorageGateway:
         range_header: str = "",
     ) -> StorageDownload:
         """Download a private PDF, forwarding an optional HTTP byte range."""
+        return self.download_object(
+            kit_key, filename, range_header=range_header
+        )
+
+    def download_image(self, kit_key: str, filename: str) -> StorageDownload:
+        """Download a private diagram image."""
+        return self.download_object(kit_key, filename)
+
+    def download_object(
+        self,
+        kit_key: str,
+        filename: str,
+        *,
+        range_header: str = "",
+    ) -> StorageDownload:
+        """Download one private kit object, forwarding an optional byte range."""
         base, key, bucket = self._configuration()
         path = self._object_path(kit_key, filename)
         headers = self._headers(key)
@@ -169,7 +212,7 @@ class SupabaseStorageGateway:
         if response.status_code == 404 or self._error_code(response) in {
             "NoSuchKey", "NoSuchBucket"
         }:
-            raise NotFound("Manual not found.")
+            raise NotFound("Media file not found.")
         if response.status_code not in {200, 206}:
             raise UpstreamError(
                 log_detail=(
