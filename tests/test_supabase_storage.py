@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -152,6 +153,18 @@ def test_authenticated_image_route_falls_back_to_storage(app, monkeypatch) -> No
     assert response.content == b"\xff\xd8\xffremote diagram"
     assert response.headers["content-type"] == "image/jpeg"
     assert response.headers["x-content-type-options"] == "nosniff"
+
+
+def test_frontend_fetches_private_media_with_the_access_token() -> None:
+    source = (
+        Path(__file__).resolve().parents[1] / "web/static/js/index.3.js"
+    ).read_text(encoding="utf-8")
+
+    assert "async function _loadKitImage" in source
+    assert "async function _loadKitManual" in source
+    assert "'Authorization': 'Bearer ' + token" in source
+    direct_private_image = """<img id="' + id + 'I" src="' + src"""
+    assert direct_private_image not in source
 
 
 def test_missing_storage_object_is_a_not_found(storage_settings, monkeypatch) -> None:

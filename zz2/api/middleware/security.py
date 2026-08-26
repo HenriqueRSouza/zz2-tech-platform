@@ -63,7 +63,9 @@ def _content_security_policy(supabase_origin: str) -> str:
         f"connect-src {' '.join(connect)}",
         # Official legacy manuals are embedded from the ZZ2-owned Drive folder.
         # No other external frame origin is allowed.
-        "frame-src 'self' https://drive.google.com",
+        # Private manuals are fetched with Authorization and displayed through
+        # a browser-local blob URL; plain iframes cannot attach bearer headers.
+        "frame-src 'self' blob: https://drive.google.com",
         "object-src 'none'",
         "base-uri 'none'",
         "form-action 'self'",

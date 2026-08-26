@@ -4830,6 +4830,38 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
       // Build sidebar
       // ── Zoom + pan ──
       var _ZS = {}, _ZX = {}, _ZY = {};
+      var _mediaObjectUrls = [];
+
+      function _mediaError(id, message) {
+        var img = document.getElementById(id + 'I');
+        var error = document.getElementById(id + 'E');
+        var detail = document.getElementById(id + 'ED');
+        if (img) img.style.display = 'none';
+        if (detail && message) detail.textContent = message;
+        if (error) error.style.display = 'flex';
+      }
+
+      async function _loadKitImage(id, src) {
+        var img = document.getElementById(id + 'I');
+        if (!img) return;
+        if (!src.startsWith(SERVER_URL + '/images/')) {
+          img.src = src;
+          return;
+        }
+        try {
+          var token = _authToken || localStorage.getItem(AUTH_TOKEN_KEY) || '';
+          var response = await fetch(src, {
+            cache: 'no-cache',
+            headers: { 'Authorization': 'Bearer ' + token },
+          });
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          var objectUrl = URL.createObjectURL(await response.blob());
+          _mediaObjectUrls.push(objectUrl);
+          img.src = objectUrl;
+        } catch (error) {
+          _mediaError(id, 'The kit file could not be loaded. Refresh and try again.');
+        }
+      }
 
       function makeZoomImg(src, alt) {
         var id = 'z' + (Math.random() * 1e9 | 0);
@@ -4843,12 +4875,12 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
               '<span class="zoom-hint">drag to pan · pinch to zoom</span>' +
             '</div>' +
             '<div class="img-viewport" id="' + id + 'V">' +
-              '<img id="' + id + 'I" src="' + src + '" alt="' + alt + '"' +
-              ' onerror="this.style.display=\'none\';document.getElementById(\'' + id + 'E\').style.display=\'flex\'" />' +
+              '<img id="' + id + 'I" alt="' + alt + '"' +
+              ' onerror="_mediaError(\'' + id + '\')" />' +
               '<div id="' + id + 'E" style="display:none;flex-direction:column;align-items:center;justify-content:center;height:200px;color:#888;gap:8px;">' +
               '<div style="font-size:32px;">🖼️</div>' +
               '<div style="font-size:13px;">Image could not load.</div>' +
-              '<div style="font-size:11px;">Check that the image is shared as \'Anyone with link\' in Drive.</div>' +
+              '<div id="' + id + 'ED" style="font-size:11px;">Refresh and try again.</div>' +
               '</div>' +
             '</div>' +
           '</div>';
@@ -4863,8 +4895,50 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
             setTimeout(tryInit, 50);
           }
         }
-        setTimeout(tryInit, 30);
+        setTimeout(function() {
+          _loadKitImage(id, src);
+          tryInit();
+        }, 30);
         return out;
+      }
+
+      async function _loadKitManual(id, url) {
+        var link = document.getElementById(id + 'A');
+        var frame = document.getElementById(id + 'F');
+        var status = document.getElementById(id + 'S');
+        try {
+          var token = _authToken || localStorage.getItem(AUTH_TOKEN_KEY) || '';
+          var response = await fetch(url, {
+            cache: 'no-cache',
+            headers: { 'Authorization': 'Bearer ' + token },
+          });
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          var objectUrl = URL.createObjectURL(await response.blob());
+          _mediaObjectUrls.push(objectUrl);
+          if (link) {
+            link.href = objectUrl;
+            link.removeAttribute('aria-disabled');
+          }
+          if (frame) frame.src = objectUrl;
+          if (status) status.textContent = '';
+        } catch (error) {
+          if (status) status.textContent = 'Manual could not load. Refresh and try again.';
+        }
+      }
+
+      function makePrivateManual(url, filename) {
+        var id = 'm' + (Math.random() * 1e9 | 0);
+        setTimeout(function() { _loadKitManual(id, url); }, 30);
+        return '<a id="' + id + 'A" class="manual-open" href="#" aria-disabled="true" target="_blank" rel="noopener">' +
+          '<span class="manual-open-ic">📄</span>' +
+          '<span class="manual-open-txt"><b>Open manual</b>' +
+            '<span class="manual-open-sub">' + filename + '</span></span>' +
+          '<span class="manual-open-go">↗</span>' +
+        '</a>' +
+        '<div id="' + id + 'S" style="padding:8px 0;color:#888;font-size:12px;">Loading manual…</div>' +
+        '<div class="manual-frame-wrap" style="width:100%;height:calc(100vh - 160px);min-height:500px;">' +
+          '<iframe id="' + id + 'F" title="' + filename + '" width="100%" height="100%" style="border:none;border-radius:8px;"></iframe>' +
+        '</div>';
       }
 
       // Apply scale + pan offset to image via absolute position
@@ -5216,7 +5290,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
             // Manual filename stored in sheet - serve from local manuals/KITNAME/ folder
             var manualFilename = kitImgs.manual;
             var manualUrl = SERVER_URL + '/manuals/' + encodeURIComponent(activeKit) + '/' + encodeURIComponent(manualFilename);
-            mainContent =
+            mainContent = officialManual ?
               '<a class="manual-open" href="' + manualUrl + '" target="_blank" rel="noopener">' +
                 '<span class="manual-open-ic">📄</span>' +
                 '<span class="manual-open-txt"><b>Open manual</b>' +
@@ -5225,7 +5299,7 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
               '</a>' +
               '<div class="manual-frame-wrap" style="width:100%;height:calc(100vh - 160px);min-height:500px;">' +
                 '<iframe src="' + manualUrl + '" width="100%" height="100%" style="border:none;border-radius:8px;"></iframe>' +
-              '</div>';
+              '</div>' : makePrivateManual(manualUrl, manualFilename);
           } else {
             mainContent = '<div style="padding:24px;color:#888;">No manual available for this kit.</div>';
           }
