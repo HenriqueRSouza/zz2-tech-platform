@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tech Support Platform (TSP) · Arquitetura do MVP</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+      min-height: 100vh;
+    }
+    .diagram-card {
+      background: #ffffff;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+      max-width: 1240px;
+      width: 100%;
+      padding: 20px;
+      border: 1px solid #e2e8f0;
+    }
+    .svg-container {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="diagram-card">
+    <div class="svg-container">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 592" width="100%" height="100%">
+  <defs>
+    <style>
+      .font-sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+      .title { font-size: 20px; font-weight: 700; fill: #0f172a; letter-spacing: -0.3px; }
+      .subtitle { font-size: 12.5px; font-weight: 400; fill: #64748b; }
+      .col-title { font-size: 13.5px; font-weight: 700; fill: #1e293b; letter-spacing: -0.2px; }
+      .pill-text { font-size: 10px; font-weight: 600; fill: #1d4ed8; text-anchor: middle; }
+      .card-title { font-size: 11.5px; font-weight: 700; fill: #0f172a; }
+      .card-desc { font-size: 10.5px; font-weight: 400; fill: #475569; }
+      .ext-title { font-size: 11.5px; font-weight: 700; fill: #1e293b; }
+      .ext-desc { font-size: 9.5px; font-weight: 400; fill: #64748b; }
+      .flow-title { font-size: 12px; font-weight: 700; fill: #9a3412; }
+      .flow-step-title { font-size: 11px; font-weight: 700; fill: #c2410c; }
+      .flow-step-desc { font-size: 10px; font-weight: 400; fill: #7c2d12; }
+      .arrow-label { font-size: 9px; font-weight: 600; fill: #475569; text-anchor: middle; }
+    </style>
+
+    <!-- Filters & Markers -->
+    <filter id="shadow" x="-3%" y="-4%" width="106%" height="108%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#0f172a" flood-opacity="0.04" />
+    </filter>
+
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#64748b" />
+    </marker>
+    <marker id="arrow-orange" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#ea580c" />
+    </marker>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1200" height="592" fill="#f8fafc" rx="10" />
+  <rect x="1" y="1" width="1198" height="590" fill="none" stroke="#e2e8f0" stroke-width="1.2" rx="9" />
+
+  <!-- Main Header -->
+  <g class="font-sans" transform="translate(24, 14)">
+    <text x="0" y="20" class="title">Tech Support Platform (TSP) · Arquitetura do MVP</text>
+    <text x="0" y="37" class="subtitle">Visão arquitetural modular em camadas, persistência híbrida e mensageria assíncrona</text>
+  </g>
+
+  <!-- ==================== SISTEMAS EXTERNOS (TOPO) ==================== -->
+  <!-- Azure AD / Entra ID -->
+  <g class="font-sans" transform="translate(278, 58)">
+    <rect width="180" height="46" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" />
+    <text x="10" y="18" class="ext-title">Azure AD / Entra ID</text>
+    <text x="10" y="34" class="ext-desc">Login institucional SAML 2.0</text>
+  </g>
+
+  <!-- Azure -->
+  <g class="font-sans" transform="translate(482, 58)">
+    <rect width="270" height="46" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" />
+    <text x="10" y="18" class="ext-title">Azure</text>
+    <text x="10" y="34" class="ext-desc">App Service · PostgreSQL Flexible · Blob Storage</text>
+  </g>
+
+  <!-- Google Sheets -->
+  <g class="font-sans" transform="translate(930, 58)">
+    <rect width="246" height="46" rx="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" />
+    <text x="10" y="18" class="ext-title">Google Sheets</text>
+    <text x="10" y="34" class="ext-desc">Planilha legada via Apps Script</text>
+  </g>
+
+  <!-- ==================== COLUNA 1: INTERFACE ==================== -->
+  <g class="font-sans" transform="translate(24, 122)">
+    <!-- Container -->
+    <rect width="230" height="346" rx="10" fill="#f0f7ff" stroke="#cfe2fe" stroke-width="1.5" />
+    <text x="14" y="24" class="col-title">1 · Interface</text>
+    <!-- Architectural Pill -->
+    <rect x="14" y="31" width="160" height="20" rx="10" fill="#dbeafe" />
+    <text x="94" y="45" class="pill-text">SPA Vanilla JS (sem build)</text>
+
+    <!-- Card 1 -->
+    <g transform="translate(10, 58)" filter="url(#shadow)">
+      <rect width="210" height="62" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+      <text x="10" y="18" class="card-title">8 páginas web</text>
+      <text x="10" y="36" class="card-desc">Diagnóstico, chamados, painel,</text>
+      <text x="10" y="50" class="card-desc">kits, relatórios e usuários.</text>
+    </g>
+
+    <!-- Card 2 -->
+    <g transform="translate(10, 128)" filter="url(#shadow)">
+      <rect width="210" height="62" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+      <text x="10" y="18" class="card-title">Árvore de testes</text>
+      <text x="10" y="36" class="card-desc">Guias por kit com esquemas,</text>
+      <text x="10" y="50" class="card-desc">chaves DIP e manuais em PDF.</text>
+    </g>
+
+    <!-- Card 3 -->
+    <g transform="translate(10, 198)" filter="url(#shadow)">
+      <rect width="210" height="62" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+      <text x="10" y="18" class="card-title">Frontend desacoplado</text>
+      <text x="10" y="36" class="card-desc">HTML, CSS e scripts nativos</text>
+      <text x="10" y="50" class="card-desc">sem build e com refresh rápido.</text>
+    </g>
+
+    <!-- Card 4 -->
+    <g transform="translate(10, 268)" filter="url(#shadow)">
+      <rect width="210" height="64" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+      <text x="10" y="18" class="card-title">Cliente de API único</text>
+      <text x="10" y="36" class="card-desc">Centraliza requisições HTTP e</text>
+      <text x="10" y="50" class="card-desc">gerencia token de sessão.</text>
+    </g>
+  </g>
+
+  <!-- ==================== COLUNA 2: SERVIÇO DE API ==================== -->
+  <g class="font-sans" transform="translate(278, 122)">
+    <!-- Container -->
+    <rect width="396" height="230" rx="10" fill="#f0f7ff" stroke="#cfe2fe" stroke-width="1.5" />
+    <text x="14" y="24" class="col-title">2 · Serviço de API</text>
+    <!-- Architectural Pill -->
+    <rect x="14" y="31" width="186" height="20" rx="10" fill="#dbeafe" />
+    <text x="107" y="45" class="pill-text">Monolito em camadas (FastAPI)</text>
+
+    <!-- Card 1: Camada de entrada -->
+    <g transform="translate(10, 58)" filter="url(#shadow)">
+      <rect width="376" height="46" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+      <text x="10" y="17" class="card-title">Camada de entrada (HTTP / REST)</text>
+      <text x="10" y="34" class="card-desc">11 rotas tipadas com validação Pydantic, rate limit e RBAC.</text>
+    </g>
+
+    <!-- Card 2: Camada de serviços -->
+    <g transform="translate(10, 110)" filter="url(#shadow)">
+      <rect width="376" height="46" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+      <text x="10" y="17" class="card-title">Camada de serviços (regras de negócio)</text>
+      <text x="10" y="34" class="card-desc">Orquestração de chamados e diagnósticos isolados de HTTP.</text>
+    </g>
+
+    <!-- Card 3: Camada de domínio e gateways -->
+    <g transform="translate(10, 162)" filter="url(#shadow)">
+      <rect width="376" height="46" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+      <text x="10" y="17" class="card-title">Camada de domínio e gateways</text>
+      <text x="10" y="34" class="card-desc">Entidades puras e clientes para Azure, SAML e Apps Script.</text>
+    </g>
+
+    <!-- Nota transversal -->
+    <text x="12" y="222" class="card-desc" style="font-size: 9.5px; fill: #64748b;">
+      Transversal: logs estruturados em JSON e auditoria limpa de segredos.
+    </text>
+  </g>
+
+  <!-- ==================== COLUNA 3: FILA DE TAREFAS ==================== -->
+  <g class="font-sans" transform="translate(696, 122)">
+    <!-- Container -->
+    <rect width="180" height="230" rx="10" fill="#f0f7ff" stroke="#cfe2fe" stroke-width="1.5" />
+    <text x="14" y="24" class="col-title">3 · Fila de tarefas</text>
+    <!-- Architectural Pill -->
+    <rect x="14" y="31" width="145" height="20" rx="10" fill="#dbeafe" />
+    <text x="86" y="45" class="pill-text">Write-Behind durável</text>
+
+    <!-- Card 1 -->
+    <g transform="translate(10, 58)" filter="url(#shadow)">
+      <rect width="160" height="46" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+      <text x="8" y="17" class="card-title">Fila local em JSON</text>
+      <text x="8" y="34" class="card-desc">Operações sob lock em disco.</text>
+    </g>
+
+    <!-- Card 2 -->
+    <g transform="translate(10, 110)" filter="url(#shadow)">
+      <rect width="160" height="46" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+      <text x="8" y="17" class="card-title">Resposta imediata</text>
+      <text x="8" y="34" class="card-desc">Retorna 201 sem travar no Sheets.</text>
+    </g>
+
+    <!-- Card 3 -->
+    <g transform="translate(10, 162)" filter="url(#shadow)">
+      <rect width="160" height="46" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+      <text x="8" y="17" class="card-title">Dead-Letter Store</text>
+      <text x="8" y="34" class="card-desc">Erros isolados para reprocessar.</text>
+    </g>
+  </g>
+
+  <!-- ==================== COLUNA 4: PROCESSADOR EM SEGUNDO PLANO ==================== -->
+  <g class="font-sans" transform="translate(930, 122)">
+    <!-- Container -->
+    <rect width="246" height="346" rx="10" fill="#f0f7ff" stroke="#cfe2fe" stroke-width="1.5" />
+    <text x="14" y="24" class="col-title">4 · Processador</text>
+    <!-- Architectural Pill -->
+    <rect x="14" y="31" width="160" height="20" rx="10" fill="#dbeafe" />
+    <text x="94" y="45" class="pill-text">Workers em threads locais</text>
+
+    <!-- Card 1 -->
+    <g transform="translate(10, 58)" filter="url(#shadow)">
+      <rect width="226" height="62" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+      <text x="10" y="18" class="card-title">Write-Behind Worker</text>
+      <text x="10" y="36" class="card-desc">Drena a fila a cada 2s e grava</text>
+      <text x="10" y="50" class="card-desc">os chamados no Google Sheets.</text>
+    </g>
+
+    <!-- Card 2 -->
+    <g transform="translate(10, 128)" filter="url(#shadow)">
+      <rect width="226" height="62" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+      <text x="10" y="18" class="card-title">Poller Worker</text>
+      <text x="10" y="36" class="card-desc">Sincroniza o Sheets a cada 30s</text>
+      <text x="10" y="50" class="card-desc">trazendo edições externas.</text>
+    </g>
+
+    <!-- Card 3 -->
+    <g transform="translate(10, 198)" filter="url(#shadow)">
+      <rect width="226" height="62" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+      <text x="10" y="18" class="card-title">Scheduler Worker</text>
+      <text x="10" y="36" class="card-desc">Executa backup diário, limpeza</text>
+      <text x="10" y="50" class="card-desc">e recálculo de indicadores.</text>
+    </g>
+
+    <!-- Card 4 -->
+    <g transform="translate(10, 268)" filter="url(#shadow)">
+      <rect width="226" height="64" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+      <text x="10" y="18" class="card-title">Parada graciosa</text>
+      <text x="10" y="36" class="card-desc">Encerra threads em SIGTERM sem</text>
+      <text x="10" y="50" class="card-desc">corromper dados em gravação.</text>
+    </g>
+  </g>
+
+  <!-- ==================== COMPONENTE 5: BASE DE DADOS (ABAIXO DE 2 E 3) ==================== -->
+  <g class="font-sans" transform="translate(278, 364)">
+    <!-- Container -->
+    <rect width="598" height="104" rx="10" fill="#f0f7ff" stroke="#cfe2fe" stroke-width="1.5" />
+    <text x="14" y="22" class="col-title">5 · Base de dados</text>
+    <!-- Architectural Pill -->
+    <rect x="138" y="9" width="220" height="19" rx="9.5" fill="#dbeafe" />
+    <text x="248" y="22.5" class="pill-text">Persistência híbrida (Local + Nuvem)</text>
+
+    <!-- 3 Cartões Horizontais -->
+    <!-- Cartão 1 -->
+    <g transform="translate(10, 36)" filter="url(#shadow)">
+      <rect width="186" height="56" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+      <text x="8" y="17" class="card-title">Armazenamento local</text>
+      <text x="8" y="33" class="card-desc">JSON atômico em disco</text>
+      <text x="8" y="47" class="card-desc">com write e fsync seguros.</text>
+    </g>
+
+    <!-- Cartão 2 -->
+    <g transform="translate(206, 36)" filter="url(#shadow)">
+      <rect width="186" height="56" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+      <text x="8" y="17" class="card-title">Postgres no Azure</text>
+      <text x="8" y="33" class="card-desc">Flexible Server como base</text>
+      <text x="8" y="47" class="card-desc">central de chamados.</text>
+    </g>
+
+    <!-- Cartão 3 -->
+    <g transform="translate(402, 36)" filter="url(#shadow)">
+      <rect width="186" height="56" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+      <text x="8" y="16" class="card-title" style="font-size: 10px;">Mídias e manuais no Azure Blob</text>
+      <text x="8" y="33" class="card-desc">PDFs e diagramas salvos em</text>
+      <text x="8" y="47" class="card-desc">container privado.</text>
+    </g>
+  </g>
+
+  <!-- ==================== SETAS DE CONEXÃO ==================== -->
+  <!-- 1. Interface -> API (REST) -->
+  <g class="font-sans">
+    <line x1="254" y1="220" x2="276" y2="220" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)" />
+    <rect x="251" y="208" width="30" height="13" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="266" y="218" class="arrow-label">REST</text>
+  </g>
+
+  <!-- 2. Azure SAML -> API -->
+  <g class="font-sans">
+    <line x1="368" y1="104" x2="368" y2="120" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)" />
+    <rect x="341" y="106" width="54" height="13" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="368" y="116" class="arrow-label">SAML 2.0</text>
+  </g>
+
+  <!-- 3. Azure Cloud <-> API -->
+  <g class="font-sans">
+    <line x1="600" y1="104" x2="600" y2="120" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)" />
+    <rect x="562" y="106" width="76" height="13" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="600" y="116" class="arrow-label">dados / arquivos</text>
+  </g>
+
+  <!-- 4. API -> Fila (enfileira) -->
+  <g class="font-sans">
+    <line x1="674" y1="220" x2="694" y2="220" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)" />
+    <rect x="668" y="208" width="40" height="13" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="688" y="218" class="arrow-label">enfileira</text>
+  </g>
+
+  <!-- 5. Fila -> Processador (entrega) -->
+  <g class="font-sans">
+    <line x1="876" y1="220" x2="928" y2="220" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)" />
+    <rect x="886" y="208" width="38" height="13" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="905" y="218" class="arrow-label">entrega</text>
+  </g>
+
+  <!-- 6. API -> Base de dados (lê e grava) -->
+  <g class="font-sans">
+    <line x1="450" y1="352" x2="450" y2="362" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)" />
+    <rect x="424" y="348" width="52" height="13" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="450" y="358" class="arrow-label">lê e grava</text>
+  </g>
+
+  <!-- 7. Processador -> Base de dados (reconcilia) -->
+  <g class="font-sans">
+    <line x1="930" y1="416" x2="878" y2="416" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)" />
+    <rect x="884" y="404" width="46" height="13" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="907" y="414" class="arrow-label">reconcilia</text>
+  </g>
+
+  <!-- 8. Processador -> Google Sheets (Apps Script) -->
+  <g class="font-sans">
+    <line x1="1040" y1="122" x2="1040" y2="106" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)" />
+    <rect x="1011" y="107" width="58" height="13" rx="3" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.8" />
+    <text x="1040" y="117" class="arrow-label">Apps Script</text>
+  </g>
+
+  <!-- ==================== FAIXA LARANJA: FLUXO PRINCIPAL ==================== -->
+  <g class="font-sans" transform="translate(24, 480)">
+    <!-- Container -->
+    <rect width="1152" height="96" rx="10" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5" />
+    <text x="16" y="20" class="flow-title">Fluxo principal: Diagnóstico interativo e sincronização assíncrona de chamado</text>
+
+    <!-- Passo 1 -->
+    <g transform="translate(14, 30)">
+      <rect width="242" height="54" rx="6" fill="#ffedd5" stroke="#fdba74" stroke-width="1" />
+      <text x="10" y="16" class="flow-step-title">1. Diagnóstico interativo</text>
+      <text x="10" y="32" class="flow-step-desc">Técnico realiza testes do kit</text>
+      <text x="10" y="46" class="flow-step-desc">e inicia novo chamado.</text>
+    </g>
+
+    <!-- Seta 1 -> 2 -->
+    <line x1="260" y1="57" x2="288" y2="57" stroke="#ea580c" stroke-width="1.5" marker-end="url(#arrow-orange)" />
+
+    <!-- Passo 2 -->
+    <g transform="translate(292, 30)">
+      <rect width="242" height="54" rx="6" fill="#ffedd5" stroke="#fdba74" stroke-width="1" />
+      <text x="10" y="16" class="flow-step-title">2. Gravação imediata</text>
+      <text x="10" y="32" class="flow-step-desc">API salva no Postgres (Azure)</text>
+      <text x="10" y="46" class="flow-step-desc">e atualiza o cache local.</text>
+    </g>
+
+    <!-- Seta 2 -> 3 -->
+    <line x1="538" y1="57" x2="566" y2="57" stroke="#ea580c" stroke-width="1.5" marker-end="url(#arrow-orange)" />
+
+    <!-- Passo 3 -->
+    <g transform="translate(570, 30)">
+      <rect width="242" height="54" rx="6" fill="#ffedd5" stroke="#fdba74" stroke-width="1" />
+      <text x="10" y="16" class="flow-step-title">3. Enfileiramento em disco</text>
+      <text x="10" y="32" class="flow-step-desc">Grava sincronização da planilha</text>
+      <text x="10" y="46" class="flow-step-desc">na fila pendente em JSON.</text>
+    </g>
+
+    <!-- Seta 3 -> 4 -->
+    <line x1="816" y1="57" x2="844" y2="57" stroke="#ea580c" stroke-width="1.5" marker-end="url(#arrow-orange)" />
+
+    <!-- Passo 4 -->
+    <g transform="translate(848, 30)">
+      <rect width="288" height="54" rx="6" fill="#ffedd5" stroke="#fdba74" stroke-width="1" />
+      <text x="10" y="16" class="flow-step-title">4. Sincronização em segundo plano</text>
+      <text x="10" y="32" class="flow-step-desc">Worker envia dados ao Sheets</text>
+      <text x="10" y="46" class="flow-step-desc">assincronamente via Apps Script.</text>
+    </g>
+  </g>
+</svg>
+
+    </div>
+  </div>
+</body>
+</html>
