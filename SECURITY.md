@@ -230,6 +230,40 @@ roughly 600 lines of security-critical code maintained in-house because Python
 session refresh and login throttling. The minimum password length for accounts
 created through this application rose from 6 characters to 12.
 
+### 19. Token spraying walked around the rate limiter
+
+`RateLimitMiddleware` keys its budget on a hash of the bearer token, so a client
+sending a *different* random token on every request got a fresh budget each time.
+Guessing tokens, probing for a leaked signing key, or forging SAML responses was
+unbounded.
+
+**Now:** `AuthGuardMiddleware` + `zz2/services/lockout.py`. Per client address, it
+counts **distinct rejected** credentials — forged or garbled, not merely expired
+(`CredentialExpired`), and not absent. At `ZZ2_AUTH_LOCKOUT_THRESHOLD` (20) within
+`ZZ2_AUTH_LOCKOUT_WINDOW_SECONDS` (10 min) the address gets `429 locked_out` on
+every request for `ZZ2_AUTH_LOCKOUT_SECONDS` (15 min), audited as `auth.lockout`.
+Counting *distinct* credentials is what keeps a broken tab retrying one expired
+token from locking out an office behind a NAT. Blocks are listed and released at
+`GET /api/system/security/lockouts` and `POST /api/system/security/lockouts/release`
+(`system_settings`).
+
+### 20. University single sign-on (SAML 2.0, Microsoft Entra ID)
+
+New capability rather than a fix: students and staff sign in with their
+university Microsoft account, inheriting the university's MFA and account
+lifecycle. Implemented as a SAML SP with the checks a SAML library performs —
+signature over the element actually read (anti-wrapping), issuer, audience,
+recipient, validity window, `InResponseTo` bound to the browser by a cookie,
+assertion-ID replay cache, no DTDs. Sessions are this server's own HS256 tokens
+under a key distinct from Supabase's, revoked on sign-out. Details, Entra setup
+and limitations: [`docs/SAML_AZURE.md`](docs/SAML_AZURE.md).
+
+### 21. Sign-out did not end anything server-side
+
+`POST /api/session/logout` documented evicting the principal cache but did not
+call it, so a token kept working for up to 60 s after sign-out. It now evicts the
+cache, and revokes SAML sessions outright.
+
 ---
 
 ## Known weaknesses

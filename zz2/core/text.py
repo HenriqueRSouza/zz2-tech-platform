@@ -103,7 +103,7 @@ def digits_only(value: object) -> str:
     """Every decimal digit in ``value``, in order.
 
     Ticket numbers appear as ``TKT-7388``, ``7388``, ``" 7388 "`` and ``7388``
-    (int) across the sheet, Supabase and the local store; comparing the digit
+    (int) across the sheet, the database and the local store; comparing the digit
     strings is the only match that works on all four.
     """
     return "".join(char for char in as_text(value) if char.isdigit())

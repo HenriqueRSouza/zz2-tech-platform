@@ -1,7 +1,7 @@
 """User administration.
 
 Enforces the two-axis authorization model from :mod:`zz2.domain.permissions` over
-the Supabase user directory. Every rule here exists to close a specific escalation
+the user directory (app_users in PostgreSQL). Every rule here exists to close a specific escalation
 path, and each is annotated with the one it closes.
 
 The invariant that matters most: **at least one active root account must always
@@ -28,7 +28,7 @@ from zz2.domain.permissions import (
     parse_permissions,
     sort_permissions,
 )
-from zz2.gateways.supabase import supabase_admin
+from zz2.gateways.user_directory import user_directory
 from zz2.repositories.roles import RoleRepository
 
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]{2,}$")
@@ -38,7 +38,7 @@ MIN_PASSWORD_LENGTH = 12
 
 Six characters was defensible for a LAN-only tool behind a login page nobody
 outside the building could reach. These accounts are now reachable from the
-internet through Supabase, where an offline-feasible guess against a short
+internet through the sign-in endpoint, where an offline-feasible guess against a short
 password is the realistic attack.
 """
 
@@ -54,7 +54,7 @@ class UserService:
         """The full Users page payload."""
         roles = self._roles.all()
         role_map = {role.key: role for role in roles}
-        accounts = supabase_admin.list_users()
+        accounts = user_directory.list_users()
 
         users = [self._describe(account, actor, role_map) for account in accounts]
         # Highest rank first, then by display name. Puts administrators at the top,
@@ -134,7 +134,7 @@ class UserService:
             raise PermissionDenied("You cannot create a user with that role.")
 
         granted = self._filter_grants(actor, permissions)
-        account = supabase_admin.create_user(
+        account = user_directory.create_user(
             email=email, password=password, display=display,
             role=role, permissions=granted,
         )
@@ -184,20 +184,19 @@ class UserService:
             applied.append("permissions")
 
         if "role" in applied or "permissions" in applied:
-            # app_metadata is replaced wholesale by Supabase, so role and
-            # permissions always travel together.
+            # Role and permissions are always written together.
             changes["app_metadata"] = {"role": new_role, "permissions": new_permissions}
 
         if active is not None and active != target["active"]:
             if not active:
                 self._guard_last_root(target, action="deactivate")
-            changes["ban_duration"] = "none" if active else supabase_admin.PERMANENT_BAN
+            changes["ban_duration"] = "none" if active else user_directory.PERMANENT_BAN
             applied.append("active")
 
         if not applied:
             return {"ok": True, "changed": []}
 
-        supabase_admin.update_user(user_id, changes)
+        user_directory.update_user(user_id, changes)
         audit("user.updated", actor=actor.username, target=target["username"],
               changed=applied)
         return {"ok": True, "changed": applied}
@@ -215,7 +214,7 @@ class UserService:
             raise PermissionDenied("You cannot change that user's password.")
 
         self._check_password(password)
-        supabase_admin.set_password(user_id, password)
+        user_directory.set_password(user_id, password)
 
         audit("user.password_reset", actor=actor.username, target=target["username"])
         return {"ok": True, "username": target["username"]}
@@ -234,7 +233,7 @@ class UserService:
             raise PermissionDenied("You cannot delete that user.")
 
         self._guard_last_root(target, action="delete")
-        supabase_admin.delete_user(user_id)
+        user_directory.delete_user(user_id)
 
         audit("user.deleted", actor=actor.username, target=target["username"])
         return {"ok": True, "username": target["username"]}
@@ -244,10 +243,10 @@ class UserService:
         """Fetch one account by id.
 
         Filtered from the full listing because the admin API's single-user
-        endpoint is not consistently available across Supabase versions. The
+        endpoint is not consistently available across directory backends. The
         directory is small — tens of accounts — so the cost is irrelevant.
         """
-        for account in supabase_admin.list_users():
+        for account in user_directory.list_users():
             if as_text(account.get("id")) == user_id:
                 return account
         raise NotFound("User not found.")
@@ -264,7 +263,7 @@ class UserService:
 
         role_map = self._roles.as_map()
         active_roots = 0
-        for account in supabase_admin.list_users():
+        for account in user_directory.list_users():
             if account.get("banned_until"):
                 continue
             key = as_text((account.get("app_metadata") or {}).get("role"))

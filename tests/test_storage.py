@@ -164,7 +164,7 @@ class TestTicketStore:
         assert store.find("7004").client == "New Client"
 
     def test_append_and_number_respects_a_remote_floor(self, store) -> None:
-        """Tickets are also created directly in Supabase, so the local maximum
+        """Tickets are also created directly in the database, so the local maximum
         alone would reuse their numbers."""
         from zz2.domain.models import Ticket
 

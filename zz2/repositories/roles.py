@@ -134,8 +134,8 @@ class RoleRepository(JsonDocumentRepository[list]):
     def count_by_role(self) -> dict[str, int]:
         """Placeholder for user counts per role.
 
-        Under Supabase Auth the user directory lives in Supabase, not on disk, so
-        counting is the auth gateway's job. Kept as an explicit stub so the Roles
+        The user directory lives in the database, not on disk, so counting is
+        the user-directory gateway's job. Kept as an explicit stub so the Roles
         page has one place to call rather than reimplementing the query.
         """
         return {}

@@ -189,7 +189,7 @@ def serve_kit_image(
     filename: str,
     actor: Annotated[Principal, CurrentPrincipal],
 ) -> Response:
-    """Serve a kit diagram from local cache or private Supabase Storage.
+    """Serve a kit diagram from local cache or private Blob Storage.
 
     Authenticated. Diagrams are internal technical documentation, and the
     monolith served them to anyone who could reach the port.

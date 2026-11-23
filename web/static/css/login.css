@@ -111,6 +111,41 @@
     .login-btn:active { transform: scale(0.99); }
     .login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    /* "Sign in with Microsoft" (SAML). Hidden until /api/config says it is on. */
+    .sso-sep {
+      display: flex; align-items: center; gap: 10px;
+      margin: 18px 0 10px; font-size: 11px; color: #6b7280;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .sso-sep::before, .sso-sep::after { content: ""; flex: 1; height: 1px; background: #2a2f37; }
+    .sso-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; box-sizing: border-box; padding: 11px;
+      border: 1px solid #3a404a; border-radius: 8px;
+      background: transparent; color: #e5e7eb; text-decoration: none;
+      font-size: 14px; font-weight: 600;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .sso-btn:hover { background: rgba(255,255,255,0.04); border-color: #4b5563; }
+    .sso-btn svg { width: 18px; height: 18px; flex: none; }
+    .sso-btn + .sso-btn, .ms-btn + .sso-btn { margin-top: 10px; }
+
+    /* "Entrar com Microsoft" (OpenID Connect). Follows Microsoft's sign-in
+     * button guidance: four-square logo, Segoe UI 15px semibold, 41px tall,
+     * light theme #fff / #8c8c8c border / #5e5e5e text, dark theme #2f2f2f /
+     * white text. Hidden until /api/config reports microsoft_enabled. */
+    .ms-btn {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      width: 100%; box-sizing: border-box; height: 41px; padding: 0 12px;
+      border: 1px solid #2f2f2f; border-radius: 0;
+      background: #2f2f2f; color: #ffffff; text-decoration: none;
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+      font-size: 15px; font-weight: 600;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .ms-btn:hover { background: #3b3b3b; }
+    .ms-btn svg { width: 21px; height: 21px; flex: none; }
+
     .error-msg {
       min-height: 20px;
       font-size: 13px;
@@ -157,6 +192,11 @@
   :root:not([data-theme="dark"]) .field input::placeholder{color:#9ca3af}
   :root:not([data-theme="dark"]) .error-msg{color:#dc2626}
   :root:not([data-theme="dark"]) .footer{color:#9ca3af}
+  :root:not([data-theme="dark"]) .sso-sep::before,:root:not([data-theme="dark"]) .sso-sep::after{background:#e5e7eb}
+  :root:not([data-theme="dark"]) .sso-btn{border-color:#d1d5db;color:#22262c}
+  :root:not([data-theme="dark"]) .sso-btn:hover{background:#f9fafb;border-color:#9ca3af}
+  :root:not([data-theme="dark"]) .ms-btn{background:#ffffff;border-color:#8c8c8c;color:#5e5e5e}
+  :root:not([data-theme="dark"]) .ms-btn:hover{background:#f3f3f3}
   :root:not([data-theme="dark"]) .spinner{background:rgba(255,255,255,0.72)}
   :root:not([data-theme="dark"]) .spinner-ring{border-color:#e5e7eb;border-top-color:#ffcd00}
 

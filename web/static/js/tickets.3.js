@@ -1,11 +1,15 @@
 // ============================================================
-//  ZZ2 Tickets — virtualized Supabase table + inline edit + create
+//  ZZ2 Tickets — virtualized ticket table + inline edit + create
+//  Data: /api/ticket-records (raw `tickets` rows). Presence: the per-ticket
+//  /api/presence endpoint, heartbeated while a row is being edited.
 // ============================================================
 const AUTH_KEY='zz2_auth_token', ROLE_KEY='zz2_auth_role';
 let TOKEN = localStorage.getItem(AUTH_KEY) || '';
-let SB=null, SB_USER=null, RT_CHANNEL=null;
-let PRESENCE_BY_TICKET={};
+let USER_DISPLAY='User';
+let PRESENCE_BY_TICKET={};          // ticket _id -> [{display}] other people on that ticket
 const RT_CLIENT_ID=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+'-'+Math.random());
+const PRESENCE_INTERVAL_MS=10000;
+let EDITING=null;                   // {id, num, timer} for the row this tab is editing
 
 const ROW_H=32, HEAD_H=36, OVER=8;
 const LINE_H=17, VPAD=10;           // textarea/cell line height + vertical padding
@@ -48,15 +52,20 @@ let refreshTimer=null;
 // ============================================================
 //  LOAD
 // ============================================================
+async function recordsApi(method, path, body){
+  const r=await ZZ2.api(method, '/api/ticket-records'+path, body);
+  let d=null; try{ d=await r.json(); }catch(e){}
+  if(r.status===403) throw new Error('forbidden');
+  if(!r.ok || !d || d.ok===false) throw new Error((d&&d.error)||('HTTP '+r.status));
+  return d;
+}
 async function loadTickets(){
-  if(!SB) throw new Error('Supabase is not configured.');
   const rows=[]; const pageSize=1000;
-  for(let from=0;;from+=pageSize){
-    const {data,error}=await SB.schema('techSupport').from('tickets').select('*')
-      .order('ticket_number',{ascending:false}).range(from,from+pageSize-1);
-    if(error) throw error;
-    rows.push(...(data||[]));
-    if(!data || data.length<pageSize) break;
+  for(let offset=0;;offset+=pageSize){
+    const d=await recordsApi('GET','?limit='+pageSize+'&offset='+offset);
+    const data=d.rows||[];
+    rows.push(...data);
+    if(data.length<pageSize) break;
   }
   META.generated = new Date().toISOString();
   DATA = rows.map(normalize).filter(t=>t.ticket||t.client||t.date);
@@ -268,10 +277,8 @@ async function onCellChange(e){
     const patch={};
     const columnMap={date:'ticket_date',ticket:'ticket_number'};
     patch[columnMap[k]||k]=newVal||null;
-    const {data,error}=await SB.schema('techSupport').from('tickets').update(patch)
-      .eq('id',t._id).select().single();
-    if(error) throw error;
-    Object.assign(t,normalize(data));
+    const d=await recordsApi('PATCH','/'+encodeURIComponent(t._id),patch);
+    Object.assign(t,normalize(d.row));
     cell.classList.remove('saving','dirty');
     if(k==='status' && el.tagName==='SELECT'){ el.className=statusClass(newVal); }
     toast('Ticket '+t.ticket+' updated','ok');
@@ -281,27 +288,57 @@ async function onCellChange(e){
     cell.classList.remove('saving','dirty');
     toast('Update failed: '+err.message,'err');
     recomputeAndRender();
-  }finally{
-    if(RT_CHANNEL) RT_CHANNEL.untrack();
   }
 }
 
 function onEditFocus(e){
   const el=e.target, i=+el.dataset.i;
-  if(!RT_CHANNEL || isNaN(i) || !VIEW[i]) return;
+  if(isNaN(i) || !VIEW[i]) return;
   const t=VIEW[i];
-  RT_CHANNEL.track({client_id:RT_CLIENT_ID,user_id:SB_USER.id,
-    display:userDisplay(SB_USER),ticket_id:String(t._id),ticket_number:t.ticket,
-    column:el.dataset.k,online_at:new Date().toISOString()});
+  if(!t.ticket || t._id==null) return;
+  if(EDITING && String(EDITING.id)===String(t._id)) return;
+  presenceLeave();
+  EDITING={id:t._id, num:t.ticket, timer:null};
+  presenceBeat(EDITING);
+  EDITING.timer=setInterval(()=>presenceBeat(EDITING),PRESENCE_INTERVAL_MS);
 }
 function onEditBlur(){
   setTimeout(()=>{
     const a=document.activeElement;
     if(!a || !a.closest || !a.closest('#gbody')){
-      if(RT_CHANNEL) RT_CHANNEL.untrack();
+      presenceLeave();
       renderPresenceMarkers();
     }
   },50);
+}
+function presenceUrl(num){ return '/api/presence/tickets/'+encodeURIComponent(num); }
+// Heartbeat for the row being edited. The reply lists everyone on that ticket
+// (here or in the Kit & Ticket Tool), shown as chips on the row.
+async function presenceBeat(ed){
+  if(EDITING!==ed) return;
+  try{
+    const r=await fetch(presenceUrl(ed.num),{method:'POST',cache:'no-store',headers:ZZ2.jsonHeaders(),
+      body:JSON.stringify({client_id:RT_CLIENT_ID,name:USER_DISPLAY})});
+    if(!r.ok) return;
+    const d=await r.json();
+    if(EDITING!==ed) return;
+    PRESENCE_BY_TICKET[String(ed.id)]=(d.viewers||[])
+      .filter(v=>v && v.client_id!==RT_CLIENT_ID && v.name)
+      .map(v=>({display:v.name}));
+    renderPresenceMarkers();
+  }catch(e){ /* best-effort */ }
+}
+// sendBeacon cannot send DELETE or the Authorization header, so leave with a
+// keepalive fetch; the server also expires a viewer 30 s after its last beat.
+function presenceLeave(){
+  const ed=EDITING; if(!ed) return;
+  EDITING=null;
+  if(ed.timer) clearInterval(ed.timer);
+  delete PRESENCE_BY_TICKET[String(ed.id)];
+  const url=presenceUrl(ed.num)+'?client_id='+encodeURIComponent(RT_CLIENT_ID);
+  const opts={method:'DELETE',headers:ZZ2.authHeaders()};
+  try{ fetch(url,Object.assign({keepalive:true},opts)).catch(()=>{}); }
+  catch(e){ try{ fetch(url,opts).catch(()=>{}); }catch(e2){} }
 }
 
 // ============================================================
@@ -325,9 +362,8 @@ async function saveNew(){
       tech:payload.tech||null,client:payload.client||null,product:payload.product||null,
       vehicle:payload.vehicle||null,issue:payload.issue||null,resolution:payload.resolution||null,
       status:payload.status||null,serial:payload.serial||null,notes:payload.notes||null};
-    const {data,error}=await SB.schema('techSupport').from('tickets').insert(insert).select().single();
-    if(error) throw error;
-    const row=normalize(data);
+    const d=await recordsApi('POST','',insert);
+    const row=normalize(d.row);
     if(!DATA.some(t=>String(t._id)===String(row._id))) DATA.push(row);
     closeNew(); applyView(false); $('#gridwrap').scrollTop=0;
     toast('Created '+row.ticket,'ok');
@@ -347,7 +383,7 @@ function nextTicketNumber(){
 // ============================================================
 function isEditing(){ const a=document.activeElement; return a && (a.tagName==='TEXTAREA'||a.tagName==='SELECT') && a.closest('#gbody'); }
 async function hardRefresh(){
-  $('#btn-refresh').disabled=true; toast('Refreshing Supabase…');
+  $('#btn-refresh').disabled=true; toast('Refreshing…');
   try{
     await loadTickets(); applyView(true); setMeta(); toast('Up to date','ok');
   }catch(e){ toast('Refresh failed','err'); }
@@ -377,26 +413,11 @@ async function init(){
     $('#toolbar').style.display='flex';
     applyView(false);
     setMeta();
-    subscribeRealtime();
   }catch(e){
     showError(e.message==='forbidden'? 'You don\'t have access to ticket data.' : e.message);
   }
 }
 
-function userDisplay(user){
-  const m=(user&&user.user_metadata)||{};
-  return m.display_name||m.full_name||m.name||user.email||'User';
-}
-function rebuildPresence(){
-  const next={};
-  const state=RT_CHANNEL?RT_CHANNEL.presenceState():{};
-  Object.keys(state).forEach(key=>(state[key]||[]).forEach(p=>{
-    if(!p.ticket_id) return;
-    (next[String(p.ticket_id)]||(next[String(p.ticket_id)]=[])).push(p);
-  }));
-  PRESENCE_BY_TICKET=next;
-  renderPresenceMarkers();
-}
 function renderPresenceMarkers(){
   document.querySelectorAll('.grow[data-row-id]').forEach(row=>{
     const editors=PRESENCE_BY_TICKET[String(row.dataset.rowId)]||[];
@@ -404,30 +425,6 @@ function renderPresenceMarkers(){
     const host=row.querySelector('.row-presence');
     if(host) host.innerHTML=editors.map(p=>`<span class="presence-chip" title="${esc(p.display)} editando ${esc(p.column||'a linha')}">${esc(p.display)}</span>`).join('');
   });
-}
-function applyRealtimeChange(payload){
-  const row=payload.new&&Object.keys(payload.new).length?payload.new:payload.old;
-  if(!row || row.id==null) return;
-  const pos=DATA.findIndex(t=>String(t._id)===String(row.id));
-  if(payload.eventType==='DELETE'){
-    if(pos>=0) DATA.splice(pos,1);
-  }else if(pos>=0){
-    DATA[pos]=normalize(Object.assign({},DATA[pos]._raw||{},row));
-  }else{
-    DATA.push(normalize(row));
-  }
-  if(!isEditing()) applyView(true);
-  setMeta();
-}
-function subscribeRealtime(){
-  RT_CHANNEL=SB.channel('techSupport:tickets',{config:{presence:{key:RT_CLIENT_ID}}})
-    .on('postgres_changes',{event:'*',schema:'techSupport',table:'tickets'},applyRealtimeChange)
-    .on('presence',{event:'sync'},rebuildPresence)
-    .on('presence',{event:'join'},rebuildPresence)
-    .on('presence',{event:'leave'},rebuildPresence)
-    .subscribe(status=>{
-      if(status==='CHANNEL_ERROR') toast('Realtime connection unavailable','err');
-    });
 }
 // wire controls
 $('#btn-new').onclick=openNew;
@@ -443,22 +440,15 @@ window.addEventListener('resize',()=>{ if($('#gbody')) render(); });
 
 (async function guard(){
   try{
-    const cfg=await fetch('/api/config',{cache:'no-store'}).then(r=>r.json());
-    if(!window.supabase||!cfg.supabase_url||!cfg.supabase_publishable_key) throw new Error('Supabase is not configured');
-    SB=window.supabase.createClient(cfg.supabase_url,cfg.supabase_publishable_key);
-    const {data:{session}}=await SB.auth.getSession();
-    if(!session){ location.href='/login.html'; return; }
-    SB_USER=session.user; TOKEN=session.access_token; localStorage.setItem(AUTH_KEY,TOKEN);
-    SB.auth.onAuthStateChange((event,next)=>{
-      if(next){TOKEN=next.access_token;localStorage.setItem(AUTH_KEY,TOKEN);}
-      else if(event==='SIGNED_OUT'){localStorage.removeItem(AUTH_KEY);location.href='/login.html';}
-    });
+    if(!TOKEN){ location.href='/login.html'; return; }
     const r=await ZZ2.verifySession(TOKEN);
     const d=await r.json();
     if(!d.ok){ localStorage.removeItem(AUTH_KEY); location.href='/login.html'; return; }
     if(!(d.permissions||[]).includes('tickets')){ location.href='/index.html'; return; }
+    USER_DISPLAY=d.display||d.email||(d.user&&(d.user.display||d.user.email))||'User';
     if(window.zz2BuildNav) zz2BuildNav(d.permissions||[]);
     init();
   }catch(e){ showError(e.message||'Authentication failed.'); }
 })();
-window.addEventListener('beforeunload',()=>{if(RT_CHANNEL)RT_CHANNEL.untrack();});
+window.addEventListener('beforeunload',presenceLeave);
+window.addEventListener('pagehide',presenceLeave);

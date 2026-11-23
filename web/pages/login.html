@@ -1,48 +1,61 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <link rel="icon" type="image/jpeg" href="/static/images/favicon.jpg">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="/static/js/shared/theme-init.js"></script>
 <script src="/static/js/shared/session.js"></script>
-  <title>ZZ2 Tech Support</title>
+  <title>Tech Support Platform (TSP)</title>
   <link rel="stylesheet" href="/static/css/login.css">
 </head>
 <body>
-<button id="themeToggle" onclick="zz2ToggleTheme()" title="Switch to dark mode" aria-label="Switch color theme">☀️</button>
+<button id="themeToggle" onclick="zz2ToggleTheme()" title="Alternar para o modo escuro" aria-label="Alternar tema de cores">☀️</button>
   <div class="card">
     <div class="spinner" id="spinner"><div class="spinner-ring"></div></div>
 
     <div class="logo-wrap">
       <img src="/static/images/zz2-logo.png" alt="ZZ2">
-      <div class="tagline">Tech Support Portal</div>
+      <div class="tagline">Portal de Suporte Técnico</div>
     </div>
 
     <div class="divider"></div>
 
-    <div class="field">
-      <label>Email</label>
-      <input type="email" id="username" placeholder="you@company.com"
-        autocomplete="email" autocapitalize="none"
-        onkeydown="if(event.key==='Enter')document.getElementById('password').focus()">
+    <div id="password-block">
+      <div class="field">
+        <label for="username">E-mail</label>
+        <input type="email" id="username" placeholder="voce@empresa.com"
+          autocomplete="email" autocapitalize="none"
+          onkeydown="if(event.key==='Enter')document.getElementById('password').focus()">
+      </div>
+
+      <div class="field">
+        <label for="password">Senha</label>
+        <input type="password" id="password" placeholder="Digite sua senha"
+          autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+
+      <button class="login-btn" id="login-btn" onclick="doLogin()">Entrar</button>
     </div>
 
-    <div class="field">
-      <label>Password</label>
-      <input type="password" id="password" placeholder="Enter password"
-        autocomplete="current-password"
-        onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="sso-block" hidden>
+      <div class="sso-sep" id="sso-sep">ou</div>
+      <a class="ms-btn" id="ms-btn" href="/api/auth/microsoft/login" hidden>
+        <svg viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+        Entrar com Microsoft
+      </a>
+      <a class="sso-btn" id="sso-btn" href="/api/auth/saml/login" hidden>
+        <svg viewBox="0 0 21 21" aria-hidden="true"><rect x="1" y="1" width="9" height="9" fill="#f25022"/><rect x="11" y="1" width="9" height="9" fill="#7fba00"/><rect x="1" y="11" width="9" height="9" fill="#00a4ef"/><rect x="11" y="11" width="9" height="9" fill="#ffb900"/></svg>
+        Entrar com conta institucional (SAML)
+      </a>
     </div>
-
-    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
 
     <div class="error-msg" id="error-msg"></div>
 
-    <div class="footer">ZZ2 Tech &nbsp;·&nbsp; Internal Use Only</div>
+    <div class="footer">TSP &nbsp;·&nbsp; Uso interno</div>
   </div>
 
-  <script src="/static/vendor/supabase.js"></script>
   <script src="/static/js/login.2.js"></script>
 <script src="/static/js/shared/theme-toggle.js"></script>
 </body>

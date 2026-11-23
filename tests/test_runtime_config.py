@@ -98,7 +98,9 @@ class TestWriting:
             config.apply({"nonsense": 1}, actor="root@zz2.com.br")
 
     @pytest.mark.parametrize("key", [
-        "secret_key", "supabase_service_key", "supabase_jwt_secret",
+        "secret_key", "database_url", "session_secret",
+        "azure_storage_connection_string", "microsoft_client_secret",
+        "supabase_service_key", "supabase_jwt_secret",
         "supabase_publishable_key", "supabase_url",
     ])
     def test_secrets_cannot_be_written_through_the_api(self, config, key: str) -> None:

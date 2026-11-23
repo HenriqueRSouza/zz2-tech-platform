@@ -55,7 +55,6 @@ done
 echo
 echo "assets"
 check "shared session helper" 200 /static/js/shared/session.js
-check "vendored supabase client" 200 /static/vendor/supabase.js
 check "favicon" 200 /static/images/favicon.jpg
 
 echo

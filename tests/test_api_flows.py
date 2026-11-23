@@ -7,12 +7,59 @@ import pytest
 from tests.conftest import auth_header
 
 
+def _inserted(statement: tuple[str, list]) -> dict:
+    """Column -> value for a recorded ``INSERT INTO t (cols) VALUES (...)``."""
+    sql, params = statement
+    columns = sql.split("(", 1)[1].split(")", 1)[0].split(", ")
+    return dict(zip(columns, params, strict=True))
+
+
+class TestTicketsWithoutTheSheet:
+    """``ZZ2_ENABLE_APPSCRIPT_SYNC=false``: the database is the only shared copy.
+
+    A fresh installation has no store to number from. With the sheet enabled the
+    sheet assigns the number; without it, that call can only fail, and the ticket
+    never reached the database.
+    """
+
+    @pytest.fixture
+    def sheetless(self, monkeypatch, settings_env, app, fake_db):
+        from zz2.settings import get_settings
+
+        monkeypatch.setenv("ZZ2_ENABLE_APPSCRIPT_SYNC", "false")
+        get_settings.cache_clear()
+        fake_db.stub("SELECT ticket_number FROM tickets", [{"ticket_number": "TKT-41"}])
+        return app
+
+    def test_first_ticket_is_numbered_from_the_database(self, sheetless, fake_db) -> None:
+        from zz2.repositories.tickets import TicketStoreRepository
+
+        assert not TicketStoreRepository().exists()
+        response = sheetless.post(
+            "/api/tickets", json={"client": "First Shop", "product": "ITZ-NTG3"},
+            headers=auth_header(permissions=["create_tickets"]),
+        )
+        assert response.status_code == 201
+        assert response.json()["ticketNum"] == "42"
+
+        inserts = fake_db.statements("INSERT INTO tickets")
+        assert [_inserted(insert)["ticket_number"] for insert in inserts] == ["TKT-42"]
+        assert TicketStoreRepository().exists()
+
+    def test_nothing_is_queued_for_the_sheet(self, sheetless) -> None:
+        from zz2.repositories.write_queue import PendingWriteRepository
+
+        sheetless.post("/api/tickets", json={"client": "Shop", "product": "X"},
+                       headers=auth_header(permissions=["create_tickets"]))
+        assert PendingWriteRepository().all() == []
+
+
 class TestTicketLifecycle:
     """Create, read, edit and discard, through the API."""
 
     @pytest.fixture
-    def seeded(self, app, fake_supabase):
-        """A store with three tickets and Supabase answering ticket queries."""
+    def seeded(self, app, fake_db):
+        """A store with three tickets and the database answering ticket queries."""
         from zz2.repositories.tickets import TicketStoreRepository
 
         TicketStoreRepository().replace_all([
@@ -23,11 +70,12 @@ class TestTicketLifecycle:
             {"ticket": "7003", "date": "2026-06-03", "client": "Silva",
              "product": "ITZ-GX1-A", "tech": "ana", "status": "RMA"},
         ], source="test")
-        fake_supabase.stub("GET", "tickets?select=ticket_number", [])
+        fake_db.stub("SELECT ticket_number FROM tickets", [])
         return app
 
-    def test_create_writes_to_supabase_before_acknowledging(self, seeded, fake_supabase) -> None:
-        """Supabase is authoritative and synchronous; the sheet is queued."""
+    def test_create_writes_to_the_database_before_acknowledging(self, seeded,
+                                                               fake_db) -> None:
+        """The database is authoritative and synchronous; the sheet is queued."""
         response = seeded.post(
             "/api/tickets",
             json={"client": "New Shop", "product": "ITZ-GX1-A", "tech": "ana",
@@ -40,10 +88,9 @@ class TestTicketLifecycle:
         assert body["ticketNum"] == "7004"
         assert body["queued"] is True
 
-        inserts = [call for call in fake_supabase.calls
-                   if call[0] == "POST" and call[1] == "tickets"]
+        inserts = fake_db.statements("INSERT INTO tickets")
         assert len(inserts) == 1
-        assert inserts[0][2]["ticket_number"] == "TKT-7004"
+        assert _inserted(inserts[0])["ticket_number"] == "TKT-7004"
 
     def test_create_queues_the_sheet_write(self, seeded) -> None:
         from zz2.repositories.write_queue import PendingWriteRepository
@@ -70,25 +117,35 @@ class TestTicketLifecycle:
         assert response.status_code == 400
         assert "client or an item" in response.json()["error"]
 
-    def test_create_aborts_when_supabase_refuses(self, seeded, monkeypatch,
-                                                 fake_supabase) -> None:
+    def test_create_aborts_when_the_database_refuses(self, seeded, fake_db) -> None:
         """No sheet write is queued, so the three copies stay consistent."""
         from zz2.core.errors import UpstreamError
         from zz2.repositories.write_queue import PendingWriteRepository
 
-        original = fake_supabase.request
-
-        def refuse(method, resource, **kwargs):
-            if method == "POST" and resource == "tickets":
-                raise UpstreamError(log_detail="simulated failure")
-            return original(method, resource, **kwargs)
-
-        monkeypatch.setattr(fake_supabase, "request", refuse)
+        fake_db.stub("INSERT INTO tickets", UpstreamError(log_detail="simulated failure"))
 
         response = seeded.post("/api/tickets", json={"client": "Doomed Co"},
                                headers=auth_header(permissions=["create_tickets"]))
         assert response.status_code == 502
         assert PendingWriteRepository().count() == 0
+
+        from zz2.repositories.tickets import TicketStoreRepository
+
+        numbers = [row["ticket"] for row in TicketStoreRepository().rows()]
+        assert numbers == ["7001", "7002", "7003"]
+
+    def test_created_ticket_is_stored_once_and_dated(self, seeded) -> None:
+        """Numbering writes the row; a second append duplicated it, undated."""
+        import datetime as dt
+
+        from zz2.repositories.tickets import TicketStoreRepository
+
+        seeded.post("/api/tickets", json={"client": "Once Co", "product": "X"},
+                    headers=auth_header(permissions=["create_tickets"]))
+
+        rows = [row for row in TicketStoreRepository().rows() if row["ticket"] == "7004"]
+        assert len(rows) == 1
+        assert rows[0]["date"] == dt.date.today().isoformat()
 
     def test_edit_keeps_the_original_creation_date(self, seeded) -> None:
         """``to_store()`` would otherwise overwrite it with the form's value."""
@@ -106,13 +163,22 @@ class TestTicketLifecycle:
         assert stored.date == "2026-06-02"
         assert stored.resolution == "Replaced harness"
 
-    def test_edit_does_not_rewrite_identity_columns(self, seeded, fake_supabase) -> None:
+    def test_edit_does_not_rewrite_identity_columns(self, seeded, fake_db) -> None:
         seeded.patch("/api/tickets/7002", json={"status": "Resolved"},
                      headers=auth_header(permissions=["create_tickets"]))
-        patches = [call for call in fake_supabase.calls if call[0] == "PATCH"]
-        assert patches
-        assert "ticket_number" not in patches[0][2]
-        assert "ticket_date" not in patches[0][2]
+        [(sql, params)] = fake_db.statements("UPDATE tickets")
+        assigned = sql.split(" SET ", 1)[1].split(" WHERE ", 1)[0]
+        assert "ticket_number" not in assigned
+        assert "ticket_date" not in assigned
+        assert sql.endswith("WHERE ticket_number = %s")
+        assert params[-1] == "TKT-7002"
+
+    def test_delete_is_parameterised(self, seeded, fake_db) -> None:
+        seeded.delete("/api/tickets/7003",
+                      headers=auth_header(permissions=["create_tickets"]))
+        assert fake_db.statements("DELETE FROM tickets") == [
+            ("DELETE FROM tickets WHERE ticket_number = %s", ["TKT-7003"])
+        ]
 
     def test_delete_removes_the_row_and_queues_the_sheet_delete(self, seeded) -> None:
         from zz2.repositories.tickets import TicketStoreRepository
@@ -154,31 +220,31 @@ class TestTicketLifecycle:
                       headers=auth_header(permissions=["create_tickets"]))
         assert seeded.get("/api/tickets/7001", headers=auth_header()).status_code == 404
 
-    def test_recent_merges_local_and_remote(self, seeded, fake_supabase) -> None:
-        """Supabase rows overwrite local ones by number; local-only rows survive."""
-        fake_supabase.stub("GET", "tickets?ticket_date=gte", [
-            {"ticket_number": "TKT-7002", "ticket_date": "2026-06-02",
+    def test_recent_merges_local_and_remote(self, seeded, fake_db) -> None:
+        """Database rows overwrite local ones by number; local-only rows survive."""
+        import datetime as dt
+
+        fake_db.stub("WHERE ticket_date >= %s", [
+            {"ticket_number": "TKT-7002", "ticket_date": dt.date(2026, 6, 2),
              "client": "Som e Cia (authoritative)", "status": "Resolved"},
-            {"ticket_number": "TKT-9001", "ticket_date": "2026-06-04",
-             "client": "Created In Supabase", "status": ""},
+            {"ticket_number": "TKT-9001", "ticket_date": dt.date(2026, 6, 4),
+             "client": "Created In The Database", "status": None},
         ])
         body = seeded.get("/api/tickets/recent?days=30", headers=auth_header()).json()
 
-        assert body["source"] == "supabase"
+        assert body["source"] == "database"
         by_number = {row["ticketNum"]: row for row in body["results"]}
         assert by_number["TKT-7002"]["client"] == "Som e Cia (authoritative)"
         assert "TKT-9001" in by_number
+        assert by_number["TKT-9001"]["date"] == "2026-06-04"
         assert "7001" in by_number, "local-only rows must not disappear"
 
-    def test_recent_falls_back_to_local_when_supabase_is_down(
-        self, seeded, monkeypatch, fake_supabase
+    def test_recent_falls_back_to_local_when_the_database_is_down(
+        self, seeded, fake_db
     ) -> None:
         from zz2.core.errors import UpstreamError
 
-        def refuse(*_args, **_kwargs):
-            raise UpstreamError(log_detail="down")
-
-        monkeypatch.setattr(fake_supabase, "select_paged", refuse)
+        fake_db.stub("WHERE ticket_date >= %s", UpstreamError(log_detail="down"))
 
         body = seeded.get("/api/tickets/recent", headers=auth_header()).json()
         assert body["source"] == "local_fallback"
@@ -510,7 +576,7 @@ class TestCompatibilityShims:
     def test_legacy_password_login_is_gone(self, app) -> None:
         response = app.post("/login", json={"username": "a", "password": "b"})
         assert response.status_code == 400
-        assert "Supabase Auth" in response.json()["error"]
+        assert "moved" in response.json()["error"]
 
     def test_legacy_csv_proxy_serves_the_local_catalogue(self, app) -> None:
         response = app.get("/api/proxy?action=csv&sheet=kits", headers=auth_header())
@@ -526,12 +592,12 @@ class TestCompatibilityShims:
         response = app.get("/api/proxy?action=export", headers=auth_header())
         assert response.status_code == 400
 
-    def test_legacy_ticket_save_dispatches_on_action(self, app, fake_supabase) -> None:
+    def test_legacy_ticket_save_dispatches_on_action(self, app, fake_db) -> None:
         from zz2.repositories.tickets import TicketStoreRepository
 
         TicketStoreRepository().replace_all([{"ticket": "7001", "client": "X"}],
                                             source="test")
-        fake_supabase.stub("GET", "tickets?select=ticket_number", [])
+        fake_db.stub("SELECT ticket_number FROM tickets", [])
 
         response = app.post("/api/proxy", json={
             "action": "newticket", "client": "Legacy Co", "product": "ITZ-X",
@@ -556,7 +622,7 @@ class TestHealthProbes:
     def test_readiness_reports_its_checks(self, app) -> None:
         body = app.get("/readyz").json()
         assert body["checks"]["data_dir_writable"] is True
-        assert body["checks"]["supabase_configured"] is True
+        assert body["checks"]["database_configured"] is True
 
 
 class TestSessionContract:

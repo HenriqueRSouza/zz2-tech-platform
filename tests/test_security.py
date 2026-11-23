@@ -106,7 +106,38 @@ class TestTokenHandling:
         assert app.post("/api/session/verify", headers=header).status_code == 401
 
 
-# -- Authorization via metadata ------------------------------------------------
+class TestForeignTokens:
+    """Only sessions this server issued are accepted. A Supabase-era token, an
+    ES256 token or one signed with another key is rejected without a network call."""
+
+    def test_es256_token_is_rejected(self, app) -> None:
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import ec
+        from jose import jwt
+
+        key = ec.generate_private_key(ec.SECP256R1()).private_bytes(
+            serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+            serialization.NoEncryption())
+        token = jwt.encode({"iss": "zz2", "aud": "zz2", "sub": "u",
+                            "exp": 9999999999, "jti": "x"}, key, algorithm="ES256")
+        response = app.post("/api/session/verify",
+                            headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 401
+
+    def test_supabase_style_token_is_rejected(self, app) -> None:
+        import time
+
+        from jose import jwt
+
+        token = jwt.encode({"sub": "u", "aud": "authenticated",
+                            "exp": int(time.time()) + 600,
+                            "app_metadata": {"role": "super_admin"}},
+                           "test-session-secret-value-at-least-32-chars", algorithm="HS256")
+        response = app.post("/api/session/verify",
+                            headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 401
+
+
 class TestMetadataAuthorization:
     """Roles must come from ``app_metadata``, never ``user_metadata``.
 
@@ -123,14 +154,15 @@ class TestMetadataAuthorization:
 
         token = jwt.encode(
             {
-                "sub": "u", "email": "u@zz2.com.br", "aud": "authenticated",
+                "iss": "zz2", "aud": "zz2", "jti": "metadata-test",
+                "sub": "u", "email": "u@zz2.com.br",
                 "exp": int(time.time()) + 600,
                 "app_metadata": {},
                 # A user-writable claim asking for the keys to the building.
                 "user_metadata": {"role": "super_admin",
                                   "permissions": ["system_settings"]},
             },
-            os.environ["ZZ2_SUPABASE_JWT_SECRET"],
+            os.environ["ZZ2_SESSION_SECRET"],
             algorithm="HS256",
         )
         response = app.get("/api/system/info",
@@ -174,11 +206,11 @@ class TestEndpointAuthorization:
         """The sign-in page needs it before any session exists."""
         response = app.get("/api/config")
         assert response.status_code == 200
-        assert "supabase_publishable_key" in response.json()
+        assert "microsoft_enabled" in response.json()
 
     def test_config_never_exposes_a_secret(self, app) -> None:
         body = app.get("/api/config").text
-        for secret in ("sb_secret_test", "test-jwt-secret-value-at-least-32-chars"):
+        for secret in ("test-session-secret-value-at-least-32-chars",):
             assert secret not in body
 
     def test_catalog_now_requires_authentication(self, app) -> None:
@@ -222,13 +254,14 @@ class TestSecurityHeaders:
         assert "cdnjs.cloudflare.com" not in script_src
         assert script_src == "script-src 'self' 'unsafe-inline'"
 
-    def test_connect_src_is_limited_to_self_and_supabase(self, app) -> None:
-        """The directive that stops an injected script phoning home."""
+    def test_connect_src_is_limited_to_self(self, app) -> None:
+        """The directive that stops an injected script phoning home. Since the
+        move off Supabase every call goes to this origin."""
         policy = app.get("/api/config").headers["Content-Security-Policy"]
         connect_src = next(part for part in policy.split("; ")
                            if part.startswith("connect-src"))
-        assert "https://example.supabase.co" in connect_src
-        assert "wss://example.supabase.co" in connect_src
+        assert connect_src == "connect-src 'self'"
+        assert "supabase" not in policy
 
     def test_frames_are_limited_to_self_and_official_manuals(self, app) -> None:
         policy = app.get("/api/config").headers["Content-Security-Policy"]

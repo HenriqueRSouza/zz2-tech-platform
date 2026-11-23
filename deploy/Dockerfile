@@ -1,4 +1,4 @@
-# ZZ2 Tech Support Platform.
+# Tech Support Platform (TSP).
 #
 # Build from the repository root:
 #   docker build -f deploy/Dockerfile -t zz2:latest --build-arg BUILD=$(git rev-parse --short HEAD) .
@@ -60,7 +60,7 @@ VOLUME ["/var/lib/zz2"]
 EXPOSE 8080
 
 # Liveness only: no disk, no network. A readiness check that fails because
-# Supabase is slow must not get the container killed.
+# the database is slow must not get the container killed.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
     CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=4).status == 200 else 1)"
 

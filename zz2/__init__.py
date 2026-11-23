@@ -1,4 +1,4 @@
-"""ZZ2 Tech Support Platform.
+"""Tech Support Platform (TSP).
 
 A modular replacement for the single-file ``server.py`` monolith. Layers, and the
 rule that keeps them honest — each depends only on the ones below it:
@@ -14,7 +14,7 @@ rule that keeps them honest — each depends only on the ones below it:
     Persistence. The only layer that touches storage.
 
 ``gateways``
-    Third-party integrations (Supabase, Google Apps Script).
+    External systems (PostgreSQL, Azure Blob Storage, Google Apps Script).
 
 ``domain``
     Entities and pure rules. Depends on nothing.

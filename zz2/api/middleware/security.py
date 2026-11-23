@@ -13,11 +13,12 @@ that is true.
 
 Two things it now does that it could not before the frontend pass:
 
-* **No external script hosts.** The Supabase client and pdf.js were loaded from
-  jsDelivr and cdnjs; both are vendored under ``web/static/vendor/``, so
-  ``script-src`` is ``'self'`` and a compromised CDN can no longer execute here.
-* **No external connect target beyond Supabase**, which the app genuinely needs
-  for authentication and realtime.
+* **No external script hosts.** pdf.js used to load from cdnjs; it is vendored
+  under ``web/static/vendor/``, so ``script-src`` is ``'self'`` and a compromised
+  CDN can no longer execute here.
+* **No external connect target at all.** Since the move off Supabase every data,
+  authentication and presence call goes to this origin, so ``connect-src`` is
+  ``'self'`` alone.
 
 One thing it still cannot do: drop ``'unsafe-inline'`` from ``script-src``. The
 pages carry 209 inline event handlers (``onclick="..."``), most of them generated
@@ -39,17 +40,12 @@ from starlette.responses import Response
 from zz2.settings import get_settings
 
 
-def _content_security_policy(supabase_origin: str) -> str:
+def _content_security_policy() -> str:
     """Build the policy.
 
     ``connect-src`` is the directive that limits exfiltration: it is what turns a
     successful script injection into a script that cannot send anything anywhere.
-    Supabase is listed over both https and wss — the Tickets page uses Postgres
-    Changes and Presence over a websocket.
     """
-    connect = ["'self'"]
-    if supabase_origin:
-        connect.extend([supabase_origin, supabase_origin.replace("https://", "wss://")])
     return "; ".join([
         "default-src 'self'",
         # 'unsafe-inline' is required by the pages' inline event handlers. See the
@@ -60,7 +56,7 @@ def _content_security_policy(supabase_origin: str) -> str:
         "worker-src 'self' blob:",
         "img-src 'self' data: blob:",
         "font-src 'self' data:",
-        f"connect-src {' '.join(connect)}",
+        "connect-src 'self'",
         # Official legacy manuals are embedded from the ZZ2-owned Drive folder.
         # No other external frame origin is allowed.
         # Private manuals are fetched with Authorization and displayed through
@@ -80,7 +76,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: Callable[..., Awaitable[None]]) -> None:
         super().__init__(app)
         settings = get_settings()
-        supabase_origin = settings.supabase_url.rstrip("/") if settings.supabase_url else ""
 
         self._headers: dict[str, str] = {
             # Stops the browser second-guessing Content-Type. Without it an
@@ -93,13 +88,13 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "X-Frame-Options": "DENY",
 
             # Send only the origin cross-site. Ticket URLs carry identifiers that
-            # should not leak in a Referer to jsDelivr or Supabase.
+            # should not leak in a Referer to a third party.
             "Referrer-Policy": "strict-origin-when-cross-origin",
 
             # Nothing here needs a camera, microphone or geolocation.
             "Permissions-Policy": "geolocation=(), microphone=(), camera=(), payment=()",
 
-            "Content-Security-Policy": _content_security_policy(supabase_origin),
+            "Content-Security-Policy": _content_security_policy(),
             "X-ZZ2-Build": settings.build,
 
             # Isolate this origin's browsing context group from cross-origin

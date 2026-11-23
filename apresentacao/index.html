@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tech Support Platform (TSP): MVP</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --slide: #ffffff;
+    --ink: #1b1d22;
+    --muted: #5d6270;
+    --line: #e4e6eb;
+    --red: #c8102e;
+    --red-soft: #fbe9ec;
+    --green: #1a7f4b;
+    --green-soft: #e6f4ec;
+    --amber: #a8620a;
+    --amber-soft: #fdf2e1;
+    --blue: #1f5fae;
+    --blue-soft: #e8f0fa;
+    --code: #f5f6f8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); overflow: hidden;
+    font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--ink); }
+
+  #stage { position: fixed; inset: 0; display: grid; place-items: center; }
+  .deck { position: relative; width: 1280px; height: 720px; transform-origin: center center; }
+  .slide { position: absolute; inset: 0; background: var(--slide); padding: 56px 72px 64px;
+    display: none; flex-direction: column; border-radius: 6px; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,.45); }
+  .slide.active { display: flex; animation: in .35s ease; }
+  @keyframes in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .slide::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 8px; background: var(--red); }
+
+  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 26px; }
+  .crit { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--red);
+    display: inline-flex; gap: 8px; align-items: center; }
+  .crit .w { background: var(--red); color: #fff; border-radius: 4px; padding: 2px 7px; font-size: 12px; }
+  .brand { font-size: 13px; color: var(--muted); font-weight: 600; }
+  h1 { font-size: 54px; line-height: 1.05; letter-spacing: -.02em; }
+  h2 { font-size: 38px; line-height: 1.1; letter-spacing: -.015em; margin-bottom: 22px; }
+  h3 { font-size: 19px; margin-bottom: 8px; }
+  p, li { font-size: 19px; line-height: 1.45; color: var(--ink); }
+  .muted { color: var(--muted); }
+  ul { padding-left: 22px; }
+  li + li { margin-top: 7px; }
+  .lead { font-size: 23px; line-height: 1.45; color: var(--muted); max-width: 1000px; }
+  strong { color: var(--ink); }
+  .r { color: var(--red); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px; background: #fff; }
+  .card p, .card li { font-size: 17px; }
+  .card.red { background: var(--red-soft); border-color: #f2c4cc; }
+  .card.green { background: var(--green-soft); border-color: #bfe3cf; }
+  .card.amber { background: var(--amber-soft); border-color: #f1d6ab; }
+  .card.blue { background: var(--blue-soft); border-color: #c4d8f0; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    padding: 3px 8px; border-radius: 4px; margin-bottom: 10px; }
+  .tag.red { background: var(--red); color: #fff; }
+  .tag.green { background: var(--green); color: #fff; }
+  .tag.amber { background: var(--amber); color: #fff; }
+  .tag.blue { background: var(--blue); color: #fff; }
+
+  .stat { font-size: 52px; font-weight: 800; letter-spacing: -.03em; color: var(--red); line-height: 1; }
+  .stat-l { font-size: 15px; color: var(--muted); margin-top: 8px; line-height: 1.35; }
+
+  .hyp { border-left: 5px solid var(--red); background: var(--red-soft); padding: 22px 26px; border-radius: 0 10px 10px 0;
+    font-size: 24px; line-height: 1.45; }
+  .hyp b { color: var(--red); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 17px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  td .w { font-weight: 700; color: var(--red); }
+
+  .flow { display: flex; align-items: stretch; gap: 10px; }
+  .flow .step { flex: 1; border: 1px solid var(--line); border-radius: 10px; padding: 14px 14px; font-size: 15px; line-height: 1.35; }
+  .flow .step b { display: block; font-size: 13px; color: var(--red); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+  .flow .arrow { align-self: center; color: var(--red); font-size: 22px; font-weight: 700; }
+
+  .layers { display: flex; flex-direction: column; gap: 8px; }
+  .layer { display: grid; grid-template-columns: 170px 1fr; align-items: center; border-radius: 8px; padding: 10px 16px;
+    background: var(--code); border: 1px solid var(--line); font-size: 16px; }
+  .layer code { font-weight: 700; color: var(--red); font-size: 16px; }
+
+  code { font-family: "JetBrains Mono", ui-monospace, Menlo, monospace; font-size: .9em; background: var(--code);
+    padding: 1px 6px; border-radius: 4px; }
+  .demo li { font-size: 18px; }
+  .demo li::marker { color: var(--red); font-weight: 700; }
+
+  .timeline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; position: relative; }
+  .timeline .card { border-top: 5px solid var(--red); }
+  .timeline .card:nth-child(2) { border-top-color: var(--amber); }
+  .timeline .card:nth-child(3) { border-top-color: var(--blue); }
+
+  .cover { justify-content: center; background:
+    radial-gradient(1000px 500px at 100% 100%, var(--red-soft), transparent 60%), #fff; }
+  .cover .kicker { font-size: 15px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--red); margin-bottom: 18px; }
+  .cover .sub { font-size: 26px; color: var(--muted); margin-top: 18px; max-width: 900px; line-height: 1.4; }
+  .cover .meta { margin-top: 48px; font-size: 17px; color: var(--muted); }
+  .logo { position: absolute; right: 72px; top: 56px; height: 54px; }
+
+  .foot { position: absolute; left: 72px; right: 72px; bottom: 22px; display: flex; justify-content: space-between;
+    font-size: 12px; color: #9aa0ab; }
+  .spacer { flex: 1; }
+
+  /* controles */
+  #progress { position: fixed; left: 0; bottom: 0; height: 4px; background: var(--red); transition: width .3s; z-index: 5; }
+  #nav { position: fixed; right: 16px; bottom: 14px; display: flex; gap: 8px; z-index: 5; }
+  #nav button { background: rgba(255,255,255,.12); color: #fff; border: 0; border-radius: 6px; width: 38px; height: 34px;
+    font-size: 16px; cursor: pointer; }
+  #nav button:hover { background: rgba(255,255,255,.25); }
+  #help { position: fixed; left: 16px; bottom: 14px; color: rgba(255,255,255,.45); font-size: 12px; z-index: 5; }
+  @media print {
+    html, body { overflow: visible; background: #fff; }
+    #stage { position: static; display: block; }
+    .deck { transform: none !important; width: 1280px; height: auto; }
+    .slide { display: flex !important; position: relative; height: 720px; page-break-after: always; box-shadow: none; border-radius: 0; animation: none; }
+    #nav, #help, #progress { display: none; }
+    @page { size: 1280px 720px; margin: 0; }
+  }
+</style>
+</head>
+<body>
+<div id="stage"><div class="deck" id="deck">
+
+<!-- 1. CAPA -->
+<section class="slide cover">
+  <div class="kicker">Engenharia de Software · Projeto MVP</div>
+  <h1>Tech Support Platform (TSP)</h1>
+  <div class="sub">Diagnóstico guiado e chamados de suporte para kits de <strong>CarPlay / Android Auto</strong>, em um único lugar.</div>
+  <div class="meta">Henrique Ribeiro de Souza e Leonardo<br>Universidade Presbiteriana Mackenzie · 2026<br>
+    <span style="font-size:15px">github.com/HenriqueRSouza/zz2-tech-platform</span></div>
+</section>
+
+<!-- 2. ROTEIRO = CRITÉRIOS -->
+<section class="slide">
+  <div class="top"><span class="crit">Roteiro</span><span class="brand">TSP · Tech Support Platform</span></div>
+  <h2>A apresentação segue os critérios de avaliação</h2>
+  <table>
+    <thead><tr><th>Peso</th><th>Critério</th><th>Onde é respondido</th></tr></thead>
+    <tbody>
+      <tr><td class="w">0/1</td><td>É um MVP?</td><td>Escopo mínimo: o que entrou e o que ficou de fora</td></tr>
+      <tr><td class="w">1</td><td>Definição do problema do usuário</td><td>Técnico de suporte e a rotina atual</td></tr>
+      <tr><td class="w">1</td><td>Definição de hipótese de valor</td><td>Hipótese + métricas que a validam</td></tr>
+      <tr><td class="w">1</td><td>Aderência aos conceitos de MVP</td><td>Construir → Medir → Aprender</td></tr>
+      <tr><td class="w">2</td><td>Valor agregado imediato</td><td>O que o técnico ganha no primeiro dia</td></tr>
+      <tr><td class="w">2</td><td>Funcionamento</td><td>Arquitetura, fluxo do chamado, 693 testes passando</td></tr>
+      <tr><td class="w">2</td><td>Clareza na demonstração do conceito</td><td>Demonstração ao vivo com dados de demonstração, roteiro de 5 passos</td></tr>
+      <tr><td class="w">1</td><td>Visão de futuro</td><td>Roadmap em três horizontes</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 3. PROBLEMA -->
+<section class="slide">
+  <div class="top"><span class="crit"><span class="w">1</span> Definição do problema do usuário</span><span class="brand">TSP · Tech Support Platform</span></div>
+  <h2>O técnico de suporte resolve problemas de memória</h2>
+  <p class="lead" style="margin-bottom:24px">A ZZ2 vende kits que adicionam CarPlay e Android Auto a centrais multimídia de fábrica. São <strong>70 modelos de kit</strong>, cada um com chicote, DIP-switches e manual próprios. Quando um instalador ou cliente liga com problema:</p>
+  <div class="grid2">
+    <div class="card red">
+      <span class="tag red">Dores</span>
+      <ul>
+        <li>Diagnóstico depende de quem atende, sem roteiro padrão</li>
+        <li>Manuais em PDF e diagramas espalhados em pastas</li>
+        <li>Chamado digitado direto numa planilha Google, com grafias diferentes para o mesmo defeito</li>
+        <li>Sem histórico de compras e devoluções do cliente ao lado do chamado</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="tag amber">Contexto técnico</span>
+      <ul>
+        <li>Ferramenta antiga: um único <code>server.py</code> de <strong>5.475 linhas</strong> em Python 2.7</li>
+        <li>Rodava num NAS da rede local, sem acesso externo</li>
+        <li>Salvar um chamado travava vários segundos esperando a planilha</li>
+        <li>18 falhas de segurança catalogadas (tokens na URL, CORS aberto, XSS em upload…)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 4. PERSONA / JORNADA -->
+<section class="slide">
+  <div class="top"><span class="crit"><span class="w">1</span> Definição do problema do usuário</span><span class="brand">TSP · Tech Support Platform</span></div>
+  <h2>Quem é o usuário e como é a jornada hoje</h2>
+  <div class="grid2" style="grid-template-columns: 1fr 1.6fr">
+    <div class="card blue">
+      <span class="tag blue">Persona</span>
+      <h3>Técnico de suporte ZZ2</h3>
+      <p>Atende instaladores e clientes finais por telefone e WhatsApp. Precisa identificar o kit, achar o defeito, orientar o teste e registrar o atendimento, tudo durante a ligação.</p>
+      <p class="muted" style="margin-top:12px;font-size:16px">Usuários secundários: líder de suporte (métricas da equipe) e engenharia de produto (quais kits mais dão problema).</p>
+    </div>
+    <div>
+      <div class="flow" style="margin-bottom:14px">
+        <div class="step"><b>1 · Identificar</b>Qual kit? Qual carro?</div><div class="arrow">→</div>
+        <div class="step"><b>2 · Diagnosticar</b>Perguntas de cabeça, procurar o PDF</div><div class="arrow">→</div>
+        <div class="step"><b>3 · Registrar</b>Digitar na planilha, esperar salvar</div><div class="arrow">→</div>
+        <div class="step"><b>4 · Analisar</b>Contar à mão o que se repete</div>
+      </div>
+      <div class="card red">
+        <p><strong>Resultado:</strong> atendimento lento e desigual entre técnicos, retrabalho quando o mesmo cliente volta, e dados de defeito que ninguém consegue somar porque “sem áudio”, “Sem Audio” e “s/ som” são três categorias diferentes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. HIPÓTESE -->
+<section class="slide">
+  <div class="top"><span class="crit"><span class="w">1</span> Definição de hipótese de valor</span><span class="brand">TSP · Tech Support Platform</span></div>
+  <h2>Hipótese de valor</h2>
+  <div class="hyp">Acreditamos que, se o técnico tiver <b>um roteiro de diagnóstico por kit</b>, o <b>manual e o diagrama à mão</b> e o <b>chamado com o histórico do cliente</b> numa só tela, o atendimento fica <b>mais rápido e padronizado</b>, e os dados de defeito passam a servir para decisão.</div>
+  <h3 style="margin-top:28px">Como vamos saber se é verdade</h3>
+  <div class="grid4" style="margin-top:8px">
+    <div class="card"><p><strong>Tempo por chamado</strong><br><span class="muted">abertura → resolução, antes e depois</span></p></div>
+    <div class="card"><p><strong>Adoção</strong><br><span class="muted">% de chamados abertos pela ferramenta e não direto na planilha</span></p></div>
+    <div class="card"><p><strong>Resolução no 1º contato</strong><br><span class="muted">chamados que não reabrem para o mesmo cliente</span></p></div>
+    <div class="card"><p><strong>Kits problemáticos</strong><br><span class="muted">“trouble score” por kit, a partir das categorias consolidadas</span></p></div>
+  </div>
+  <p class="muted" style="margin-top:18px;font-size:16px">As métricas já são coletadas pela própria plataforma (página Analytics e contadores por técnico): a medição faz parte do produto.</p>
+</section>
+
+<!-- 6. É UM MVP? -->
+<section class="slide">
+  <div class="top"><span class="crit"><span class="w">0/1</span> É um MVP?</span><span class="brand">TSP · Tech Support Platform</span></div>
+  <h2>Sim: o mínimo que entrega o ciclo completo do atendimento</h2>
+  <div class="grid2">
+    <div class="card green">
+      <span class="tag green">Dentro do MVP</span>
+      <ul>
+        <li>Login e permissões por papel (técnico, líder, admin)</li>
+        <li>Ferramenta de diagnóstico com árvore por kit</li>
+        <li>Manuais PDF e diagramas de ligação / DIP-switch</li>
+        <li>Abrir, editar e buscar chamados</li>
+        <li>Histórico de compras e devoluções do cliente</li>
+        <li>Analytics básico: tendência, kits, técnicos</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="tag amber">Fora, de propósito</span>
+      <ul>
+        <li><strong>Integração obrigatória com a planilha:</strong> ela sincroniza quando configurada; sem ela, o Supabase é a fonte única</li>
+        <li><strong>Build de frontend / SPA:</strong> JavaScript puro, mudança = editar e recarregar</li>
+        <li><strong>Banco relacional para tudo:</strong> JSON em disco atrás de repositórios; trocar depois não muda os serviços</li>
+        <li>App mobile, portal do cliente, IA</li>
+      </ul>
+    </div>
+  </div>
+  <p class="muted" style="margin-top:18px;font-size:16px">Critério de corte: entra só o que o técnico precisa durante uma ligação, ou o que é necessário para medir a hipótese.</p>
+</section>
+
+<!-- 7. ADERÊNCIA -->
+<section class="slide">
+  <div class="top"><span class="crit"><span class="w">1</span> Aderência aos conceitos de MVP</span><span class="brand">TSP · Tech Support Platform</span></div>
+  <h2>Construir → Medir → Aprender</h2>
+  <div class="grid3">
+    <div class="card">
+      <span class="tag red">Construir</span>
+      <p>Menor esforço que valida a hipótese: reaproveitou o comportamento da ferramenta legada, provado em uso, e reorganizou em camadas para poder evoluir.</p>
+    </div>
+    <div class="card">
+      <span class="tag amber">Medir</span>
+      <p>Analytics nativo: chamados por período, “trouble score” por kit, produtividade por técnico. As grafias diferentes são consolidadas para os números fazerem sentido.</p>
+    </div>
+    <div class="card">
+      <span class="tag blue">Aprender</span>
+      <p>A árvore de diagnóstico é editável na própria ferramenta (Kit Editor): o que se aprende num atendimento vira passo padrão para o próximo.</p>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:22px">
+    <div class="card"><h3>Usuário real, ambiente real</h3><p>Usado pelos técnicos da ZZ2 com o catálogo real de 70 kits, não é protótipo de tela.</p></div>
+    <div class="card"><h3>Mudança barata</h3><p>Camadas independentes, deploy com rollback automático e testes em CI: pivotar uma decisão custa pouco.</p></div>
+  </div>
+</section>
+
+<!-- 8. VALOR IMEDIATO -->
+<section class="slide">
+  <div class="top"><span class="crit"><span class="w">2</span> Valor agregado imediato</span><span class="brand">TSP · Tech Support Platform</span></div>
+  <h2>O que o técnico ganha no primeiro dia</h2>
+  <div class="grid4" style="margin-bottom:26px">
+    <div><div class="stat">70</div><div class="stat-l">kits com diagrama, DIP-switch e manual a um clique</div></div>
+    <div><div class="stat">19</div><div class="stat-l">sintomas na árvore padrão de diagnóstico, com passos de teste</div></div>
+    <div><div class="stat">0 s</div><div class="stat-l">de espera ao salvar: o número sai na hora; integrações correm em segundo plano</div></div>
+    <div><div class="stat">1</div><div class="stat-l">tela com chamado + histórico de compras e devoluções do cliente</div></div>
+  </div>
+  <div class="grid3">
+    <div class="card green"><h3>Para o técnico</h3><p>Roteiro guiado (“Tela preta? Sempre ou só ao trocar de entrada?”) e os passos exatos para pedir ao instalador.</p></div>
+    <div class="card green"><h3>Para o líder</h3><p>Painel com volume de chamados, tempo e produtividade, sem montar relatório na mão.</p></div>
+    <div class="card green"><h3>Para a empresa</h3><p>Acesso seguro fora da rede local (VPS + HTTPS) e dados que não se perdem: fila durável e backup noturno.</p></div>
+  </div>
+</section>
+
+<!-- 9. FUNCIONAMENTO: ARQUITETURA -->
+<section class="slide">
+  <div class="top"><span class="crit"><span class="w">2</span> Funcionamento</span><span class="brand">TSP · Tech Support Platform</span></div>
+  <h2>Arquitetura em camadas</h2>
+  <div class="grid2" style="grid-template-columns: 1.25fr 1fr">
+    <div class="layers">
+      <div class="layer"><code>api/</code><span>HTTP, rotas, autorização, rate limit, sem regra de negócio</span></div>
+      <div class="layer"><code>services/</code><span>Regras de negócio: chamados, analytics, kits, usuários</span></div>
+      <div class="layer"><code>repositories/</code><span>Única camada que toca armazenamento</span></div>
+      <div class="layer"><code>gateways/</code><span>Supabase (Auth, Postgres, Storage) e Google Apps Script</span></div>
+      <div class="layer"><code>domain/</code><span>Entidades e permissões (funções puras)</span></div>
+      <div class="layer"><code>workers/</code><span>Fila da planilha (opcional), backup e auto-resolução</span></div>
+    </div>
+    <div>
+      <table>
+        <tr><th colspan="2">Stack</th></tr>
+        <tr><td>Backend</td><td>Python 3.11 · FastAPI · gunicorn</td></tr>
+        <tr><td>Identidade</td><td>Supabase Auth (JWT)</td></tr>
+        <tr><td>Dados</td><td>Supabase Postgres (chamados, histórico de clientes) + Storage privado para PDFs</td></tr>
+        <tr><td>Frontend</td><td>JavaScript puro, 8 páginas, sem build</td></tr>
+        <tr><td>Infra</td><td>VPS · nginx · Let’s Encrypt · systemd ou Docker</td></tr>
+      </table>
+      <p class="muted" style="font-size:15px;margin-top:14px">Padrões aplicados onde resolviam um problema concreto: Repository, Service Layer, Injeção de Dependência, Gateway, Observer, Command Queue, Strategy.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 10. FUNCIONAMENTO: FLUXO + QUALIDADE -->
+<section class="slide">
+  <div class="top"><span class="crit"><span class="w">2</span> Funcionamento</span><span class="brand">TSP · Tech Support Platform</span></div>
+  <h2>Salvar um chamado: rápido e sem perder dados</h2>
+  <div class="flow" style="margin-bottom:26px">
+    <div class="step"><b>1 · Valida</b>Login, permissão, limite de requisições e formato</div><div class="arrow">→</div>
+    <div class="step"><b>2 · Numera</b>Reserva o próximo número do chamado</div><div class="arrow">→</div>
+    <div class="step"><b>3 · Grava</b>Supabase, fonte da verdade (síncrono)</div><div class="arrow">→</div>
+    <div class="step"><b>4 · Enfileira</b>Se a planilha estiver ligada, fila durável em disco</div><div class="arrow">→</div>
+    <div class="step"><b>5 · Responde</b>201 na hora, com o número do chamado</div>
+  </div>
+  <div class="grid4">
+    <div class="card"><div class="stat" style="font-size:42px">693</div><div class="stat-l">testes automatizados passando (~7 s)</div></div>
+    <div class="card"><div class="stat" style="font-size:42px">409</div><div class="stat-l">verificações de paridade com o sistema antigo no analytics</div></div>
+    <div class="card"><div class="stat" style="font-size:42px">18</div><div class="stat-l">vulnerabilidades do legado corrigidas, cada uma com teste</div></div>
+    <div class="card"><div class="stat" style="font-size:42px">CI</div><div class="stat-l">lint + testes a cada push; deploy reverte sozinho se o health check falhar</div></div>
+  </div>
+</section>
+
+<!-- 11. DEMONSTRAÇÃO -->
+<section class="slide">
+  <div class="top"><span class="crit"><span class="w">2</span> Clareza na demonstração do conceito</span><span class="brand">TSP · Tech Support Platform</span></div>
+  <h2>Demonstração: um atendimento do início ao fim</h2>
+  <div class="grid2" style="grid-template-columns: 1.45fr 1fr">
+    <ol class="demo" style="padding-left:26px">
+      <li><strong>Login</strong> no Supabase Auth: o menu mostra só o que o papel permite.</li>
+      <li><strong>Diagnóstico:</strong> kit <code>ITZ-NTG4</code> → “No power / black screen” → “Black screen after switching” → passos de teste, diagrama de DIP-switch e manual.</li>
+      <li><strong>Cliente:</strong> escolher <em>Auto Center Paulista Ltda</em>: o formulário alerta: 27% de devolução no mês.</li>
+      <li><strong>Salvar:</strong> número na hora, aparece em “Hoje” e já está no Supabase (Table Editor).</li>
+      <li><strong>Analytics:</strong> 6 meses de volume crescente; <code>ITZ-CCC</code> e <code>ITZ-LR15-A</code> no topo do trouble score; “MULTISOM” e “som e cia” consolidados.</li>
+    </ol>
+    <div class="card blue">
+      <span class="tag blue">O que observar</span>
+      <ul>
+        <li>Tudo numa ferramenta, sem trocar de janela</li>
+        <li>Mesmo roteiro para qualquer técnico</li>
+        <li>O histórico do cliente muda a conversa</li>
+        <li>O dado do atendimento vira métrica</li>
+      </ul>
+      <p class="muted" style="font-size:14px;margin-top:14px">Dados de demonstração: 320 chamados (<code>scripts/seed_demo_tickets.py</code>) e 12 clientes (<code>sql/demo_customers.sql</code>), marcados e removíveis com um comando.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 12. VISÃO DE FUTURO -->
+<section class="slide">
+  <div class="top"><span class="crit"><span class="w">1</span> Visão de futuro</span><span class="brand">TSP · Tech Support Platform</span></div>
+  <h2>Para onde o produto vai</h2>
+  <div class="timeline">
+    <div class="card">
+      <span class="tag red">Curto prazo</span>
+      <h3>Consolidar</h3>
+      <ul>
+        <li>Medir a linha de base das métricas da hipótese</li>
+        <li>Tokens em cookie <code>httpOnly</code> e CSP sem <code>unsafe-inline</code></li>
+        <li>Rate limit compartilhado (Redis)</li>
+        <li>Upload de mídia sem base64</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="tag amber">Médio prazo</span>
+      <h3>Substituir</h3>
+      <ul>
+        <li>Aposentar a planilha Google de vez, pois o MVP já opera sem ela</li>
+        <li>Histórico de clientes direto do ERP (Zoho), em tempo real</li>
+        <li>Migrar o JSON em disco para Postgres (só repositórios mudam)</li>
+        <li>Versão mobile / PWA para o técnico em campo</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="tag blue">Longo prazo</span>
+      <h3>Expandir</h3>
+      <ul>
+        <li>Sugerir o diagnóstico mais provável a partir dos chamados resolvidos (IA)</li>
+        <li>Portal de autoatendimento para instaladores</li>
+        <li>Relatório de defeitos por kit para engenharia e fornecedores</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 13. ENCERRAMENTO -->
+<section class="slide cover">
+  <div class="kicker">Resumo</div>
+  <h1>Do conhecimento na cabeça<br>ao <span class="r">atendimento guiado</span>.</h1>
+  <div class="sub">Um problema real, uma hipótese mensurável, um MVP funcionando com 70 kits e 693 testes, e um caminho claro para evoluir.</div>
+  <div class="meta" style="font-size:22px;color:var(--ink);font-weight:700">Obrigado! Perguntas?</div>
+</section>
+
+</div></div>
+
+<div id="progress"></div>
+<div id="help">← → navegar · F tela cheia · Ctrl+P exportar PDF</div>
+<div id="nav"><button id="prev" aria-label="Anterior">‹</button><button id="next" aria-label="Próximo">›</button></div>
+
+<script>
+  const slides = [...document.querySelectorAll('.slide')];
+  const deck = document.getElementById('deck');
+  let i = 0;
+
+  slides.forEach((s, n) => {
+    if (s.classList.contains('cover')) return;
+    const f = document.createElement('div');
+    f.className = 'foot';
+    f.innerHTML = '<span>Tech Support Platform (TSP) · Projeto MVP</span><span>' + (n + 1) + ' / ' + slides.length + '</span>';
+    s.appendChild(f);
+  });
+
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((s, k) => s.classList.toggle('active', k === i));
+    document.getElementById('progress').style.width = ((i + 1) / slides.length * 100) + '%';
+    history.replaceState(null, '', '#' + (i + 1));
+  }
+  function fit() {
+    const s = Math.min(innerWidth / 1280, innerHeight / 720) * 0.96;
+    deck.style.transform = 'scale(' + s + ')';
+  }
+  addEventListener('resize', fit);
+  addEventListener('keydown', e => {
+    if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); show(i + 1); }
+    else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key.toLowerCase() === 'f') {
+      document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    }
+  });
+  document.getElementById('prev').onclick = () => show(i - 1);
+  document.getElementById('next').onclick = () => show(i + 1);
+  let tx = null;
+  addEventListener('touchstart', e => tx = e.touches[0].clientX);
+  addEventListener('touchend', e => {
+    if (tx === null) return;
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) show(i + (dx < 0 ? 1 : -1));
+    tx = null;
+  });
+
+  fit();
+  show((parseInt(location.hash.slice(1), 10) || 1) - 1);
+</script>
+</body>
+</html>

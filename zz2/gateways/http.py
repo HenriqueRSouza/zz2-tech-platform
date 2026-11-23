@@ -12,7 +12,7 @@ gain on a workload where the concurrency limit is disk, not sockets. Sync
 throughout keeps one execution model.
 
 Timeouts are mandatory and explicit. ``urllib2.urlopen`` without a timeout —
-which the monolith used for the Supabase auth check — blocks forever if the peer
+which the monolith used for its upstream auth check — blocks forever if the peer
 stops responding, and every request thread that touches it blocks with it. A slow
 upstream must degrade to an error, not to a hung server.
 """
@@ -23,15 +23,12 @@ import threading
 
 import httpx
 
-from zz2.settings import get_settings
-
 USER_AGENT = "ZZ2Server/2.0"
 """Deliberately not browser-like.
 
-Supabase's secret-key gateway rejects a request whose ``User-Agent`` looks like a
-browser ("Forbidden use of secret API key in browser") as a safety net against a
-leaked service key being used client-side. That protection only works if genuine
-server traffic identifies itself honestly, so this must never be dressed up as
+Server traffic identifies itself honestly: some upstream gateways reject
+secret-keyed requests whose ``User-Agent`` looks like a browser, as a safety net
+against a leaked key being used client-side. This must never be dressed up as
 Mozilla the way the monolith's Apps Script calls were.
 """
 
@@ -67,8 +64,3 @@ def close_client() -> None:
             _client.close()
             _client = None
 
-
-def is_configured() -> bool:
-    """Whether Supabase credentials are present at all."""
-    settings = get_settings()
-    return bool(settings.supabase_url and settings.supabase_service_key.get_secret_value())

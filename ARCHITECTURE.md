@@ -69,6 +69,7 @@ cannot be reused by a worker.
 |---|---|
 | `permissions.py` | The permission catalogue, `Role`, `Principal`, and the hierarchy rules. Pure functions — no I/O — which is what makes the escalation guards testable in isolation. |
 | `models.py` | `Ticket`, `Kit`, `TroubleshootingNode`, `Blueprint`, `WriteOperation`, and the mapping between their local / API / Supabase representations. |
+| `troubleshooting.py` | `TroubleshootingSession` and `SessionOutcome`: one technician walking one kit's tree. |
 
 ### `repositories/` — persistence
 
@@ -80,6 +81,7 @@ cannot be reused by a worker.
 | `roles.py` | Role definitions, with the built-in roles repaired on every read. |
 | `write_queue.py` | The durable write queue and the dead-letter store. |
 | `stats.py`, `drafts.py`, `kit_history.py` | Counters, per-user drafts, kit snapshots. |
+| `troubleshooting_sessions.py` | Executed sessions, behind one interface with two stores: the Supabase table or a local JSON document. |
 
 ### `gateways/` — third parties
 
@@ -94,7 +96,10 @@ cannot be reused by a worker.
 
 | Module | Responsibility |
 |---|---|
-| `auth.py` | Access token → `Principal`. Local JWT verification, or remote as a fallback. |
+| `auth.py` | Access token → `Principal`. Local JWT verification, remote as a fallback, or this server's own SAML session tokens. |
+| `saml.py`, `sso.py`, `session_tokens.py` | SAML SP for Entra ID (request, response validation), authorization of the SAML identity, and the revocable session it receives. |
+| `lockout.py` | Brute-force guard: blocks addresses presenting many distinct rejected credentials. |
+| `troubleshooting_sessions.py` | Record, amend, list and aggregate executed troubleshooting sessions. |
 | `tickets.py` | Create, edit, discard, search, history. Owns the write-behind ordering. |
 | `analytics.py` | The three-tier view: store → consolidated view → served payload. |
 | `normalization.py` | Label consolidation. Pure, and parity-tested against the monolith. |
@@ -118,6 +123,7 @@ cannot be reused by a worker.
 | `middleware/security.py` | Response hardening headers and the CSP. |
 | `middleware/request_context.py` | Request id, body cap, access log. |
 | `middleware/rate_limit.py` | Per-client read and write budgets. |
+| `middleware/auth_guard.py` | Applies the brute-force lockout to every request. |
 | `routers/*.py` | One router per domain, plus `pages.py` (static) and `compat.py` (the monolith's URL scheme). |
 
 ### `workers/` — background loops

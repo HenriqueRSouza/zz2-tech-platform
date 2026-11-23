@@ -1,4 +1,4 @@
-# ZZ2 Tech Support Platform
+# Tech Support Platform (TSP)
 
 Internal web app for CarPlay / Android Auto kit diagnostics and support
 ticketing. Technicians work through per-kit troubleshooting trees, raise and edit
@@ -37,8 +37,16 @@ write-behind queue that keeps a legacy Google Sheet in step.
 **Analytics.** Ticket trends, kit trouble scores and technician throughput, over a
 consolidated view that merges the spelling variants humans typed into the sheet.
 
-**Authorization.** Supabase Auth for identity, plus a two-axis model here:
-permissions gate features, rank gates who you may act upon.
+**Troubleshooting sessions.** Every "Apply to ticket" records the path the
+technician walked through a kit's tree, the steps carried out and — once the
+ticket is saved — the outcome. `GET /api/troubleshooting/stats` answers "for this
+kit, which path resolves the problem and which never does". Stored in Supabase
+(`sql/troubleshooting_sessions.sql`) or, without a service key, locally.
+
+**Authorization.** Supabase Auth for identity — or the university's Microsoft
+account through SAML ([`docs/SAML_AZURE.md`](docs/SAML_AZURE.md)) — plus a
+two-axis model here: permissions gate features, rank gates who you may act upon.
+Addresses that keep presenting bad credentials are locked out.
 
 ---
 
@@ -277,3 +285,5 @@ generator and delete it.
 | [`SECURITY.md`](SECURITY.md) | Threat model, what was fixed, what is still open, deployment checklist |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Layers, module map, the patterns and what each one bought |
 | [`RUNBOOK.md`](RUNBOOK.md) | Operations: deploy, restart, restore, add a user, triage |
+| [`docs/SAML_AZURE.md`](docs/SAML_AZURE.md) | University sign-in: Entra ID setup, configuration, security checks |
+| [`docs/TROUBLESHOOTING_API.md`](docs/TROUBLESHOOTING_API.md) | Troubleshooting sessions API |

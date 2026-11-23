@@ -6,15 +6,6 @@
       // localhost/whatever host in local dev), so no hardcoded IP is needed.
       const SERVER_URL = window.location.origin;
       const API_URL    = SERVER_URL + '/api/proxy';
-      // Realtime signaling only (presence + broadcast on ephemeral per-ticket
-      // channels) -- ticket data itself never touches this project. RLS on the
-      // real data tables in this project blocks this key (see the server-side
-      // customer-history proxy), and channels here carry no ticket content
-      // anyway, only names/ids/"reload" nudges.
-      const SUPABASE_URL             = 'https://sctzhnojdcnquwmafyxo.supabase.co';
-      const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_6Usj8W8jWS2dPp5j8eZBRA_0XPaE6oT';
-      const _sb = (window.supabase && window.supabase.createClient)
-        ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY) : null;
       // The Apps Script URL + secret key stay on the server. Every ticket call is
       // routed through the authenticated /api/proxy so the key never reaches the
       // browser.
@@ -425,15 +416,22 @@
       let _ticketSaveAfterAutoCreate = false;
       let _ticketFormGeneration = 0;
 
-      // ── Realtime collaboration state (Supabase presence/broadcast) ─────────
-      let _ticketChannel      = null;   // current per-ticket Supabase Realtime channel, or null
-      let _ticketChannelNum   = null;   // ticketNum (string) the channel above is joined to
-      let _channelWasDown     = false;  // true while reconnecting after CHANNEL_ERROR/TIMED_OUT
+      // ── Live collaboration state (backend presence endpoint, polled) ───────
+      // POST /api/presence/tickets/<num> is the heartbeat: it registers this tab
+      // as a viewer (expires after 30 s without one) and returns the current
+      // viewers plus "ticket_updated"/"ticket_deleted" events other tabs posted.
+      const PRESENCE_INTERVAL_MS = 10000;
+      let _ticketPresenceNum   = null;   // ticketNum (string) this tab is heartbeating, or null
+      let _ticketPresenceTimer = null;   // setInterval handle for the heartbeat
+      let _ticketViewers       = [];     // other viewers from the last heartbeat
+      let _presenceWasDown     = false;  // true after a failed heartbeat, until one succeeds
+      let _presenceSeenEvents  = {};     // event key -> true, so a re-delivered event fires once
       let _ticketDirty        = false;  // true once the open ticket has unsaved local edits
       let _pendingRemoteTicket = null;  // latest server copy, held until the user confirms reload
       const _rtClientId = 'c_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
 
       window.addEventListener('beforeunload', function () { _leaveTicketChannel(); });
+      window.addEventListener('pagehide', function () { _leaveTicketChannel(); });
 
       function _ticketFormPayload() {
         return {
@@ -471,7 +469,7 @@
         payload.action = 'newticket';
         _ticketAutoCreating = true;
         var msg = document.getElementById('ticket-msg');
-        if (msg) msg.textContent = 'Creating ticket in Supabase...';
+        if (msg) msg.textContent = 'Creating ticket...';
         proxyPost(payload)
         .then(function(r) { return r.json(); })
         .then(function(d) {
@@ -505,7 +503,8 @@
           _clearDraft();
           _ticketDirty = false;
           _joinTicketChannel(d.ticketNum);
-          if (msg) msg.textContent = 'Ticket ' + _fmtTicketNum(d.ticketNum) + ' created in Supabase.';
+          _tsLinkTicket(d.ticketNum, '');
+          if (msg) msg.textContent = 'Ticket ' + _fmtTicketNum(d.ticketNum) + ' created.';
           if (_ticketSaveAfterAutoCreate) {
             _ticketSaveAfterAutoCreate = false;
             ticketSave();
@@ -525,63 +524,107 @@
         });
       })();
 
-      function _joinTicketChannel(ticketNum) {
-        if (!_sb || !ticketNum) return;
-        var key = String(ticketNum);
-        if (_ticketChannelNum === key && _ticketChannel) return;   // already on this ticket's channel
-        _leaveTicketChannel();
-        var ch = _sb.channel('ticket:' + key, {
-          config: { broadcast: { self: false }, presence: { key: _rtClientId } }
-        });
-        ch.on('presence', { event: 'sync' }, function () { _renderTicketPresence(); });
-        ch.on('broadcast', { event: 'ticket_updated' }, function (m) { _onRemoteTicketUpdated(m.payload); });
-        ch.on('broadcast', { event: 'ticket_deleted' }, function (m) { _onRemoteTicketDeleted(m.payload); });
-        ch.subscribe(function (status) { _onTicketChannelStatus(status, key); });
-        _ticketChannel = ch;
-        _ticketChannelNum = key;
+      function _presenceUrl(ticketNum) {
+        return SERVER_URL + '/api/presence/tickets/' + encodeURIComponent(ticketNum);
       }
 
+      function _joinTicketChannel(ticketNum) {
+        if (!ticketNum) return;
+        var key = String(ticketNum);
+        if (_ticketPresenceNum === key) return;   // already heartbeating this ticket
+        _leaveTicketChannel();
+        _ticketPresenceNum = key;
+        _presenceSeenEvents = {};
+        _presenceHeartbeat(key);
+        _ticketPresenceTimer = setInterval(function () { _presenceHeartbeat(key); }, PRESENCE_INTERVAL_MS);
+      }
+
+      // Leave on ticket change and on unload. sendBeacon cannot send DELETE or an
+      // Authorization header, so this is a keepalive fetch, which the browser
+      // completes even while the page is going away. If it never lands, the
+      // server drops this viewer 30 s after the last heartbeat anyway.
       function _leaveTicketChannel() {
-        if (_ticketChannel) {
-          try { _ticketChannel.untrack(); } catch (e) {}
-          try { _sb && _sb.removeChannel(_ticketChannel); } catch (e) {}
+        var key = _ticketPresenceNum;
+        if (_ticketPresenceTimer) clearInterval(_ticketPresenceTimer);
+        _ticketPresenceTimer = null;
+        _ticketPresenceNum = null;
+        _ticketViewers = [];
+        _presenceWasDown = false;
+        if (key) {
+          var url = _presenceUrl(key) + '?client_id=' + encodeURIComponent(_rtClientId);
+          var opts = { method: 'DELETE', headers: _proxyHeaders() };
+          try {
+            fetch(url, Object.assign({ keepalive: true }, opts)).catch(function () {});
+          } catch (e) {
+            try { fetch(url, opts).catch(function () {}); } catch (e2) {}
+          }
         }
-        _ticketChannel = null;
-        _ticketChannelNum = null;
-        _channelWasDown = false;
         _renderTicketPresence();
       }
 
-      function _onTicketChannelStatus(status, ticketNum) {
-        if (!_ticketChannel || _ticketChannelNum !== ticketNum) return;  // callback from a channel already left
-        if (status === 'SUBSCRIBED') {
-          try {
-            _ticketChannel.track({ name: _authDisplay || 'Unknown', role: _authRole || '', clientId: _rtClientId, ts: Date.now() });
-          } catch (e) {}
-          if (_channelWasDown) {
-            _channelWasDown = false;
-            _handleActiveTicketChangedRemotely({ ticketNum: ticketNum, by: '' });
+      function _presenceHeartbeat(key) {
+        if (_ticketPresenceNum !== key) return;
+        fetch(_presenceUrl(key), {
+          method: 'POST', cache: 'no-store',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, _proxyHeaders()),
+          body: JSON.stringify({ client_id: _rtClientId, name: _authDisplay || 'Unknown' })
+        })
+        .then(function (r) {
+          if (!r.ok) throw new Error('presence HTTP ' + r.status);
+          return r.json();
+        })
+        .then(function (d) {
+          if (_ticketPresenceNum !== key) return;   // left this ticket while the request was in flight
+          if (_presenceWasDown) {
+            // Back after an outage: anything may have changed meanwhile.
+            _presenceWasDown = false;
+            _handleActiveTicketChangedRemotely({ ticketNum: key, by: '' });
             loadTodayTickets(true);
           }
-        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          _channelWasDown = true;
-          setTimeout(function () {
-            if (_ticketChannelNum === ticketNum) _joinTicketChannel(ticketNum);   // single retry, only if still relevant
-          }, 4000);
-        }
+          _ticketViewers = ((d && d.viewers) || []).filter(function (v) {
+            return v && v.client_id !== _rtClientId && v.name;
+          });
+          _renderTicketPresence();
+          ((d && d.events) || []).forEach(function (ev) { _onPresenceEvent(ev); });
+        })
+        .catch(function () {
+          if (_ticketPresenceNum === key) _presenceWasDown = true;
+        });
+      }
+
+      function _onPresenceEvent(ev) {
+        if (!ev || ev.client_id === _rtClientId) return;
+        var payload = ev.payload || {};
+        var id = ev.id != null ? String(ev.id)
+          : [ev.client_id || '', ev.type || '', payload.ts || ev.ts || ev.at || ''].join('|');
+        if (_presenceSeenEvents[id]) return;
+        _presenceSeenEvents[id] = true;
+        if (ev.type === 'ticket_updated') _onRemoteTicketUpdated(payload);
+        else if (ev.type === 'ticket_deleted') _onRemoteTicketDeleted(payload);
+      }
+
+      // Tell the other viewers of the current ticket that it changed. Best-effort:
+      // they also notice on their next reload.
+      function _presenceSend(type, payload) {
+        var key = _ticketPresenceNum;
+        if (!key) return;
+        try {
+          fetch(_presenceUrl(key) + '/events', {
+            method: 'POST', keepalive: true,
+            headers: Object.assign({ 'Content-Type': 'application/json' }, _proxyHeaders()),
+            body: JSON.stringify({ client_id: _rtClientId, type: type, payload: payload })
+          }).catch(function () {});
+        } catch (e) {}
       }
 
       function _renderTicketPresence() {
         var row = document.getElementById('ticket-presence-row');
         if (!row) return;
         try {
-          if (!_ticketChannel) { row.style.display = 'none'; row.innerHTML = ''; return; }
-          var state = _ticketChannel.presenceState();
+          if (!_ticketPresenceNum) { row.style.display = 'none'; row.innerHTML = ''; return; }
           var names = [];
-          Object.keys(state).forEach(function (key) {
-            (state[key] || []).forEach(function (p) {
-              if (p && p.clientId !== _rtClientId && p.name) names.push(p.name);
-            });
+          _ticketViewers.forEach(function (v) {
+            if (names.indexOf(v.name) < 0) names.push(v.name);
           });
           if (!names.length) { row.style.display = 'none'; row.innerHTML = ''; return; }
           row.style.display = 'flex';
@@ -722,11 +765,9 @@
               });
               _saveDailyCache();
               _clearDraft();
-              if (_ticketChannel && _ticketChannelNum === String(num)) {
-                try {
-                  _ticketChannel.send({ type: 'broadcast', event: 'ticket_deleted',
-                    payload: { ticketNum: String(num), by: _authDisplay || '', ts: Date.now() } });
-                } catch (e) {}
+              if (_ticketPresenceNum === String(num)) {
+                _presenceSend('ticket_deleted',
+                  { ticketNum: String(num), by: _authDisplay || '', ts: Date.now() });
               }
               ticketNew();
               _setActiveTab('today');
@@ -843,13 +884,12 @@
             _upsertDailyTicket(optT);
             _saveDailyCache();
 
-            if (wasEdit && _ticketChannel && _ticketChannelNum === String(d.ticketNum)) {
-              try {
-                _ticketChannel.send({ type: 'broadcast', event: 'ticket_updated',
-                  payload: { ticketNum: String(d.ticketNum), by: _authDisplay || '', ts: Date.now() } });
-              } catch (e) {}
+            if (wasEdit && _ticketPresenceNum === String(d.ticketNum)) {
+              _presenceSend('ticket_updated',
+                { ticketNum: String(d.ticketNum), by: _authDisplay || '', ts: Date.now() });
             }
 
+            _tsLinkTicket(d.ticketNum, payload.status);   // before ticketNew() clears it
             _clearDraft();
             _hideDup();
             ticketNew();              // reset the form (also deselects the kit)
@@ -946,7 +986,71 @@
       // What the last Apply contributed to Issue / Resolution, so a re-apply
       // overwrites its own previous contribution — never the tech's typed text.
       var _lastApply = { issue: [], resolution: [] };
-      function _resetApply() { _lastApply = { issue: [], resolution: [] }; }
+      function _resetApply() { _lastApply = { issue: [], resolution: [] }; _tsSession = null; }
+
+      // ── Troubleshooting session record ────────────────────────────────────
+      // Each Apply records the walked path as a session in the backend
+      // (POST /api/troubleshooting/sessions). A re-Apply supersedes the previous
+      // pending session (marked abandoned); creating/saving the ticket links the
+      // session to it and closes it from the ticket's status. Best-effort: a
+      // failure here never blocks the ticket workflow.
+      var _tsSession = null;   // { idPromise: Promise<string|null> }
+      function _tsApi(method, path, body) {
+        return fetch(SERVER_URL + path, {
+          method: method,
+          headers: { 'Content-Type': 'application/json',
+                     'Authorization': _proxyHeaders().Authorization },
+          body: JSON.stringify(body)
+        }).then(function(r) { return r.ok ? r.json() : null; })
+          .catch(function() { return null; });
+      }
+      function _tsPathSteps() {
+        var parts = [];
+        for (var i = 1; i < nodeStack.length; i++) {
+          var n = nodeStack[i];
+          var label = (n && typeof n === 'object') ? (n.label || n.text || '')
+                    : (typeof n === 'string' ? n : '');
+          label = String(label).trim();
+          if (label) parts.push(label.slice(0, 300));
+        }
+        return parts.slice(0, 60);
+      }
+      // Mirrors TicketStatus.canonicalise on the server. Empty → still pending.
+      function _tsOutcomeFromStatus(status) {
+        var s = String(status || '').toLowerCase();
+        if (!s || s.indexOf('wait') >= 0) return '';
+        if (s.indexOf('resolv') >= 0) return 'resolved';
+        if (s.indexOf('rma') >= 0 || s.indexOf('distrib') >= 0) return 'escalated';
+        if (s.indexOf('no sol') >= 0 || s.indexOf('nosol') >= 0 || s.indexOf('destroy') >= 0) return 'unresolved';
+        return '';
+      }
+      function _tsRecordApply(checkedSteps) {
+        var steps = _tsPathSteps();
+        if (!activeKit || !steps.length) return;
+        var previous = _tsSession;
+        if (previous) {
+          previous.idPromise.then(function(id) {
+            if (id) _tsApi('PATCH', '/api/troubleshooting/sessions/' + id, { outcome: 'abandoned' });
+          });
+        }
+        var ticketNum = (_ticketMode === 'edit' && _ticketRowData) ? String(_ticketRowData.ticketNum || '') : '';
+        _tsSession = {
+          idPromise: _tsApi('POST', '/api/troubleshooting/sessions', {
+            kit_key: activeKit, path: steps, checked_steps: checkedSteps.slice(0, 60),
+            ticket_number: ticketNum
+          }).then(function(d) { return (d && d.session) ? d.session.id : null; })
+        };
+      }
+      function _tsLinkTicket(ticketNum, status) {
+        var current = _tsSession;
+        if (!current || !ticketNum) return;
+        var body = { ticket_number: String(ticketNum) };
+        var outcome = _tsOutcomeFromStatus(status);
+        if (outcome) body.outcome = outcome;
+        current.idPromise.then(function(id) {
+          if (id) _tsApi('PATCH', '/api/troubleshooting/sessions/' + id, body);
+        });
+      }
       // Remove the previously-applied segments, then add the new ones. Anything the
       // tech typed by hand (not in prevSegs) is left exactly as-is.
       function _setAppliedSegs(fieldId, prevSegs, newSegs) {
@@ -1005,6 +1109,7 @@
         _setAppliedSegs('ticket-resolution', _lastApply.resolution, steps);
         _lastApply.issue = newIssue.slice();
         _lastApply.resolution = steps.slice();
+        _tsRecordApply(steps);
 
         _ensureTicketCreateVisible();
         // When this Apply is starting a fresh ticket (tech still blank), fill the
@@ -1308,7 +1413,7 @@
         return common / Math.min(ticketTokens.length, wantedTokens.length) >= 0.75;
       }
 
-      function _historyRowFromSupabase(row) {
+      function _historyRowFromRecord(row) {
         return {
           ticketNum: row.ticket_number || '', date: row.ticket_date || '',
           tech: row.tech || '', client: row.client || '', product: row.product || '',
@@ -1318,28 +1423,30 @@
       }
 
       function _ticketHistoryData(field, value) {
-        // Read the same live table used by tickets.html. This keeps history
-        // current even if the Python process has not yet restarted after a deploy.
-        if (!_sb) return _ticketHistoryDataFromServer(field, value);
+        // Read the same live table used by tickets.html through
+        // GET /api/ticket-records/history (SQL ILIKE pattern, newest first).
+        // Client names match fuzzily via a %token% pattern; products match
+        // case-insensitively but exactly, as before.
         var rows = [], pageSize = 1000;
-        var queryValue = field === 'client' ? _historyClientQuery(value) : value;
-        function loadPage(from) {
-          return _sb.schema('techSupport').from('tickets')
-            .select('ticket_date,ticket_number,tech,client,product,vehicle,issue,resolution,status,serial,notes')
-            .ilike(field, queryValue)
-            .order('ticket_date', { ascending: false, nullsFirst: false })
-            .order('ticket_number', { ascending: false })
-            .range(from, from + pageSize - 1)
-            .then(function (result) {
-              if (result.error) throw result.error;
-              var batch = result.data || [];
+        var pattern = field === 'client' ? _historyClientQuery(value) : value;
+        function loadPage(offset) {
+          return _apiGet('/api/ticket-records/history?field=' + encodeURIComponent(field) +
+                         '&pattern=' + encodeURIComponent(pattern) +
+                         '&limit=' + pageSize + '&offset=' + offset)
+            .then(function (response) {
+              if (!response.ok) throw new Error('history HTTP ' + response.status);
+              return response.json();
+            })
+            .then(function (d) {
+              if (!d || !d.ok) throw new Error((d && d.error) || 'history failed');
+              var batch = d.rows || [];
               rows = rows.concat(batch);
-              return batch.length === pageSize ? loadPage(from + pageSize) : rows;
+              return batch.length === pageSize ? loadPage(offset + pageSize) : rows;
             });
         }
         return loadPage(0).then(function (liveRows) {
-          return { ok: true, source: 'supabase_browser', field: field, value: value,
-            count: liveRows.length, results: liveRows.map(_historyRowFromSupabase) };
+          return { ok: true, source: 'ticket_records', field: field, value: value,
+            count: liveRows.length, results: liveRows.map(_historyRowFromRecord) };
         }).catch(function () {
           return _ticketHistoryDataFromServer(field, value);
         });

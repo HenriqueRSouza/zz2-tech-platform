@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Bring the Settings page in line with the migrated backend.
 
-Four endpoints were removed with the move to Supabase Auth and systemd, and the
-page still had controls for all of them:
+Four endpoints were removed with the move to server-issued sessions and systemd,
+and the page still had controls for all of them:
 
 ``/api/system/restart``
     Re-executed the process from a web request. Restarts belong to systemd now.
@@ -11,7 +11,8 @@ page still had controls for all of them:
     Managed the local ``sessions.json``, which no longer exists.
 
 ``/api/system/unlock``
-    Cleared the local login-lockout table. Supabase owns login throttling.
+    Cleared the local login-lockout table. Lockouts now live under
+    ``/api/system/security/lockouts``.
 
 Left alone, those controls would 404 on click and the panels behind them would
 render empty — a page that looks broken rather than one that says what changed. So
@@ -43,27 +44,25 @@ def patch_js(source: str) -> str:
         """    '<button class="act" onclick="act(\\'/api/system/clear-expired\\',\\'Expired sessions cleared\\',this)"><span class="ic">&#129529;</span><span>Clear expired<small>purge dead sessions</small></span></button>',
     '<button class="act warn" onclick="restartServer(this)"><span class="ic">&#9211;</span><span>Restart server<small>re-exec the process</small></span></button>'
   ].join('');""",
-        """    '<button class="act" onclick="act(\\'/api/system/sync-supabase\\',\\'Catalogue mirrored\\',this)"><span class="ic">&#9729;</span><span>Mirror catalogue<small>push kits to Supabase</small></span></button>'
+        """    '<button class="act" onclick="act(\\'/api/system/sync-database\\',\\'Catalogue mirrored\\',this)"><span class="ic">&#9729;</span><span>Mirror catalogue<small>push kits to the database</small></span></button>'
   ].join('');""",
         "actions",
     )
 
-    # -- Sessions: Supabase owns them, so report that instead of an empty table
+    # -- Sessions: stateless signed tokens, so describe them instead of a table
     old_sessions = source[source.index("  /* sessions */"):source.index("  /* files */")]
-    source = source.replace(old_sessions, """  /* sessions -- owned by Supabase Auth, not by this server.
-     There is no local session store to enumerate, so rather than render an empty
-     table the panel says where sessions actually live. Revoking one is done from
-     the Supabase dashboard, which is also the only place that can. */
+    source = source.replace(old_sessions, """  /* sessions -- signed tokens issued by this server, not rows in a table.
+     There is no session store to enumerate, so rather than render an empty
+     table the panel explains how sessions work. */
   const sessionsPanel = $('#g-sessions-note');
   if (sessionsPanel) {
     sessionsPanel.innerHTML =
       '<div class="bd" style="padding:14px">' +
-      '<b>Sessions are managed by Supabase Auth.</b>' +
-      '<div class="muted" style="margin-top:6px">Sign-ins, refresh tokens and ' +
-      'revocation live in your Supabase project under Authentication &rsaquo; Users. ' +
-      'This server verifies each access token per request and caches the result ' +
-      'for 60 seconds, so a role change or a disabled account takes effect within ' +
-      'a minute without anyone re-signing in.</div></div>';
+      '<b>Sessions are signed tokens issued by this server.</b>' +
+      '<div class="muted" style="margin-top:6px">Password and Microsoft sign-ins ' +
+      'both receive a token that is valid for 8 hours and is verified locally on ' +
+      'every request. Signing out revokes the token; to cut off an account ' +
+      'immediately, disable it on the Users &amp; Roles page.</div></div>';
   }
 
 """)
@@ -94,8 +93,12 @@ def patch_js(source: str) -> str:
     ['CORS origins', (sec.cors_origins && sec.cors_origins.length)
         ? esc(sec.cors_origins.join(', '))
         : '<span class="muted">same-origin only</span>'],
-    ['Supabase service key', flag(secrets.supabase_service_key, 'configured', 'missing')],
-    ['Supabase JWT secret', flag(secrets.supabase_jwt_secret, 'configured', 'missing')],
+    ['Microsoft sign-in', flag(sec.microsoft_sign_in, 'enabled', 'disabled')],
+    ['SAML sign-in', flag(sec.saml_sign_in, 'enabled', 'disabled')],
+    ['Database URL', flag(secrets.database_url, 'configured', 'missing')],
+    ['Session secret', flag(secrets.session_secret, 'configured', 'missing')],
+    ['Azure Storage', flag(secrets.azure_storage, 'configured', 'missing')],
+    ['Microsoft client secret', flag(secrets.microsoft_client_secret, 'configured', 'missing')],
     ['Apps Script secret', flag(secrets.appscript_secret, 'configured', 'missing')],
     ['Data directory mode', mode.mode
         ? (esc(mode.mode) + ' ' + flag(!mode.world_readable, 'not world-readable',
@@ -237,6 +240,7 @@ def main() -> int:
     for dead in ("restartServer", "revoke(", "unlock(",
                  "sessions_active", "csv_cache", "has_code", "server.threads"):
         assert dead not in js_patched, f"{dead} is still referenced"
+    assert "supabase" not in js_patched.lower(), "Supabase is still referenced"
 
     JS.write_text(js_patched, encoding="utf-8")
     HTML.write_text(html_patched, encoding="utf-8")

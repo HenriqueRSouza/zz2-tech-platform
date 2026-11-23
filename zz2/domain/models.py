@@ -3,7 +3,7 @@
 Pydantic models rather than the bare dicts the monolith passed around. The dicts
 were the source of a specific recurring bug class: the same ticket appeared as
 ``{'ticket': ...}`` in the local store, ``{'ticketNum': ...}`` in the tool's API
-responses and ``{'ticket_number': ...}`` in Supabase, and every function that
+responses and ``{'ticket_number': ...}`` in the database, and every function that
 touched one had to guess which shape it had received. ``_pick(o, ['ticket',
 'ticket_no', 'Ticket #', 'number'])`` exists because of it.
 
@@ -104,7 +104,7 @@ class Ticket(BaseModel):
 
     @property
     def canonical_number(self) -> str:
-        """``TKT-nnnn`` — the form stored in Supabase."""
+        """``TKT-nnnn`` — the form stored in the database."""
         digits = digits_only(self.number)
         return f"TKT-{digits}" if digits else as_text(self.number).strip()
 
@@ -141,8 +141,8 @@ class Ticket(BaseModel):
         )
 
     @classmethod
-    def from_supabase(cls, row: dict[str, Any]) -> Self:
-        """Read a ``techSupport.tickets`` row."""
+    def from_record(cls, row: dict[str, Any]) -> Self:
+        """Read a ``techSupport.tickets`` row (dates already ISO strings)."""
         return cls(
             number=as_text(row.get("ticket_number")),
             date=as_text(row.get("ticket_date")),
@@ -189,7 +189,7 @@ class Ticket(BaseModel):
             "notes": self.notes,
         }
 
-    def to_supabase(self, *, include_identity: bool = True) -> dict[str, Any]:
+    def to_record(self, *, include_identity: bool = True) -> dict[str, Any]:
         """The shape written to ``techSupport.tickets``.
 
         Args:

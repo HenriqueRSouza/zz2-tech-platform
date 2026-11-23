@@ -5,7 +5,7 @@ tickets are created and edited. The Analytics page reads a view derived from it,
 so a page load never triggers a full sheet export.
 
 Ticket numbers are matched on **digits only**, everywhere. The same ticket is
-written as ``"7388"`` by the sheet, ``"TKT-7388"`` by Supabase, ``7388`` (int) by
+written as ``"7388"`` by the sheet, ``"TKT-7388"`` by the database, ``7388`` (int) by
 one older export path and ``" 7388 "`` by hand-edited rows. The monolith's
 delete used a strict string comparison and carried a four-line comment about the
 resulting bug: a discarded ticket kept reappearing in another technician's Today
@@ -112,7 +112,8 @@ class TicketStoreRepository(Repository):
             store["updated"] = _utc_now_iso()
         bus.publish(TicketStoreChanged("append", ticket.number))
 
-    def append_and_number(self, ticket: Ticket, floor: int = 0) -> int | None:
+    def append_and_number(self, ticket: Ticket, floor: int = 0,
+                          *, seed: bool = False) -> int | None:
         """Assign the next number and append, atomically.
 
         Returns the assigned number, or ``None`` when the store is not seeded so
@@ -125,10 +126,13 @@ class TicketStoreRepository(Repository):
 
         Args:
             floor: Externally observed high-water mark, e.g. the highest number
-                already in Supabase. Tickets can also be created directly from
+                already in the database. Tickets can also be created directly from
                 the Tickets page, so the local maximum alone is not enough.
+            seed: Start an empty store when none exists. For installations
+                without the sheet, where there is no export to seed from and
+                ``floor`` alone is the authoritative high-water mark.
         """
-        if not self.exists():
+        if not self.exists() and not seed:
             return None
         assigned: int | None = None
         with mutate(self._path, _empty_store()) as store:

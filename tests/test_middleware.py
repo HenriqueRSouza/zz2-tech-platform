@@ -17,19 +17,16 @@ from tests.conftest import auth_header
 
 @pytest.fixture
 def limited_app(monkeypatch: pytest.MonkeyPatch, data_dir, fake_supabase,
-                fake_admin) -> Iterator[Any]:
+                fake_admin, fake_db) -> Iterator[Any]:
     """An app with a deliberately tiny rate-limit budget."""
     from fastapi.testclient import TestClient
 
     for key, value in {
         "ZZ2_ENVIRONMENT": "development",
         "ZZ2_BUILD": "test",
-        "ZZ2_SUPABASE_URL": "https://example.supabase.co",
-        "ZZ2_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_test",
-        "ZZ2_SUPABASE_SERVICE_KEY": "sb_secret_test",
-        "ZZ2_SUPABASE_JWT_SECRET": "test-jwt-secret-value-at-least-32-chars",
+        "ZZ2_SESSION_SECRET": "test-session-secret-value-at-least-32-chars",
         "ZZ2_ENABLE_BACKGROUND_WORKERS": "false",
-        "ZZ2_ENABLE_SUPABASE_MIRROR": "false",
+        "ZZ2_ENABLE_DB_MIRROR": "false",
         "ZZ2_LOG_JSON": "false",
         "ZZ2_RATE_LIMIT_ENABLED": "true",
         "ZZ2_RATE_LIMIT_REQUESTS": "5",

@@ -1,4 +1,4 @@
-# ZZ2 Tech Support Platform
+# Tech Support Platform (TSP)
 #
 #   sudo cp deploy/systemd/zz2.service /etc/systemd/system/
 #   sudo systemctl daemon-reload
@@ -10,7 +10,7 @@
 # gain privileges, and cannot see the rest of the filesystem.
 
 [Unit]
-Description=ZZ2 Tech Support Platform
+Description=Tech Support Platform (TSP)
 Documentation=https://github.com/YOUR-ORG/zz2-tech-support
 After=network-online.target
 Wants=network-online.target

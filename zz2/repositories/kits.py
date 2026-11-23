@@ -1,6 +1,6 @@
 """Kit catalogue and troubleshooting trees.
 
-Local files are authoritative for kit data. The Kit Editor writes here; Supabase
+Local files are authoritative for kit data. The Kit Editor writes here; the database
 receives a mirror afterwards for off-server backup. Getting that direction right
 matters — the mirror must never be able to resurrect a kit an administrator
 deleted locally.

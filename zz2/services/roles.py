@@ -38,7 +38,7 @@ from zz2.domain.permissions import (
     sort_permissions,
     validate_role_key,
 )
-from zz2.gateways.supabase import supabase_admin
+from zz2.gateways.user_directory import user_directory
 from zz2.repositories.roles import RoleRepository
 
 
@@ -84,16 +84,16 @@ class RoleService:
         }
 
     def _user_counts(self) -> dict[str, int]:
-        """Accounts per role, from the Supabase directory.
+        """Accounts per role, from the user directory.
 
-        Best effort: if Supabase is unreachable the page still renders, with every
+        Best effort: if the database is unreachable the page still renders, with every
         count at zero. ``deletable`` is derived from these counts, so a mutation
         re-checks before acting — a stale zero must not become permission to
         delete a role that is in use.
         """
         counts: dict[str, int] = {}
         try:
-            for account in supabase_admin.list_users():
+            for account in user_directory.list_users():
                 key = as_text((account.get("app_metadata") or {}).get("role")) or "tech"
                 counts[key] = counts.get(key, 0) + 1
         except Exception:  # noqa: BLE001 - the page must render regardless

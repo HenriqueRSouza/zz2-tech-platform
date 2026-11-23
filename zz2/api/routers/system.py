@@ -14,11 +14,13 @@ Three endpoints from the monolith are **gone**, and their absence is deliberate:
     check was a remote code-execution primitive.
 
 ``POST /api/system/revoke`` and ``/api/system/clear-expired``
-    Managed the local ``sessions.json``, which no longer exists. Supabase owns
-    sessions; revocation happens in its dashboard or through its admin API.
+    Managed the local ``sessions.json``, which no longer exists. Sessions are
+    signed tokens issued by this server; revocation happens at sign-out.
 
 ``POST /api/system/unlock``
-    Cleared the local login-lockout table. Supabase owns login throttling.
+    Cleared the local login-lockout table. The brute-force guard for passwords,
+    bearer tokens and SSO responses is managed under
+    ``/api/system/security/lockouts`` instead.
 """
 
 from __future__ import annotations
@@ -44,6 +46,7 @@ from zz2.paths import AUDIT_LOG, SERVER_LOG
 from zz2.services.analytics import analytics_service
 from zz2.services.autoresolve import auto_resolve_service
 from zz2.services.backup import backup_service
+from zz2.services.lockout import lockout_guard
 from zz2.services.mirror import mirror_service
 from zz2.services.runtime_config import runtime_config
 from zz2.services.sheet_sync import sheet_sync_service
@@ -272,9 +275,10 @@ def run_autoresolve(
     return result.to_api()
 
 
-@router.post("/sync-supabase")
+@router.post("/sync-database")
+@router.post("/sync-supabase", include_in_schema=False)  # pre-migration path
 def force_mirror(actor: Annotated[Principal, RequireSystem]) -> dict[str, Any]:
-    """Push the kit catalogue to Supabase now."""
+    """Push the kit catalogue to the database now."""
     counts = mirror_service.upload(reason=f"manual:{actor.username}")
     return {"ok": True, "synced": counts}
 
@@ -347,3 +351,29 @@ def clear_dead_letters(
     cleared = dead.clear()
     audit("write.dead_letters_cleared", actor=actor.username, cleared=cleared)
     return {"ok": True, "cleared": cleared}
+
+
+# -- Brute-force guard ---------------------------------------------------------
+class LockoutReleaseRequest(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    address: str = Field(min_length=1, max_length=64)
+
+
+@router.get("/security/lockouts")
+def list_lockouts(actor: Annotated[Principal, RequireSystem]) -> dict[str, Any]:
+    """Addresses currently blocked for presenting too many bad credentials."""
+    return {"ok": True, "lockouts": lockout_guard.blocked()}
+
+
+@router.post("/security/lockouts/release")
+def release_lockout(
+    payload: LockoutReleaseRequest,
+    actor: Annotated[Principal, RequireSystem],
+) -> dict[str, Any]:
+    """Unblock one address early, e.g. an office NAT a broken script tripped."""
+    released = lockout_guard.release(payload.address)
+    if not released:
+        raise NotFound("That address is not blocked.")
+    audit("auth.lockout_released", actor=actor.username, client=payload.address)
+    return {"ok": True}

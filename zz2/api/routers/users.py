@@ -1,6 +1,6 @@
 """User administration endpoints.
 
-Backed by the Supabase Auth Admin API. Every route requires ``manage_users``, and
+Backed by the database user directory. Every route requires ``manage_users``, and
 :mod:`zz2.services.users` additionally enforces the rank and containment rules —
 the permission alone is not sufficient to act on any given account.
 """

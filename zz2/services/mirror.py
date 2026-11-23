@@ -1,8 +1,8 @@
 """Off-server mirror of the local kit catalogue.
 
-Local files are authoritative; this pushes a copy to Supabase so the catalogue
-survives loss of the VPS. One-directional by design — nothing here ever reads from
-Supabase into local files, because that would let the mirror resurrect a kit an
+Local files are authoritative; this pushes a copy to the database so the catalogue
+survives loss of the server. One-directional by design — nothing here ever reads
+from the database into local files, because that would let the mirror resurrect a kit an
 administrator deleted.
 
 The generation marker makes a partial upload safe. Every row in a snapshot carries
@@ -23,11 +23,11 @@ import threading
 import time
 from typing import Any
 
-from zz2.core.errors import UpstreamError
+from zz2.core.errors import NotConfigured, UpstreamError
 from zz2.core.events import Event, KitCatalogChanged, bus
 from zz2.core.logging import logger
 from zz2.core.text import safe_key
-from zz2.gateways.supabase import supabase
+from zz2.gateways.database import db, sql
 from zz2.paths import MANUALS_DIR
 from zz2.repositories.kits import KitCatalogRepository
 from zz2.settings import get_settings
@@ -43,7 +43,7 @@ HASH_CHUNK_BYTES = 1024 * 1024
 
 
 class MirrorService:
-    """Uploads coherent catalogue snapshots to Supabase."""
+    """Uploads coherent catalogue snapshots to the database."""
 
     def __init__(self, catalog: KitCatalogRepository | None = None) -> None:
         self._catalog = catalog or KitCatalogRepository()
@@ -54,11 +54,11 @@ class MirrorService:
     # -- Event wiring ----------------------------------------------------------
     def register(self) -> None:
         """Subscribe to catalogue changes. Called once during startup."""
-        if not get_settings().enable_supabase_mirror:
-            logger.info("supabase mirror disabled by configuration")
+        if not get_settings().enable_db_mirror:
+            logger.info("database mirror disabled by configuration")
             return
         bus.subscribe(KitCatalogChanged, self._on_catalog_changed)
-        logger.info("supabase mirror subscribed to catalogue changes")
+        logger.info("database mirror subscribed to catalogue changes")
 
     def _on_catalog_changed(self, event: Event) -> None:
         reason = getattr(event, "reason", "unknown")
@@ -89,6 +89,9 @@ class MirrorService:
             # Already logged by the gateway. A failed mirror is not an
             # application error: local data, which is authoritative, is intact.
             logger.warning("scheduled mirror upload failed", extra={"reason": reason})
+        except NotConfigured:
+            # ZZ2_DATABASE_URL unset (typical in development): nothing to mirror to.
+            logger.info("mirror skipped: database not configured", extra={"reason": reason})
 
     # -- Upload ----------------------------------------------------------------
     def upload(self, *, reason: str = "manual") -> dict[str, int]:
@@ -105,19 +108,24 @@ class MirrorService:
 
             for table, conflict_target, rows in batches:
                 if rows:
-                    supabase.upsert(table, rows, on_conflict=conflict_target)
+                    db.upsert(table, rows, conflict=conflict_target)
 
             # Prune only after every upsert succeeded. Reverse dependency order
             # so a child table is emptied before its parent.
             for table in ("manual_assets", "troubleshooting", "blueprints", "kits"):
-                supabase.delete_where(table, f"sync_generation=neq.{generation}")
+                db.execute(
+                    sql.SQL("DELETE FROM {} WHERE sync_generation <> %s").format(
+                        sql.Identifier(table)),
+                    [generation],
+                )
 
             counts = {table: len(rows) for table, _conflict, rows in batches}
-            logger.info("catalogue mirrored to supabase",
+            logger.info("catalogue mirrored to the database",
                         extra={"reason": reason, **counts})
             return counts
 
-    def _snapshot(self) -> tuple[int, list[tuple[str, str, list[dict[str, Any]]]]]:
+    def _snapshot(self) -> tuple[int, list[tuple[str, tuple[str, ...],
+                                                   list[dict[str, Any]]]]]:
         """Build one consistent snapshot of every mirrored table.
 
         The generation is a millisecond timestamp — monotonic enough to order
@@ -165,10 +173,10 @@ class MirrorService:
         ]
 
         return generation, [
-            ("kits", "kit_key", kit_rows),
-            ("troubleshooting", "kit_key", tree_rows),
-            ("blueprints", "id", blueprint_rows),
-            ("manual_assets", "kit_key,filename", manual_rows),
+            ("kits", ("kit_key",), kit_rows),
+            ("troubleshooting", ("kit_key",), tree_rows),
+            ("blueprints", ("id",), blueprint_rows),
+            ("manual_assets", ("kit_key", "filename"), manual_rows),
         ]
 
     @staticmethod
@@ -176,7 +184,7 @@ class MirrorService:
         """Metadata for a kit's manual files.
 
         File *metadata* only — size and SHA-256, never contents. PDF bytes live in
-        Supabase Storage; this table records the matching object path and the
+        Blob Storage; this table records the matching object path and the
         local cache checksum.
         """
         # Validated even though it came from our own kits.json. That file is

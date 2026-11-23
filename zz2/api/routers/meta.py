@@ -1,14 +1,14 @@
 """Public configuration, session verification and health probes.
 
 ``/api/config`` is the one endpoint that must stay unauthenticated: the sign-in
-page needs the Supabase URL and publishable key *before* anyone has a session.
+page needs to know which sign-in methods are offered *before* anyone has a session.
 Its payload comes from an explicit allowlist in
 :meth:`zz2.settings.Settings.public_config`, so adding a secret to ``Settings``
 cannot leak it here by accident.
 
 The health probes are separate on purpose. ``/healthz`` answers "is this process
 alive" and must never touch disk or the network — a liveness probe that fails
-because Supabase is slow gets the container restarted for no reason. ``/readyz``
+because the database is slow gets the container restarted for no reason. ``/readyz``
 answers "should traffic be routed here" and does check dependencies.
 """
 
@@ -17,12 +17,14 @@ from __future__ import annotations
 import time
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Header, Response
 
 from zz2.api.deps import CurrentPrincipal
+from zz2.core.logging import audit
 from zz2.domain.permissions import PERMISSION_CATALOG, Principal
-from zz2.gateways.supabase import supabase
+from zz2.gateways.database import db
 from zz2.paths import ANALYTICS_FILE, DATA_DIR
+from zz2.services.auth import auth_service
 from zz2.services.runtime_config import runtime_config
 from zz2.services.telemetry import PROCESS_STARTED_AT
 from zz2.settings import get_settings
@@ -69,14 +71,18 @@ def verify_session(actor: Annotated[Principal, CurrentPrincipal]) -> dict[str, A
 
 @router.post("/api/session/logout")
 def logout(actor: Annotated[Principal, CurrentPrincipal],
-           response: Response) -> dict[str, Any]:
-    """Drop this token's cached principal.
+           response: Response,
+           authorization: Annotated[str | None, Header()] = None) -> dict[str, Any]:
+    """End the session server-side.
 
-    Supabase owns the session, so the browser signs out through the Supabase
-    client. All this does is evict the server-side cache, which otherwise would
-    keep honouring the token for up to
+    The session this server issued is revoked and the server-side principal
+    cache is evicted, which otherwise would keep honouring the token for up to
     :data:`~zz2.services.auth.PRINCIPAL_CACHE_TTL` seconds after sign-out.
     """
+    token = auth_service.token_from_header(authorization) or ""
+    revoked = auth_service.sign_out(token)
+    audit("session.logout", actor=actor.username,
+          provider=actor.metadata.get("provider", "-"), revoked=revoked)
     response.headers["Clear-Site-Data"] = '"cache", "storage"'
     return {"ok": True}
 
@@ -115,15 +121,19 @@ def readiness(response: Response) -> dict[str, Any]:
     request fail individually.
 
     The ticket store being unseeded is reported but does *not* fail the probe: the
-    site is fully usable without it, since reads fall through to Supabase.
+    site is fully usable without it, since reads fall through to the database.
+
+    ``database_configured`` checks configuration only, not connectivity: a
+    database blip must not pull every instance out of rotation at once, and
+    every data path already degrades gracefully when the database is down.
     """
     checks = {
         "data_dir_writable": _writable(),
-        "supabase_configured": supabase.configured,
+        "database_configured": db.configured,
         "workers": worker_manager.status(),
         "ticket_store_seeded": ANALYTICS_FILE.exists(),
     }
-    ready = checks["data_dir_writable"] and checks["supabase_configured"]
+    ready = checks["data_dir_writable"] and checks["database_configured"]
     if not ready:
         response.status_code = 503
     return {"ok": ready, "checks": checks}

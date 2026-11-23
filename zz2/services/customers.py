@@ -1,10 +1,9 @@
 """Customer purchase history and item sales.
 
 Reads two tables in the company's ``zoho`` schema — a different dataset from the
-support tables, populated by the ERP. Row-level security blocks the publishable
-key there, so every query runs server-side with the service key. That is the whole
-reason this goes through the application instead of the browser talking to
-Supabase directly, and the reason the service key must never be sent to a page.
+support tables, populated by the ERP. Only the application server holds database
+credentials, so every query runs here, server-side; the browser never talks to the
+database directly.
 
 Matching is the hard part. Tickets record the client as free text, typed by a
 technician; the ERP has canonical customer names. Joining them is fuzzy, so every
@@ -20,9 +19,11 @@ from zz2.core.cache import TTLCache
 from zz2.core.errors import UpstreamError, ValidationError
 from zz2.core.logging import logger
 from zz2.core.text import as_text
-from zz2.gateways.supabase import encode_value, supabase
+from zz2.gateways.database import db, escape_like, json_rows
 from zz2.services.normalization import best_customer_match, norm_key
-from zz2.settings import get_settings
+
+SUMMARY_ROW_LIMIT = 50_000
+"""Safety bound on the customer-picker query (the PostgREST path paged 50 × 1,000)."""
 
 HISTORY_TTL = 600.0
 SUMMARIES_TTL = 600.0
@@ -45,33 +46,28 @@ _item_sales_cache: TTLCache[str, dict[str, Any]] = TTLCache(ITEM_SALES_TTL, max_
 
 
 class CustomerService:
-    """Customer and item queries against the read-only ERP schema."""
+    """Customer and item queries against the read-only ERP schema.
 
-    @property
-    def _schema(self) -> str:
-        """The ERP schema name, read at use time rather than captured."""
-        return get_settings().customer_history_schema
+    Tables are named unqualified: the connection ``search_path`` includes the
+    customer-history schema (see :mod:`zz2.gateways.database`).
+    """
 
     # -- Customer picker -------------------------------------------------------
     def summaries(self) -> dict[str, Any]:
         """Every customer with lifetime sales and return totals.
 
-        Feeds the searchable client picker on the ticket form. Paged explicitly:
-        PostgREST caps a response at 1,000 rows and returns the truncation as a
-        success, so an unpaged query would silently drop every customer past the
-        first thousand — and the drop would look like those customers do not
-        exist.
+        Feeds the searchable client picker on the ticket form.
         """
         cached = _summaries_cache.get("all")
         if cached is not None:
             return cached
 
         try:
-            rows = supabase.select_paged(
-                "customer_performance_semesters?select=customer_name,sales_quantity,"
-                "returns_quantity&order=customer_name.asc&limit={limit}&offset={offset}",
-                schema=self._schema,
-            )
+            rows = json_rows(db.fetch_all(
+                "SELECT customer_name, sales_quantity, returns_quantity "
+                "FROM customer_performance_semesters ORDER BY customer_name ASC LIMIT %s",
+                [SUMMARY_ROW_LIMIT],
+            ))
         except UpstreamError as exc:
             # Answered in the body rather than as an HTTP error: the picker
             # degrades to free-text entry, which is better than a broken form.
@@ -142,21 +138,21 @@ class CustomerService:
                 "message": "No matching customer found",
             }
 
-        encoded = encode_value(matched)
         try:
-            semesters = supabase.select(
-                f"customer_performance_semesters?customer_name=eq.{encoded}"
-                "&select=period_year,semester,period_start,period_end,sales_quantity,"
-                "returns_quantity,returns_rate,bcy_total"
-                "&order=period_year.desc,semester.desc&limit=6",
-                schema=self._schema,
-            )
-            months = supabase.select(
-                f"customer_performance_months?customer_name=eq.{encoded}"
-                "&select=period_year,month,sales_quantity,returns_quantity,"
-                "returns_rate,bcy_total&order=period_year.desc,month.desc&limit=12",
-                schema=self._schema,
-            )
+            semesters = json_rows(db.fetch_all(
+                "SELECT period_year, semester, period_start, period_end, sales_quantity, "
+                "returns_quantity, returns_rate, bcy_total "
+                "FROM customer_performance_semesters WHERE customer_name = %s "
+                "ORDER BY period_year DESC, semester DESC LIMIT 6",
+                [matched],
+            ))
+            months = json_rows(db.fetch_all(
+                "SELECT period_year, month, sales_quantity, returns_quantity, "
+                "returns_rate, bcy_total "
+                "FROM customer_performance_months WHERE customer_name = %s "
+                "ORDER BY period_year DESC, month DESC LIMIT 12",
+                [matched],
+            ))
         except UpstreamError:
             logger.warning("customer history: period lookup failed")
             return {**empty, "matched_customer": matched,
@@ -175,7 +171,7 @@ class CustomerService:
     def _candidate_names(self, client_name: str) -> list[str]:
         """Narrow the candidate set before fuzzy matching.
 
-        An ``ilike`` on the longest word of the client name, rather than pulling
+        An ``ILIKE`` on the longest word of the client name, rather than pulling
         the whole customer table for every ticket. The longest word is the most
         selective one available without any knowledge of the data.
         """
@@ -186,10 +182,10 @@ class CustomerService:
         )
         if not words:
             return []
-        rows = supabase.select(
-            f"customer_performance_semesters?customer_name=ilike.*{encode_value(words[0])}*"
-            "&select=customer_name&limit=100",
-            schema=self._schema,
+        rows = db.fetch_all(
+            "SELECT customer_name FROM customer_performance_semesters "
+            "WHERE customer_name ILIKE %s LIMIT 100",
+            ["%" + escape_like(words[0]) + "%"],
         )
         return sorted({
             as_text(row.get("customer_name")) for row in rows if row.get("customer_name")
@@ -237,14 +233,15 @@ class CustomerService:
         if cached is not None:
             return cached
 
-        encoded = encode_value(product)
+        pattern = escape_like(product)
         try:
-            rows = supabase.select_paged(
-                f"sales_by_item?or=(item_sku.ilike.{encoded},item_name.ilike.{encoded})"
-                "&select=item_sku,item_name,quantity_sold,period_start,period_end,"
-                "semester,source&order=period_start.desc&limit={limit}&offset={offset}",
-                schema=self._schema,
-            )
+            rows = json_rows(db.fetch_all(
+                "SELECT item_sku, item_name, quantity_sold, period_start, period_end, "
+                "semester, source FROM sales_by_item "
+                "WHERE item_sku ILIKE %s OR item_name ILIKE %s "
+                "ORDER BY period_start DESC",
+                [pattern, pattern],
+            ))
         except UpstreamError:
             logger.warning("item sales unavailable", extra={"product": product})
             return {"ok": False, "error": "Sales data is unavailable.",

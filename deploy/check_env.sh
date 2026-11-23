@@ -23,10 +23,8 @@ set +a
 required=(
   ZZ2_PUBLIC_URL
   ZZ2_TRUSTED_HOSTS
-  ZZ2_SUPABASE_URL
-  ZZ2_SUPABASE_PUBLISHABLE_KEY
-  ZZ2_SUPABASE_SERVICE_KEY
-  ZZ2_SUPABASE_JWT_SECRET
+  ZZ2_DATABASE_URL
+  ZZ2_SESSION_SECRET
 )
 
 for name in "${required[@]}"; do
@@ -44,10 +42,12 @@ case "$ZZ2_PUBLIC_URL" in
   *) fail "ZZ2_PUBLIC_URL must begin with https:// in production" ;;
 esac
 
-case "$ZZ2_SUPABASE_URL" in
-  https://*.supabase.co) ;;
-  *) fail "ZZ2_SUPABASE_URL must look like https://PROJECT.supabase.co" ;;
+case "$ZZ2_DATABASE_URL" in
+  postgresql://*sslmode=require*|postgres://*sslmode=require*) ;;
+  *) fail "ZZ2_DATABASE_URL must be a postgresql:// URL with sslmode=require" ;;
 esac
+
+[ "${#ZZ2_SESSION_SECRET}" -ge 32 ] || fail "ZZ2_SESSION_SECRET must be at least 32 characters"
 
 if [ "${ZZ2_ENABLE_APPSCRIPT_SYNC:-false}" = "true" ]; then
   case "${ZZ2_APPSCRIPT_URL:-}:${ZZ2_APPSCRIPT_SECRET:-}" in

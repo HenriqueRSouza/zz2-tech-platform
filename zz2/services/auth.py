@@ -1,43 +1,32 @@
 """Authentication: access token to :class:`Principal`.
 
-Supabase Auth is the only identity provider. The legacy path this replaces — a
-pure-Python PBKDF2 implementation, ``credentials.json``, ``sessions.json``, a
-disk-persisted lockout table and hand-rolled constant-time comparison — was
-roughly 600 lines of security-critical code maintained in-house because Python
-2.7 on the NAS could not do better. None of it needed to survive the move to a
-VPS, and every line of it was a line that could be wrong.
+Every session is one this server issued (:mod:`zz2.services.session_tokens`):
+after a password sign-in against ``app_users``, a Microsoft (OpenID Connect)
+sign-in, or a SAML sign-in. Tokens are HS256 JWTs verified in-process — no
+network round-trip per request.
 
-Two verification strategies, chosen by configuration:
+Authorization is re-read from the user directory on each (uncached) request when
+the token belongs to an account, so a role change or a deactivation takes effect
+within :data:`PRINCIPAL_CACHE_TTL` seconds instead of at token expiry. If the
+database is briefly unreachable the role snapshot inside the token is used.
 
-**Local (preferred).** The JWT's HS256 signature is verified in-process with
-``ZZ2_SUPABASE_JWT_SECRET``. No network call, so authentication does not fail when
-Supabase is briefly unreachable, and a page issuing twelve parallel API calls
-costs zero upstream requests.
-
-**Remote (fallback).** The token is presented to ``/auth/v1/user``. Correct
-without the JWT secret, but it puts a network round-trip on every request. Results
-are cached briefly — the monolith did this too, and had to, but its cache was an
-unbounded dict swept only on insert.
-
-Tokens are read from the ``Authorization`` header **only**. The monolith also
-accepted ``?token=`` from the query string, which writes a live session token into
-access logs, ``Referer`` headers on every outbound link, browser history and any
-intermediate proxy's logs. That is the single highest-value change in this file.
+Tokens are read from the ``Authorization`` header **only**, never the query
+string, which would write live tokens into logs, ``Referer`` headers and history.
 """
 
 from __future__ import annotations
 
+import uuid
 from typing import Any
 
-from jose import JWTError, jwt
-
 from zz2.core.cache import TTLCache
-from zz2.core.errors import AuthenticationError, UpstreamError
+from zz2.core.errors import AuthenticationError, NotConfigured, UpstreamError
 from zz2.core.logging import audit, logger
 from zz2.core.text import as_text
 from zz2.domain.permissions import Principal, parse_permissions
-from zz2.gateways.supabase import supabase
+from zz2.gateways.user_directory import user_directory
 from zz2.repositories.roles import RoleRepository
+from zz2.services import session_tokens
 from zz2.settings import Settings, get_settings
 
 PRINCIPAL_CACHE_TTL = 60.0
@@ -112,74 +101,61 @@ class AuthService:
         """Drop a cached principal, e.g. on sign-out."""
         _principal_cache.invalidate(token)
 
-    # -- Verification strategies ----------------------------------------------
-    def _verify(self, token: str) -> dict[str, Any]:
-        secret = self._settings.supabase_jwt_secret.get_secret_value()
-        if secret:
-            return self._verify_locally(token, secret)
-        return self._verify_remotely(token)
+    @staticmethod
+    def sign_out(token: str) -> bool:
+        """End a session server-side.
 
-    def _verify_locally(self, token: str, secret: str) -> dict[str, Any]:
-        """Verify the HS256 signature, expiry and audience in-process.
-
-        ``verify_aud`` is on. Skipping audience validation is a common shortcut
-        and it is what lets a token minted for a different Supabase project — or
-        for the ``anon`` role rather than an authenticated user — pass a signature
-        check that looks correct.
+        The token is revoked outright, so a copied token stops working at once
+        rather than at expiry. Returns whether the token was revoked.
         """
-        try:
-            claims = jwt.decode(
-                token,
-                secret,
-                algorithms=["HS256"],
-                audience=self._settings.supabase_jwt_audience,
-                options={"verify_aud": True, "verify_exp": True, "require_exp": True},
-            )
-        except JWTError as exc:
-            # The reason is logged, never returned: "signature invalid" versus
-            # "token expired" tells an attacker which half of a forgery attempt
-            # was wrong.
-            logger.info("token rejected", extra={"reason": type(exc).__name__})
-            raise AuthenticationError("Your session has expired. Sign in again.") from exc
+        _principal_cache.invalidate(token)
+        return session_tokens.revoke(token) if session_tokens.is_session_token(token) else False
 
+    # -- Verification ------------------------------------------------------------
+    @staticmethod
+    def _verify(token: str) -> dict[str, Any]:
+        if not session_tokens.is_session_token(token):
+            raise AuthenticationError("Your session is not valid. Sign in again.")
+        claims = session_tokens.verify(token)
         if not claims.get("sub"):
             raise AuthenticationError("Your session is not valid. Sign in again.")
         return claims
 
-    def _verify_remotely(self, token: str) -> dict[str, Any]:
-        """Verify by asking Supabase, and normalise the reply to claim shape.
+    @staticmethod
+    def _current_account(subject: str) -> dict[str, Any] | None:
+        """The live account behind ``subject``, or ``None`` when the token is not
+        tied to one (or the directory is unavailable).
 
-        A ``401`` from Supabase surfaces as :class:`UpstreamError` from the
-        gateway; it is translated here to an authentication failure so a bad token
-        does not read as a server fault in the logs.
+        Raises:
+            AuthenticationError: The account was deleted or deactivated.
         """
+        if not _looks_like_uuid(subject) or not user_directory.configured:
+            return None
         try:
-            user = supabase.fetch_user(token)
-        except UpstreamError as exc:
-            raise AuthenticationError("Your session could not be verified.") from exc
-
-        return {
-            "sub": user.get("id"),
-            "email": user.get("email"),
-            "app_metadata": user.get("app_metadata") or {},
-            "user_metadata": user.get("user_metadata") or {},
-        }
+            account = user_directory.get_user(subject)
+        except (NotConfigured, UpstreamError):
+            logger.warning("user directory unavailable; using token role snapshot")
+            return None
+        if account is None or account.get("banned_until"):
+            raise AuthenticationError("Your account is not active. Sign in again.")
+        return account
 
     # -- Principal construction ------------------------------------------------
     def _build_principal(self, claims: dict[str, Any]) -> Principal:
         """Map verified claims onto a principal with resolved permissions.
 
-        Authorization data comes from ``app_metadata``, never ``user_metadata``.
-        The distinction is the whole authorization model: ``user_metadata`` is
-        writable by the user's own session through the Supabase client, so a role
-        read from there would let any signed-in user promote themselves. The
-        monolith read ``app_metadata.get('role') or user_metadata.get('role')`` —
-        the fallback made every account self-promotable to any role name it liked.
+        Authorization data comes from ``app_metadata`` (the account's ``role`` and
+        ``permissions`` columns), never ``user_metadata``. The monolith read
+        ``app_metadata.get('role') or user_metadata.get('role')`` — the fallback
+        made every account self-promotable to any role name it liked.
         """
-        app_metadata = claims.get("app_metadata") or {}
-        user_metadata = claims.get("user_metadata") or {}
-
         subject = as_text(claims.get("sub"))
+        provider = as_text((claims.get("app_metadata") or {}).get("provider")) or "password"
+        account = self._current_account(subject)
+        source = account if account is not None else claims
+        app_metadata = source.get("app_metadata") or {}
+        user_metadata = source.get("user_metadata") or {}
+
         email = as_text(claims.get("email") or user_metadata.get("email"))
         display = as_text(
             user_metadata.get("display_name")
@@ -204,8 +180,16 @@ class AuthService:
             granted=granted,
             rank=rank,
             is_root=is_root,
-            metadata={"provider": "supabase"},
+            metadata={"provider": provider},
         )
+
+
+def _looks_like_uuid(value: str) -> bool:
+    try:
+        uuid.UUID(value)
+    except (ValueError, TypeError, AttributeError):
+        return False
+    return True
 
 
 auth_service = AuthService()

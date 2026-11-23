@@ -92,9 +92,9 @@ def legacy_login(request: Request) -> dict[str, Any]:
     Answers 410 with an explanation rather than 404, so an old cached page shows
     the operator something actionable instead of a blank failure.
     """
-    _deprecated(request, "Supabase Auth")
+    _deprecated(request, "POST /api/auth/login")
     raise ValidationError(
-        "Password sign-in has moved to Supabase Auth. Reload the sign-in page.",
+        "Password sign-in has moved to the new sign-in page. Reload the sign-in page.",
         detail={"gone": True},
     )
 
@@ -212,9 +212,9 @@ def legacy_users_create(
 ) -> dict[str, Any]:
     """Old create, which keyed users by ``username``.
 
-    Supabase identities are email addresses, so the old ``username`` field is read
+    Accounts are identified by email address, so the old ``username`` field is read
     as the email. A short local-part name from the NAS era will fail validation —
-    correctly: that account does not exist in Supabase and cannot be created
+    correctly: that account does not exist in the directory and cannot be created
     without a real address.
     """
     _deprecated(request, "POST /api/users")
@@ -270,9 +270,9 @@ def legacy_users_delete(
 
 
 def _resolve_user_id(actor: Principal, payload: dict[str, Any]) -> str:
-    """Map a legacy ``username`` to a Supabase user id.
+    """Map a legacy ``username`` to a user id.
 
-    The old API addressed users by name; Supabase addresses them by uuid. The
+    The old API addressed users by name; the user directory addresses them by uuid. The
     directory is small, so a linear scan is fine.
     """
     if payload.get("id"):
@@ -342,8 +342,8 @@ def legacy_status(
 ) -> dict[str, Any]:
     """Old status endpoint.
 
-    The active-session list it used to return is gone: sessions live in Supabase
-    now, and this process cannot enumerate them.
+    The active-session list it used to return is gone: sessions are signed
+    tokens now, and this process does not keep a list of them.
     """
     _deprecated(request, "GET /api/system/info")
     snapshot = telemetry_service.snapshot()

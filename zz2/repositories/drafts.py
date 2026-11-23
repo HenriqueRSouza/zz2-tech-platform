@@ -4,7 +4,7 @@ One file per user so a draft save never contends with another user's, and a
 corrupt draft can only ever cost one person their unsaved form.
 
 The filename is derived from the username through :func:`safe_filename`. That is
-a security boundary, not tidiness: the username comes from a Supabase JWT
+a security boundary, not tidiness: the username comes from the session's
 ``email`` claim, and an address like ``../../config`` would otherwise write
 outside the drafts directory. The allowlist reduces it to one path component.
 """

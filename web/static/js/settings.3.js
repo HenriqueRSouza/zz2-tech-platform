@@ -79,27 +79,25 @@ function render(d){
     '<button class="act brand" onclick="act(\'/api/system/rebuild\',\'Analytics rebuilt\',this)"><span class="ic">&#8635;</span><span>Rebuild store<small>full re-pull from sheet</small></span></button>',
     '<button class="act" onclick="act(\'/api/system/reconcile\',\'Reconciled\',this)"><span class="ic">&#128260;</span><span>Reconcile now<small>sync recent window</small></span></button>',
     '<button class="act" onclick="act(\'/api/system/backup\',\'Backup created\',this)"><span class="ic">&#128190;</span><span>Run backup<small>full snapshot (code + data)</small></span></button>',
-    '<button class="act" onclick="act(\'/api/system/sync-supabase\',\'Catalogue mirrored\',this)"><span class="ic">&#9729;</span><span>Mirror catalogue<small>push kits to Supabase</small></span></button>'
+    '<button class="act" onclick="act(\'/api/system/sync-database\',\'Catalogue mirrored\',this)"><span class="ic">&#9729;</span><span>Mirror catalogue<small>push kits to the database</small></span></button>'
   ].join('');
 
   /* config form -- built once so the 12s auto-refresh never clobbers an edit */
   renderConfig(d.config||{});
   if((d.config||{}).auto_resolve_days) $('#ar-days').textContent=d.config.auto_resolve_days;
 
-  /* sessions -- owned by Supabase Auth, not by this server.
-     There is no local session store to enumerate, so rather than render an empty
-     table the panel says where sessions actually live. Revoking one is done from
-     the Supabase dashboard, which is also the only place that can. */
+  /* sessions -- signed tokens issued by this server, not rows in a table.
+     There is no session store to enumerate, so rather than render an empty
+     table the panel explains how sessions work. */
   const sessionsPanel = $('#g-sessions-note');
   if (sessionsPanel) {
     sessionsPanel.innerHTML =
       '<div class="bd" style="padding:14px">' +
-      '<b>Sessions are managed by Supabase Auth.</b>' +
-      '<div class="muted" style="margin-top:6px">Sign-ins, refresh tokens and ' +
-      'revocation live in your Supabase project under Authentication &rsaquo; Users. ' +
-      'This server verifies each access token per request and caches the result ' +
-      'for 60 seconds, so a role change or a disabled account takes effect within ' +
-      'a minute without anyone re-signing in.</div></div>';
+      '<b>Sessions are signed tokens issued by this server.</b>' +
+      '<div class="muted" style="margin-top:6px">Password and Microsoft sign-ins ' +
+      'both receive a token that is valid for 8 hours and is verified locally on ' +
+      'every request. Signing out revokes the token; to cut off an account ' +
+      'immediately, disable it on the Users &amp; Roles page.</div></div>';
   }
 
   /* files */
@@ -132,8 +130,12 @@ function render(d){
     ['CORS origins', (sec.cors_origins && sec.cors_origins.length)
         ? esc(sec.cors_origins.join(', '))
         : '<span class="muted">same-origin only</span>'],
-    ['Supabase service key', flag(secrets.supabase_service_key, 'configured', 'missing')],
-    ['Supabase JWT secret', flag(secrets.supabase_jwt_secret, 'configured', 'missing')],
+    ['Microsoft sign-in', flag(sec.microsoft_sign_in, 'enabled', 'disabled')],
+    ['SAML sign-in', flag(sec.saml_sign_in, 'enabled', 'disabled')],
+    ['Database URL', flag(secrets.database_url, 'configured', 'missing')],
+    ['Session secret', flag(secrets.session_secret, 'configured', 'missing')],
+    ['Azure Storage', flag(secrets.azure_storage, 'configured', 'missing')],
+    ['Microsoft client secret', flag(secrets.microsoft_client_secret, 'configured', 'missing')],
     ['Apps Script secret', flag(secrets.appscript_secret, 'configured', 'missing')],
     ['Data directory mode', mode.mode
         ? (esc(mode.mode) + ' ' + flag(!mode.world_readable, 'not world-readable',

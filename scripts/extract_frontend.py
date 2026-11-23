@@ -94,7 +94,6 @@ ASSET_MAP = {
 #: entirely: a compromised CDN response can no longer execute on this origin, and
 #: the pages work without outbound internet access.
 VENDOR_MAP = {
-    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2": "/static/vendor/supabase.js",
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js":
         "/static/vendor/pdf.min.js",
     "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js":
@@ -452,6 +451,12 @@ def main() -> int:
         assert SESSION_MODULE_TAG in extraction.html, (
             f"{extraction.page}: the session helper is not loaded"
         )
+        # The browser no longer talks to a third-party database or auth client:
+        # every read and write goes through this server's /api routes.
+        for name, text in [("html", extraction.html), *((p.name, b) for p, b in extraction.assets.items())]:
+            assert "supabase" not in text.lower(), (
+                f"{extraction.page}/{name} still references the removed Supabase client"
+            )
 
         (PAGES_OUT / f"{extraction.page}.html").write_text(
             extraction.html, encoding="utf-8")

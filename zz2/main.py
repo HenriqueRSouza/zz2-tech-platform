@@ -12,9 +12,11 @@ Middleware order is significant and runs outermost first:
 2. ``CORSMiddleware`` — answer preflights without waking the rest of the stack.
 3. ``RequestContextMiddleware`` — assign the request id, enforce the body cap,
    log the outcome. Third so the log covers everything below it.
-4. ``RateLimitMiddleware`` — after the request id exists, so a block is
+4. ``AuthGuardMiddleware`` — refuses addresses locked out for presenting too
+   many bad credentials, before they spend any rate-limit budget.
+5. ``RateLimitMiddleware`` — after the request id exists, so a block is
    traceable, and before any handler work is done.
-5. ``SecurityHeadersMiddleware`` — innermost, so it stamps every response
+6. ``SecurityHeadersMiddleware`` — innermost, so it stamps every response
    including ones the layers above generate.
 """
 
@@ -29,24 +31,30 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from zz2.api.error_handlers import register_error_handlers
+from zz2.api.middleware.auth_guard import AuthGuardMiddleware
 from zz2.api.middleware.rate_limit import RateLimitMiddleware
 from zz2.api.middleware.request_context import RequestContextMiddleware
 from zz2.api.middleware.security import SecurityHeadersMiddleware
 from zz2.api.routers import (
     analytics,
+    auth,
     compat,
     customers,
     kits,
     meta,
     pages,
     roles,
+    saml,
     system,
+    ticket_records,
     tickets,
+    troubleshooting,
     users,
     workspace,
 )
 from zz2.core.errors import AppError
 from zz2.core.logging import audit, configure_logging, logger
+from zz2.gateways.database import db
 from zz2.gateways.http import close_client
 from zz2.paths import ensure_runtime_dirs
 from zz2.services.analytics import analytics_service
@@ -58,6 +66,7 @@ from zz2.workers.manager import worker_manager
 API_ROUTERS = (
     meta.router,
     tickets.router,
+    ticket_records.router,
     analytics.router,
     kits.router,
     customers.router,
@@ -65,6 +74,9 @@ API_ROUTERS = (
     users.router,
     roles.router,
     system.router,
+    troubleshooting.router,
+    saml.router,
+    auth.router,
 )
 
 
@@ -111,6 +123,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         worker_manager.stop_all()
         mirror_service.cancel()
         close_client()
+        db.close()
         audit("server.stopped")
 
 
@@ -124,7 +137,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     configure_logging(level=resolved.log_level, json_output=resolved.log_json)
 
     app = FastAPI(
-        title="ZZ2 Tech Support Platform",
+        title="Tech Support Platform (TSP)",
         version=resolved.build,
         description="Internal CarPlay/Android-Auto kit diagnostics and support ticketing.",
         lifespan=lifespan,
@@ -156,6 +169,7 @@ def _register_middleware(app: FastAPI, settings: Settings) -> None:
     # so the last one added runs first.
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(RateLimitMiddleware)
+    app.add_middleware(AuthGuardMiddleware)
     app.add_middleware(RequestContextMiddleware)
 
     if settings.cors_origins:

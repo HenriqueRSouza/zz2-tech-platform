@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Discover folder-based manuals and import them into Supabase Storage.
+"""Discover folder-based manuals and import them into Azure Blob Storage.
 
 The source may contain any number of nested folders. A PDF is assigned to a kit
 when one of its parent folder names matches a catalogue key (case-insensitive,
@@ -148,7 +148,7 @@ def main() -> int:
         return 0
 
     if not storage_gateway.configured:
-        print("Supabase Storage is not configured.", file=sys.stderr)
+        print("Azure Blob Storage is not configured.", file=sys.stderr)
         return 1
     if args.ensure_bucket or rows:
         try:

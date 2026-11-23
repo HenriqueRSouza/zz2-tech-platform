@@ -26,10 +26,10 @@
   var ROLE_KEY = 'zz2_auth_role';
   var LOGIN_PAGE = '/login.html';
 
-  /* Supabase persists its own refresh session under sb-<ref>-auth-token. Signing
-   * out has to clear that too, or the next page load silently restores the
-   * session the user just ended. */
-  var SUPABASE_KEY_PATTERN = /^sb-.*-auth-token$/;
+  /* The auth client the pages used before the move to server-issued sessions
+   * left a refresh session under sb-<ref>-auth-token. Nothing reads it any
+   * more, but it is a credential sitting in storage, so signing out removes it. */
+  var LEGACY_AUTH_KEY_PATTERN = /^sb-.*-auth-token$/;
 
   function token() {
     try {
@@ -59,7 +59,7 @@
       localStorage.removeItem(ROLE_KEY);
       for (var i = localStorage.length - 1; i >= 0; i--) {
         var key = localStorage.key(i);
-        if (key && SUPABASE_KEY_PATTERN.test(key)) localStorage.removeItem(key);
+        if (key && LEGACY_AUTH_KEY_PATTERN.test(key)) localStorage.removeItem(key);
       }
     } catch (e) { /* nothing useful to do */ }
   }

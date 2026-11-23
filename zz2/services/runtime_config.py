@@ -179,7 +179,10 @@ _FIELDS_BY_KEY = {field.key: field for field in CONFIG_FIELDS}
 #: permissions. Secrets belong in the environment; a browser-writable secret is a
 #: browser-readable secret one bug later.
 FORBIDDEN_KEYS = frozenset({
-    "secret_key", "supabase_service_key", "supabase_jwt_secret",
+    "secret_key", "database_url", "session_secret", "saml_session_secret",
+    "azure_storage_connection_string", "microsoft_client_secret",
+    # Pre-migration keys, still refused so an old config.json cannot smuggle them in.
+    "supabase_service_key", "supabase_jwt_secret",
     "supabase_publishable_key", "supabase_url",
 })
 

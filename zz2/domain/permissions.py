@@ -33,7 +33,7 @@ class Permission(StrEnum):
     """Every capability on the site.
 
     A ``StrEnum`` so the wire format stays the plain strings the existing
-    ``roles.json`` and Supabase ``app_metadata`` already contain, while typos
+    ``roles.json`` and the user directory already contain, while typos
     become import-time errors instead of silently-never-granted permissions.
     """
 
@@ -151,13 +151,13 @@ class Role:
 class Principal:
     """An authenticated caller.
 
-    Deliberately not called "User": it may be backed by a Supabase identity, and
-    it carries only what authorization needs. Handlers receive a ``Principal``
-    and never see a raw token or a credentials record.
+    Deliberately not called "User": it may be backed by a password or a
+    Microsoft identity, and it carries only what authorization needs. Handlers
+    receive a ``Principal`` and never see a raw token or a credentials record.
 
     Attributes:
-        subject: Stable identity (Supabase ``sub`` claim).
-        username: Login identifier, an email address under Supabase Auth.
+        subject: Stable identity (the session's ``sub`` claim).
+        username: Login identifier, an email address.
         display: Human-readable name for audit lines and the UI.
         role_key: Role this principal holds.
         extra_permissions: Per-user additive grants, on top of the role.
@@ -198,7 +198,7 @@ def parse_permissions(raw: object) -> frozenset[Permission]:
     """Convert stored or client-supplied permission data to a validated set.
 
     Unknown keys are dropped silently rather than rejected: this runs on data
-    from Supabase ``app_metadata``, which is edited outside this application, and
+    from the user directory, which can be edited outside this application, and
     a stray value there must not lock a user out of the whole site.
     """
     if not isinstance(raw, list | tuple | set | frozenset):

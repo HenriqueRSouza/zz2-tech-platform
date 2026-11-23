@@ -8,12 +8,6 @@
       ZZ2.logoutRequest().catch(function(){});
       localStorage.removeItem(AUTH_KEY);
       localStorage.removeItem(ROLE_KEY);
-      // Remove Supabase's persisted refresh session as well as the compatibility
-      // access-token key above. The next login will start a clean Auth session.
-      for (var i = localStorage.length - 1; i >= 0; i--) {
-        var key = localStorage.key(i);
-        if (key && /^sb-.*-auth-token$/.test(key)) localStorage.removeItem(key);
-      }
       window.location.href = '/login.html';
     }
 
@@ -80,35 +74,28 @@
     }
 
     function loadStats(token) {
-      // Ticket counts come directly from techSupport.tickets. HEAD + exact count
-      // avoids downloading rows and the four independent ranges run in parallel.
-      fetch(SERVER_URL + '/api/config', {cache:'no-store'})
-      .then(function(r) { return r.json(); })
-      .then(function(cfg) {
-        if (!cfg.supabase_url || !cfg.supabase_publishable_key) throw new Error('Supabase is not configured');
-        var now = new Date();
-        var today = _localISO(now);
-        var week = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        week.setDate(week.getDate() - ((week.getDay() + 6) % 7));
-        var month = new Date(now.getFullYear(), now.getMonth(), 1);
-        var tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1);
-        function count(since, before) {
-          var query = '?select=id' + (since ? '&ticket_date=gte.' + encodeURIComponent(since) : '') +
-            (before ? '&ticket_date=lt.' + encodeURIComponent(before) : '');
-          return fetch(cfg.supabase_url.replace(/\/$/,'') + '/rest/v1/tickets' + query, {
-            method:'HEAD', cache:'no-store',
-            headers:{'apikey':cfg.supabase_publishable_key,'Authorization':'Bearer '+token,
-              'Accept-Profile':'techSupport','Prefer':'count=exact'}
-          }).then(function(r){
-            if (!r.ok) throw new Error('Ticket count HTTP '+r.status);
-            var range=r.headers.get('content-range')||'*/0';
-            return parseInt(range.split('/').pop(),10)||0;
-          });
-        }
-        var upper=_localISO(tomorrow);
-        return Promise.all([count(today,upper),count(_localISO(week),upper),
-          count(_localISO(month),upper),count('','')]);
-      })
+      // Ticket counts come from GET /api/ticket-records/count, which counts in
+      // the database without returning rows. The four ranges run in parallel.
+      var now = new Date();
+      var today = _localISO(now);
+      var week = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      week.setDate(week.getDate() - ((week.getDay() + 6) % 7));
+      var month = new Date(now.getFullYear(), now.getMonth(), 1);
+      var tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate()+1);
+      function count(since, before) {
+        var params = [];
+        if (since) params.push('since=' + encodeURIComponent(since));
+        if (before) params.push('before=' + encodeURIComponent(before));
+        return fetch(SERVER_URL + '/api/ticket-records/count' + (params.length ? '?' + params.join('&') : ''), {
+          cache:'no-store', headers:{'Authorization':'Bearer '+token}
+        }).then(function(r){
+          if (!r.ok) throw new Error('Ticket count HTTP '+r.status);
+          return r.json();
+        }).then(function(d){ return (d && d.count) || 0; });
+      }
+      var upper=_localISO(tomorrow);
+      Promise.all([count(today,upper),count(_localISO(week),upper),
+        count(_localISO(month),upper),count('','')])
       .then(function(counts) {
         var s = { today:counts[0], this_week:counts[1], this_month:counts[2], total:counts[3] };
         applyStats(s);

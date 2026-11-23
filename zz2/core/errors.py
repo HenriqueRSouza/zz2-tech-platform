@@ -62,6 +62,15 @@ class AuthenticationError(AppError):
     message = "Sign in to continue."
 
 
+class CredentialExpired(AuthenticationError):
+    """A genuine credential that has run out.
+
+    Separate from a forged or garbled one because the brute-force guard must not
+    count it: an expired token proves the caller once held a valid session, and
+    an office full of people whose sessions lapsed at lunch is not an attack.
+    """
+
+
 class PermissionDenied(AppError):
     status_code = 403
     code = "forbidden"
@@ -96,6 +105,11 @@ class RateLimited(AppError):
         self.retry_after = retry_after
 
 
+class LockedOut(RateLimited):
+    code = "locked_out"
+    message = "Too many failed sign-in attempts from this address. Try again later."
+
+
 # -- 5xx: the caller cannot fix it ---------------------------------------------
 class StorageError(AppError):
     status_code = 500
@@ -104,7 +118,7 @@ class StorageError(AppError):
 
 
 class UpstreamError(AppError):
-    """A third party (Supabase, Apps Script) failed or timed out.
+    """A dependency (the database, Blob Storage, Apps Script) failed or timed out.
 
     ``502`` rather than ``500`` on purpose: it tells an operator reading the
     access log that the fault is outside this process, which is the single most

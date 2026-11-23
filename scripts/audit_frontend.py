@@ -49,8 +49,8 @@ PATH_LITERAL = re.compile(
 #: error with an explanation rather than a bare "unmatched".
 REMOVED_PATHS = {
     "/api/system/restart": "restarts belong to systemd (systemctl restart zz2)",
-    "/api/system/revoke": "sessions live in Supabase; revoke them there",
-    "/api/system/unlock": "login throttling lives in Supabase",
+    "/api/system/revoke": "sessions are signed tokens; sign out or disable the account",
+    "/api/system/unlock": "lockouts moved to /api/system/security/lockouts",
     "/api/system/clear-expired": "there is no local session store to purge",
 }
 
@@ -87,6 +87,10 @@ def check_routes() -> int:
     ]
 
     references: dict[str, set[str]] = {}
+    #: Paths written as a prefix to concatenate an id onto
+    #: (``'/api/presence/tickets/' + num``): they resolve if the route has one
+    #: more parameterised segment.
+    prefixes: set[str] = set()
     for directory in SEARCH_DIRS:
         for path in sorted(directory.rglob("*")):
             if path.suffix not in {".js", ".html"}:
@@ -96,11 +100,14 @@ def check_routes() -> int:
                 url = _clean(match.group(1))
                 if url.startswith("/"):
                     references.setdefault(url, set()).add(path.name)
+                    if match.group(1).split("?")[0].endswith("/"):
+                        prefixes.add(url)
 
     unmatched: list[str] = []
     print(f"routes: {len(references)} distinct paths referenced")
     for url in sorted(references):
-        if any(matcher.match(url) for matcher in matchers):
+        candidates = [url] + ([url + "/_"] if url in prefixes else [])
+        if any(matcher.match(c) for matcher in matchers for c in candidates):
             continue
         reason = REMOVED_PATHS.get(url)
         detail = f" — removed: {reason}" if reason else ""

@@ -7,8 +7,8 @@ locally with the host panel blank instead of returning a 500.
 
 The security panel changed with the auth migration. It used to report locked
 accounts, failing login attempts and any credentials still stored as plaintext —
-all facts about a local credential store that no longer exists. Supabase owns
-authentication now, so what is reported here is what *this* process can still see
+all facts about a local credential store that no longer exists. Accounts live in
+the database user directory now, so what is reported here is what *this* process can still see
 and be wrong about: rate-limiter state, whether secrets are configured, and
 whether the mode of the data directory is safe.
 """
@@ -178,21 +178,28 @@ class TelemetryService:
         """What this process can report about its own security posture.
 
         Deliberately narrow. It reports configuration facts that are checkable
-        here, and does not claim to describe account security — Supabase owns
-        that, and a panel that looked authoritative while reading nothing would be
+        here, and does not claim to describe account security — the user
+        directory owns that, and a panel that looked authoritative while reading nothing would be
         worse than no panel.
         """
         settings = get_settings()
         return {
-            "auth_provider": "supabase",
-            "jwt_verification": "local" if settings.supabase_jwt_secret.get_secret_value()
-                                else "remote",
+            "auth_provider": "database",
+            # Every session is an HS256 token this server issued and verifies
+            # itself; there is no remote verification path any more.
+            "jwt_verification": "local",
+            "microsoft_sign_in": settings.microsoft_enabled,
+            "saml_sign_in": settings.saml_enabled,
             "https_enforced": settings.public_url.startswith("https://"),
             "rate_limit_enabled": settings.rate_limit_enabled,
             "cors_origins": list(settings.cors_origins),
             "secrets_configured": {
-                "supabase_service_key": bool(settings.supabase_service_key.get_secret_value()),
-                "supabase_jwt_secret": bool(settings.supabase_jwt_secret.get_secret_value()),
+                "database_url": settings.database_configured,
+                "session_secret": bool(settings.effective_session_secret),
+                "azure_storage": bool(
+                    settings.azure_storage_connection_string.get_secret_value()),
+                "microsoft_client_secret": bool(
+                    settings.microsoft_client_secret.get_secret_value()),
                 "appscript_secret": bool(settings.appscript_secret.get_secret_value()),
             },
             "data_dir_mode": self._data_dir_mode(),

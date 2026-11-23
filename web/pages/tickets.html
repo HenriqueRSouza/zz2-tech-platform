@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="/static/js/shared/theme-init.js"></script>
 <script src="/static/js/shared/session.js"></script>
-<title>ZZ2 Tech Support · Tickets</title>
+<title>TSP · Tickets</title>
 <link rel="stylesheet" href="/static/css/tickets.1.css">
 </head>
 <body>
@@ -15,7 +15,7 @@
 <div class="zz2-nav-overlay" id="zz2NavOverlay"></div>
 <nav class="zz2-nav" id="zz2Nav" aria-hidden="true">
   <div class="zz2-nav-head">
-    <span class="zz2-nav-title">ZZ2 <b>Navigation</b></span>
+    <span class="zz2-nav-title">TSP <b>Navigation</b></span>
     <button class="zz2-nav-x" id="zz2NavClose" aria-label="Close menu">&times;</button>
   </div>
   <div class="zz2-nav-links">
@@ -27,7 +27,6 @@
     <a class="zz2-nav-link" href="/settings.html" data-perm="system_settings" data-page="settings"><span class="i">⚙️</span>System Settings</a>
   </div>
 </nav>
-<script src="/static/vendor/supabase.js"></script>
 <script src="/static/js/shared/nav.js"></script>
 <!-- /ZZ2 shared navigation menu -->
 
@@ -41,7 +40,7 @@
   <span class="spacer"></span>
   <button class="tb-toggle" id="themeToggle" onclick="zz2ToggleTheme()" title="Switch to dark mode" aria-label="Switch color theme">☀️</button>
   <div class="meta" id="meta">—</div>
-  <button class="tb-btn" id="btn-refresh" title="Reload tickets from Supabase">↻ Refresh</button>
+  <button class="tb-btn" id="btn-refresh" title="Reload tickets from the server">↻ Refresh</button>
   <button class="tb-btn primary" id="btn-new">+ New ticket</button>
 </header>
 

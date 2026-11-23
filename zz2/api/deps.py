@@ -30,7 +30,7 @@ from typing import Annotated
 
 from fastapi import Depends, Header, Request
 
-from zz2.core.errors import AuthenticationError, PermissionDenied
+from zz2.core.errors import AuthenticationError, CredentialExpired, PermissionDenied
 from zz2.core.logging import actor_var
 from zz2.domain.permissions import Permission, Principal
 from zz2.repositories.drafts import DraftRepository
@@ -57,7 +57,15 @@ def current_principal(
     if not token:
         raise AuthenticationError()
 
-    principal = auth_service.authenticate(token)
+    try:
+        principal = auth_service.authenticate(token)
+    except AuthenticationError as exc:
+        # Read by AuthGuardMiddleware after the response: a presented credential
+        # that was *rejected* (not merely expired) counts towards a lockout.
+        request.state.auth_failure = (
+            "expired" if isinstance(exc, CredentialExpired) else "rejected"
+        )
+        raise
 
     # Bind the actor to the logging context so every record produced while
     # handling this request names who caused it, without threading it through.

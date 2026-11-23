@@ -2,19 +2,19 @@
 
 Where the write-behind design lives. A ticket save touches three systems:
 
-1. **Supabase** — synchronous and authoritative. If this fails, the save fails.
+1. **Database** (PostgreSQL) — synchronous and authoritative. If this fails, the save fails.
 2. **Local store** — updated immediately so the Today pane reflects the change.
 3. **Google Sheet** — queued via :mod:`zz2.workers.write_behind`, retried until it
    lands.
 
-Ordering is the point. Supabase first, because it is the copy other technicians
+Ordering is the point. The database first, because it is the copy other technicians
 read in real time and the only one whose failure the user must hear about. The
 sheet last, because it is slow (multi-second Apps Script round-trips) and its
 delay must not be the user's delay.
 
-Reads follow the same hierarchy: Supabase is authoritative, and the local store is
+Reads follow the same hierarchy: the database is authoritative, and the local store is
 a fallback for when it is unreachable plus a holding area for writes still in
-flight. A ticket created here but not yet in Supabase must still appear in its
+flight. A ticket created here but not yet in the database must still appear in its
 author's own pane, or the save looks like it failed.
 """
 
@@ -28,23 +28,36 @@ from zz2.core.errors import UpstreamError, ValidationError
 from zz2.core.logging import audit, logger
 from zz2.core.text import as_text, digits_only
 from zz2.domain.models import Ticket, WriteOperation
-from zz2.gateways.supabase import encode_value, supabase
+from zz2.gateways.database import (
+    assignment_list,
+    column_list,
+    db,
+    escape_like,
+    json_rows,
+    placeholder_list,
+    sql,
+)
 from zz2.repositories.stats import StatsRepository
 from zz2.repositories.tickets import TicketStoreRepository
 from zz2.repositories.write_queue import PendingWriteRepository, new_operation_id
 from zz2.services.normalization import norm_key
 from zz2.services.runtime_config import runtime_config
+from zz2.settings import get_settings
 
-TICKET_FIELDS = (
-    "ticket_date,ticket_number,tech,client,product,vehicle,issue,"
-    "resolution,status,serial,notes"
+_SELECT_TICKETS = (
+    "SELECT ticket_date, ticket_number, tech, client, product, vehicle, issue, "
+    "resolution, status, serial, notes FROM tickets"
 )
+
+RECENT_ROW_LIMIT = 10_000
+"""Safety bound on the recent-tickets query (the PostgREST path paged 10 × 1,000)."""
+
+HISTORY_ROW_LIMIT = 50_000
+"""Safety bound on a history query (the PostgREST path paged 50 × 1,000)."""
 
 MAX_SEARCH_RESULTS = 500
 """Cap on returned matches, so a one-character query cannot ship the whole store
 to a browser that will render 40,000 rows and lock the tab."""
-
-SUPABASE_PAGE_SIZE = 1000
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,7 +80,7 @@ class SaveResult:
 
 
 class TicketService:
-    """Reads and writes tickets across Supabase, the local store and the sheet."""
+    """Reads and writes tickets across the database, the local store and the sheet."""
 
     def __init__(
         self,
@@ -87,12 +100,16 @@ class TicketService:
             ValidationError: Neither a client nor an item was supplied. A ticket
                 identifying nothing is unusable, and rejecting it here is cheaper
                 than someone deleting it later.
-            UpstreamError: Supabase refused the insert. Nothing is queued, so the
+            UpstreamError: The database refused the insert. Nothing is queued, so the
                 sheet and the local store stay consistent with the failure.
         """
         ticket = Ticket.from_store(payload)
         if not (ticket.client.strip() or ticket.product.strip()):
             raise ValidationError("Enter a client or an item before creating the ticket.")
+
+        # Dated before numbering: numbering appends this ticket to the local store,
+        # and an undated row there drops out of every analytics time series.
+        ticket = ticket.model_copy(update={"date": dt.date.today().isoformat()})
 
         number = self._next_ticket_number(ticket)
         if number is None:
@@ -100,22 +117,23 @@ class TicketService:
             # locally. The synchronous path lets the sheet assign one.
             return self._create_synchronously(payload, ticket, actor=actor)
 
-        ticket = ticket.model_copy(update={
-            "number": str(number),
-            "date": dt.date.today().isoformat(),
-        })
+        ticket = ticket.model_copy(update={"number": str(number)})
 
         # Authoritative write first. A failure here must abort: queueing the sheet
         # write anyway would leave a ticket that exists in the sheet and the local
-        # store but not in the copy every other technician reads.
-        supabase.request("POST", "tickets", payload=ticket.to_supabase(),
-                         prefer="return=minimal")
+        # store but not in the copy every other technician reads. The row numbering
+        # reserved in the store goes with it, or it would linger as a phantom.
+        try:
+            _insert_ticket(ticket.to_record())
+        except UpstreamError:
+            self._store.delete(number)
+            raise
 
         if ticket.tech:
             self._stats.increment(ticket.tech.lower())
 
+        # No append here: numbering already wrote the row to the store.
         self._enqueue("newticket", payload, predicted_number=number)
-        self._store.append(ticket)
 
         audit("ticket.created", actor=actor, ticket=str(number))
         return SaveResult(str(number), queued=True)
@@ -123,8 +141,8 @@ class TicketService:
     def update(self, payload: dict[str, Any], *, actor: str) -> SaveResult:
         """Edit an existing ticket.
 
-        ``ticket_date`` and ``ticket_number`` are excluded from the Supabase
-        patch: the number identifies the row, and the date records when the
+        ``ticket_date`` and ``ticket_number`` are excluded from the database
+        update: the number identifies the row, and the date records when the
         ticket was created, not when it was last touched.
         """
         number = as_text(payload.get("ticketNum")).strip()
@@ -132,10 +150,12 @@ class TicketService:
             raise ValidationError("A ticket number is required to save an edit.")
 
         ticket = Ticket.from_store(payload).model_copy(update={"number": number})
-        filter_query = f"tickets?ticket_number=eq.{encode_value(ticket.canonical_number)}"
-        supabase.request("PATCH", filter_query,
-                         payload=ticket.to_supabase(include_identity=False),
-                         prefer="return=minimal")
+        record = ticket.to_record(include_identity=False)
+        db.execute(
+            sql.SQL("UPDATE tickets SET {} WHERE ticket_number = %s").format(
+                assignment_list(record)),
+            [*record.values(), ticket.canonical_number],
+        )
 
         self._enqueue("updateticket", payload)
 
@@ -156,8 +176,7 @@ class TicketService:
             raise ValidationError("A ticket number is required to discard a ticket.")
 
         canonical = Ticket(number=number).canonical_number
-        supabase.request("DELETE", f"tickets?ticket_number=eq.{encode_value(canonical)}",
-                         prefer="return=minimal")
+        db.execute("DELETE FROM tickets WHERE ticket_number = %s", [canonical])
 
         self._enqueue("deleteticket", payload)
         self._store.delete(number)
@@ -190,17 +209,17 @@ class TicketService:
         return SaveResult(number, queued=False)
 
     def _next_ticket_number(self, ticket: Ticket) -> int | None:
-        """Reserve the next number, respecting Supabase's high-water mark.
+        """Reserve the next number, respecting the database's high-water mark.
 
-        Tickets are also created straight from the Tickets page into Supabase, so
+        Tickets are also created straight from the Tickets page into the database, so
         the local maximum alone would reuse their numbers. The remote maximum is
         read *before* the store lock is taken — holding a file lock across a
         network call would block every unrelated store read for the duration.
         """
         remote_max = 0
         try:
-            rows = supabase.select(
-                "tickets?select=ticket_number&order=ticket_number.desc&limit=100"
+            rows = db.fetch_all(
+                "SELECT ticket_number FROM tickets ORDER BY ticket_number DESC LIMIT 100"
             )
             for row in rows:
                 digits = digits_only(row.get("ticket_number"))
@@ -211,10 +230,17 @@ class TicketService:
             # number, and the sheet reconciles any collision by renumbering.
             logger.warning("could not read remote ticket high-water mark")
 
-        return self._store.append_and_number(ticket, floor=remote_max)
+        return self._store.append_and_number(
+            ticket, floor=remote_max,
+            seed=not get_settings().enable_appscript_sync,
+        )
 
     def _enqueue(self, action: str, payload: dict[str, Any],
                  *, predicted_number: int | None = None) -> None:
+        # Without the sheet, the database is the only copy that matters; queueing would
+        # only retry against an unconfigured script until the write dead-letters.
+        if not get_settings().enable_appscript_sync:
+            return
         self._queue.enqueue(WriteOperation(
             id=new_operation_id(),
             action=action,
@@ -227,7 +253,7 @@ class TicketService:
     def recent(self, days: int = 1) -> dict[str, Any]:
         """Tickets from the last ``days`` days, merged across both sources.
 
-        Local rows are laid down first, then Supabase rows overwrite them by
+        Local rows are laid down first, then database rows overwrite them by
         number. That order is deliberate: a queued local write stays visible, and
         anywhere both sources have the ticket, the shared authoritative copy wins.
 
@@ -248,23 +274,21 @@ class TicketService:
             key = str(ticket.numeric) if ticket.numeric is not None else f"local-{index}"
             merged[key] = ticket.to_api()
 
-        source = "supabase"
+        source = "database"
         try:
-            rows = supabase.select_paged(
-                f"tickets?ticket_date=gte.{cutoff}&select={TICKET_FIELDS}"
-                "&order=ticket_date.asc,ticket_number.asc"
-                "&limit={limit}&offset={offset}",
-                page_size=SUPABASE_PAGE_SIZE,
-                max_pages=10,
-            )
+            rows = json_rows(db.fetch_all(
+                _SELECT_TICKETS + " WHERE ticket_date >= %s "
+                "ORDER BY ticket_date ASC, ticket_number ASC LIMIT %s",
+                [cutoff, RECENT_ROW_LIMIT],
+            ))
             for index, row in enumerate(rows):
-                ticket = Ticket.from_supabase(row)
+                ticket = Ticket.from_record(row)
                 if ticket.numeric in suppressed:
                     continue
                 key = str(ticket.numeric) if ticket.numeric is not None else f"remote-{index}"
                 merged[key] = ticket.to_api()
         except UpstreamError:
-            logger.warning("recent tickets: Supabase unavailable, serving local store")
+            logger.warning("recent tickets: database unavailable, serving local store")
             source = "local_fallback"
 
         def sort_key(item: dict[str, Any]) -> tuple[str, int]:
@@ -356,16 +380,16 @@ class TicketService:
         pattern = self._history_pattern(value, fuzzy=fuzzy and field == "client")
 
         try:
-            rows = supabase.select_paged(
-                f"tickets?{field}=ilike.{pattern}&select={TICKET_FIELDS}"
-                "&order=ticket_date.desc.nullslast,ticket_number.desc"
-                "&limit={limit}&offset={offset}",
-                page_size=SUPABASE_PAGE_SIZE,
-            )
-            results = [Ticket.from_supabase(row).to_api() for row in rows]
-            source = "supabase"
+            rows = json_rows(db.fetch_all(
+                sql.SQL(_SELECT_TICKETS + " WHERE {} ILIKE %s "
+                        "ORDER BY ticket_date DESC NULLS LAST, ticket_number DESC "
+                        "LIMIT %s").format(sql.Identifier(field)),
+                [pattern, HISTORY_ROW_LIMIT],
+            ))
+            results = [Ticket.from_record(row).to_api() for row in rows]
+            source = "database"
         except UpstreamError:
-            logger.warning("ticket history: Supabase unavailable, serving local store")
+            logger.warning("ticket history: database unavailable, serving local store")
             results = self._local_history(field, value)
             source = "local_fallback"
 
@@ -381,7 +405,7 @@ class TicketService:
 
     @staticmethod
     def _history_pattern(value: str, *, fuzzy: bool) -> str:
-        """Build the ``ilike`` pattern, percent-encoded for PostgREST.
+        """Build the ``ILIKE`` pattern, with user text escaped to match literally.
 
         Fuzzy mode picks the single most distinctive token rather than searching
         the whole phrase: numbers first (a street number or branch code is highly
@@ -390,7 +414,7 @@ class TicketService:
         name differs by one word.
         """
         if not fuzzy:
-            return encode_value(value)
+            return escape_like(value)
 
         import re
 
@@ -399,7 +423,7 @@ class TicketService:
         generic = {"car", "stereo", "audio", "alarm", "the", "and", "inc", "llc", "ltda"}
         distinctive = [token for token in tokens if token not in generic]
         choices = sorted(numeric or distinctive or tokens, key=len, reverse=True)
-        return "*" + encode_value(choices[0] if choices else value) + "*"
+        return "%" + escape_like(choices[0] if choices else value) + "%"
 
     def _local_history(self, field: str, value: str) -> list[dict[str, Any]]:
         """Exact-key history from the local store, newest first."""
@@ -413,6 +437,15 @@ class TicketService:
             if norm_key(as_text(row.get(field)).strip()) == wanted:
                 results.append(Ticket.from_store(row).to_api())
         return results
+
+
+def _insert_ticket(record: dict[str, Any]) -> None:
+    """``INSERT`` one ``tickets`` row; columns come from :meth:`Ticket.to_record`."""
+    db.execute(
+        sql.SQL("INSERT INTO tickets ({}) VALUES ({})").format(
+            column_list(record), placeholder_list(len(record))),
+        list(record.values()),
+    )
 
 
 ticket_service = TicketService()

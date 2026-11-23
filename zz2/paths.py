@@ -58,6 +58,7 @@ KITS_JSON = STORE_DIR / "kits.json"
 TS_JSON = STORE_DIR / "troubleshooting.json"
 BLUEPRINTS_JSON = STORE_DIR / "blueprints.json"
 CATALOG_META_JSON = STORE_DIR / "catalog_meta.json"
+TS_SESSIONS_JSON = STORE_DIR / "troubleshooting_sessions.json"
 ANALYTICS_VIEW_FILE = STORE_DIR / "analytics_view.json"
 KIT_HISTORY_DIR = STORE_DIR / "kit_history"
 
