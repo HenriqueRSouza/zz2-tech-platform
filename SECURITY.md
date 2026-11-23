@@ -1,9 +1,18 @@
 # Security
 
 This document is written to be *useful*, which means it is honest about what is
-not fixed. The old deployment was a LAN-only server on a NAS; the new one is on a
-VPS reachable from the internet. That change invalidates most of the assumptions
-the original code was written under, and this file tracks the consequences.
+not fixed. The old deployment was a LAN-only server on a NAS; the new one is
+reachable from the internet — Azure App Service, with the scripts under `deploy/`
+still supporting a self-managed VPS. That change invalidates most of the
+assumptions the original code was written under, and this file tracks the
+consequences.
+
+In November 2026 the backing services moved from Supabase to Azure (see
+[`docs/AZURE_MIGRATION.md`](docs/AZURE_MIGRATION.md)): PostgreSQL Flexible Server
+replaces Supabase's Postgres/PostgREST, an `app_users` table plus server-issued
+sessions replace Supabase Auth, Microsoft sign-in (OpenID Connect) was added,
+Azure Blob Storage replaces Supabase Storage, and a backend presence endpoint
+replaces Supabase Realtime. The browser now talks to this origin only.
 
 - [Threat model](#threat-model)
 - [Fixed](#fixed)
@@ -17,8 +26,10 @@ the original code was written under, and this file tracks the consequences.
 
 **What we assume.** The application is reachable from the public internet.
 Attackers can send arbitrary requests, know the software is open source, and can
-read this document. Staff accounts are held in Supabase Auth. Kit diagrams,
-manuals, customer purchase history and ticket text are confidential business data.
+read this document. Staff accounts are held in the application's own
+`techSupport.app_users` table (scrypt password hashes) or linked to a Microsoft
+Entra ID identity. Kit diagrams, manuals, customer purchase history and ticket
+text are confidential business data.
 
 **What we defend against.** Unauthenticated access to any data; privilege
 escalation by an authenticated user; credential theft through logs, referrers or
@@ -26,9 +37,12 @@ stored XSS; source and configuration disclosure; resource exhaustion by a single
 client; and a compromised third-party CDN.
 
 **What we do not defend against.** A distributed denial of service (the VPS
-provider's edge is the right layer); an attacker with the Supabase service key
-(it bypasses row-level security by design — treat it as root); a malicious
-super-admin; and physical or hypervisor-level compromise of the VPS.
+provider's edge is the right layer); an attacker holding `ZZ2_DATABASE_URL`,
+`ZZ2_AZURE_STORAGE_CONNECTION_STRING` or `ZZ2_SESSION_SECRET` (each is
+equivalent to root — the database has no row-level security, the storage
+connection string reads every manual, and the session secret mints any
+identity); a malicious super-admin; a compromised Azure subscription owner; and
+physical or hypervisor-level compromise of the host.
 
 ---
 
@@ -69,8 +83,11 @@ in is not reachable. See `zz2/api/routers/pages.py` and `zz2/core/jsonstore.py`.
 `config.json` held `secret_key`, `supabase_service_key` and the Supabase URL,
 inside the directory the static handler served from.
 
-**Now:** secrets come from the process environment — systemd `EnvironmentFile` at
-`0640 root:zz2`, or Docker secrets. `config.json` survives only for non-secret,
+**Now:** secrets come from the process environment — App Service application
+settings (ideally Key Vault references) on Azure, or a systemd `EnvironmentFile`
+at `0640 root:zz2` / Docker secrets on a VPS. The production validator refuses
+to boot without `ZZ2_DATABASE_URL` or with a `ZZ2_SESSION_SECRET` shorter than
+32 characters. `config.json` survives only for non-secret,
 operator-tunable values, and `RuntimeConfigService.apply` **rejects** any attempt
 to write a secret key through the API. See `zz2/settings.py` and
 `zz2/services/runtime_config.py`.
@@ -156,11 +173,18 @@ See `zz2/core/text.py` and `zz2/api/routers/pages.py`.
 role = app_metadata.get('role') or user_metadata.get('role') or 'tech'
 ```
 
-`user_metadata` is writable by the user's own Supabase session. That fallback let
-any signed-in account set its own role to anything.
+`user_metadata` was writable by the user's own Supabase session. That fallback
+let any signed-in account set its own role to anything.
 
-**Now:** `app_metadata` only, with no fallback. An unknown role resolves to zero
-permissions rather than a default. See `zz2/services/auth.py`.
+**Now:** the role comes from the `role` and `permissions` columns of `app_users`,
+which only an administrator can change through the Users API — there is no
+self-service profile write that reaches them. (The user directory still exposes
+them as `app_metadata` for compatibility.) An unknown role resolves to zero
+permissions rather than a default, and a deactivated or deleted account is
+refused whenever its principal is resolved (principals are cached for up to
+60 s), not only at sign-in. If the database is unreachable at that moment, the
+role recorded in the token is used instead. See `zz2/services/auth.py` and
+`zz2/gateways/user_directory.py`.
 
 ### 12. Missing and inconsistent authorization
 
@@ -181,7 +205,9 @@ multi-megabyte view — was unlimited.
 
 **Now:** per-client fixed-window limits with separate read and write budgets,
 keyed on identity before IP so one office behind a NAT does not share a budget;
-plus nginx-level limits in front. See `zz2/api/middleware/rate_limit.py`.
+plus nginx-level limits in front on a VPS deployment (App Service has no nginx
+layer — the application limits are the only ones there). See
+`zz2/api/middleware/rate_limit.py`.
 
 ### 14. Unbounded resource use
 
@@ -191,14 +217,16 @@ never evicted, and an unbounded log.
 
 **Now:** an 8 MB default body cap rejected from `Content-Length` before buffering,
 explicit connect/read/write timeouts on every outbound call, TTL+LRU caches with
-hard entry limits, rotating logs, and `MemoryMax`/`TasksMax` in the systemd unit.
+hard entry limits, rotating logs, and `MemoryMax`/`TasksMax` in the systemd unit
+(on App Service, the plan's instance size is the ceiling).
 
 ### 15. Remote process restart
 
 `POST /api/system/restart` called `os.execv`. One bug in the auth check made it a
 remote code execution primitive.
 
-**Now:** removed. Restarts are `systemctl restart zz2`.
+**Now:** removed. Restarts go through the platform — `az webapp restart` on
+Azure, `systemctl restart zz2` on a VPS.
 
 ### 16. CDN supply chain
 
@@ -206,8 +234,9 @@ remote code execution primitive.
 jsDelivr; `kit-editor.html` loaded pdf.js from cdnjs. No Subresource Integrity.
 A compromised CDN response executes with full access to the page.
 
-**Now:** both are vendored under `web/static/vendor/`, and `script-src` is
-`'self'`. The pages also work with no outbound internet access.
+**Now:** pdf.js and Chart.js are vendored under `web/static/vendor/`, and the
+Supabase client is gone entirely since the Azure migration — the pages call this
+origin's API instead. `script-src` and `connect-src` are both `'self'`.
 
 ### 17. Server-side request forgery
 
@@ -226,9 +255,19 @@ disk-persisted lockout table, and a fallback that compared plaintext passwords �
 roughly 600 lines of security-critical code maintained in-house because Python
 2.7 could not do better.
 
-**Now:** deleted. Supabase Auth owns identities, passwords, password policy,
-session refresh and login throttling. The minimum password length for accounts
-created through this application rose from 6 characters to 12.
+**Then (first rewrite):** deleted, with Supabase Auth owning identities and
+passwords.
+
+**Now (Azure):** Supabase Auth is gone, so password accounts are back in-house —
+but on the standard library, not hand-written primitives. Hashes are
+`hashlib.scrypt` (N=2^15, r=8, p=1, 16-byte random salt), compared with
+`hmac.compare_digest`; a lookup for a non-existent account still computes a hash
+so latency does not reveal which emails exist. The minimum password length is
+12 characters (it was 6). Sessions are HS256 JWTs signed with
+`ZZ2_SESSION_SECRET`, 8 h by default, with a required `jti` so sign-out can
+revoke them. Microsoft sign-in accounts have no password at all. See
+`zz2/gateways/user_directory.py`, `zz2/services/users.py` and
+`zz2/services/session_tokens.py`.
 
 ### 19. Token spraying walked around the rate limiter
 
@@ -247,6 +286,10 @@ token from locking out an office behind a NAT. Blocks are listed and released at
 `GET /api/system/security/lockouts` and `POST /api/system/security/lockouts/release`
 (`system_settings`).
 
+Since Supabase no longer throttles sign-in, the same guard records failed
+password logins (`POST /api/auth/login`), failed Microsoft callbacks and invalid
+SSO hand-off codes (`POST /api/auth/sso/exchange`). See `zz2/api/routers/auth.py`.
+
 ### 20. University single sign-on (SAML 2.0, Microsoft Entra ID)
 
 New capability rather than a fix: students and staff sign in with their
@@ -254,15 +297,47 @@ university Microsoft account, inheriting the university's MFA and account
 lifecycle. Implemented as a SAML SP with the checks a SAML library performs —
 signature over the element actually read (anti-wrapping), issuer, audience,
 recipient, validity window, `InResponseTo` bound to the browser by a cookie,
-assertion-ID replay cache, no DTDs. Sessions are this server's own HS256 tokens
-under a key distinct from Supabase's, revoked on sign-out. Details, Entra setup
-and limitations: [`docs/SAML_AZURE.md`](docs/SAML_AZURE.md).
+assertion-ID replay cache, no DTDs. Sessions are this server's own HS256 tokens,
+revoked on sign-out. Details, Entra setup and limitations:
+[`docs/SAML_AZURE.md`](docs/SAML_AZURE.md).
 
 ### 21. Sign-out did not end anything server-side
 
 `POST /api/session/logout` documented evicting the principal cache but did not
 call it, so a token kept working for up to 60 s after sign-out. It now evicts the
-cache, and revokes SAML sessions outright.
+cache and revokes the token's `jti` — for every session, since all sessions are
+now issued by this server.
+
+### 22. Sign in with Microsoft (OpenID Connect)
+
+New capability, added with the Azure migration: "Entrar com Microsoft" for
+Outlook / Microsoft 365 accounts. Authorization-code flow with PKCE (S256), run
+server-side with a confidential client. `state` is single-use and bound to the
+browser by a cookie holding a separate nonce (only its hash is kept
+server-side); the `id_token` is verified with RS256 against Microsoft's JWKS,
+with audience, issuer-matches-`tid`, expiry and `nonce` checks. The browser never
+sees the Microsoft tokens — it receives a one-time hand-off code in the URL
+fragment (not the query string, so it is not logged or sent as a `Referer`) and
+exchanges it for a session. Account rules are shared with SAML: domain
+allowlist, an existing deactivated account is refused, group-to-role mapping.
+See `zz2/services/microsoft.py` and `zz2/services/sso.py`.
+
+### 23. Fewer third parties in the browser
+
+Under Supabase, every page held a Supabase client and talked to Supabase
+directly for auth, tickets (PostgREST) and presence (Realtime), so the
+authorization model was split between this server and RLS policies the browser
+could probe. Now every call goes to this origin: tickets through
+`/api/ticket-records` with the same permission dependencies as the rest of the
+API, presence through `/api/presence/...`. `connect-src` dropped to `'self'`, and
+`/api/config` no longer returns any key — only feature flags.
+
+Kit media lives in a **private** Blob container read with a server-side
+connection string; browsers only reach it through the authenticated
+`/images/<kit>/<file>` and `/manuals/<kit>/<file>` routes, and the connection
+string is never logged. Database connections use TLS (`sslmode=require`), and
+every statement uses bound parameters with driver-quoted identifiers. See
+`zz2/gateways/storage.py` and `zz2/gateways/database.py`.
 
 ---
 
@@ -287,32 +362,53 @@ most of the two biggest page scripts, and each change risks a behaviour
 regression in code with no test coverage. It should be done page by page, with
 the CSP tightened per page once that page is clean.
 
-**Mitigation meanwhile:** `connect-src` is limited to self and Supabase, so an
-injected script cannot exfiltrate to an arbitrary host; `object-src 'none'` and
-`base-uri 'none'` close two common escalation routes.
+**Mitigation meanwhile:** `connect-src` is `'self'` only, so an injected script
+cannot `fetch` to another host; `object-src 'none'` and `base-uri 'none'` close
+two common escalation routes.
 
 ### Access tokens in `localStorage`
 
 **Severity: medium.** A successful XSS can read the token. `HttpOnly` cookies
 would not be readable by script.
 
-**Why:** the Supabase JavaScript client manages the session and stores it in
-`localStorage` by design. Moving to cookies means the server brokers sign-in
-rather than the browser, which is a different authentication architecture — and
-it would need CSRF protection, which cookies require and bearer tokens do not.
+**Why:** the pages send the token as a bearer header, and
+`web/static/js/shared/session.js` keeps it in `localStorage`. This was dictated
+by the Supabase client; it no longer is, but the front-end was kept as it was.
 
-**Fix:** a server-side session broker that exchanges a Supabase sign-in for an
-`HttpOnly; Secure; SameSite=Strict` cookie. Worth doing after the CSP work, since
-that is what makes XSS unlikely in the first place.
+**Fix:** since the server now issues every session itself, the remaining work is
+on the page side: set the token as an `HttpOnly; Secure; SameSite=Strict` cookie
+at sign-in / SSO exchange, accept it in `current_principal`, and add CSRF
+protection for state-changing requests (cookies need it; bearer tokens do not).
+Worth doing after the CSP work, since that is what makes XSS unlikely in the
+first place.
 
-### Rate limiting is per process
+### In-process state: rate limits, lockouts, revocations, presence
 
-**Severity: low.** The counters are in memory. The deployment runs one worker
-(see `deploy/gunicorn.conf.py`), so the configured limit is the real limit today —
-but raising `workers` would silently multiply it.
+**Severity: low.** The rate-limit counters, the lockout table, the revoked-token
+list and ticket presence all live in memory. The deployment runs one worker (see
+`deploy/gunicorn.conf.py`) on one App Service instance, so they are correct
+today, with two consequences:
 
-**Fix:** move the counters to Redis. Required before scaling horizontally, for
-this reason and because the background workers would also duplicate.
+- Raising `workers` or scaling out the App Service plan would silently multiply
+  the limits and split the revocation list between instances.
+- A restart forgets revocations: a token signed out before the restart is valid
+  again until its `exp` (8 h at most by default).
+
+**Fix:** move this state to Redis (or a table) before scaling horizontally; until
+then, rotating `ZZ2_SESSION_SECRET` is the way to revoke every session at once.
+
+### No row-level security in the database
+
+**Severity: low.** Supabase enforced row-level security per table; the Azure
+schema (`sql/azure_schema.sql`) does not, and the application connects with a
+single role that can read and write every table. Authorization is enforced only
+in the API layer (`zz2/api/deps.py`). Since the browser no longer has a direct
+database path, this is defence in depth rather than an exposure — but an SQL
+injection or a leaked `ZZ2_DATABASE_URL` would reach everything.
+
+**Fix:** a dedicated application role with `GRANT`s limited to the
+`techSupport` and `zoho` tables it uses (no DDL, no ownership), separate from the
+admin login used for migrations.
 
 ### Uploads travel as base64 in a JSON body
 
@@ -327,12 +423,12 @@ limits bound the exposure.
 
 ### `/api/config` is unauthenticated
 
-**Severity: informational, by design.** It returns the Supabase URL and the
-publishable key, because the sign-in page needs both before any session exists.
-Both are intended to be public — the publishable key is what the browser
-authenticates with. The payload comes from an explicit allowlist
-(`Settings.public_config`), so adding a secret to `Settings` cannot leak it here
-by accident, and a test asserts no secret appears in the response.
+**Severity: informational, by design.** The sign-in page needs it before any
+session exists. Since the migration it returns only the build, the environment
+and which sign-in methods are enabled — no URL or key. The payload comes from an
+explicit allowlist (`Settings.public_config`), so adding a secret to `Settings`
+cannot leak it here by accident, and a test asserts no secret appears in the
+response.
 
 ### The Apps Script integration authenticates with a shared secret in a URL
 
@@ -343,7 +439,7 @@ string. That is the deployment's own protocol, not a choice made here.
 disabled on the shared client, and callers cannot inject their own `key`
 parameter.
 
-**Fix:** retire the Google Sheet. Tickets already live in Supabase; the sheet,
+**Fix:** retire the Google Sheet. Tickets already live in PostgreSQL; the sheet,
 the write-behind queue and the poller all exist to keep it in step.
 
 ---
@@ -355,39 +451,69 @@ automatically by `deploy/smoke_test.sh`.
 
 **Secrets**
 
-- [ ] `/etc/zz2/zz2.env` is `0640 root:zz2` and holds every secret.
-- [ ] `ZZ2_SUPABASE_JWT_SECRET` is set, so tokens are verified locally.
+- [ ] Every secret is an App Service application setting (preferably a Key Vault
+      reference), or on a VPS in `/etc/zz2/zz2.env` at `0640 root:zz2`:
+      `ZZ2_DATABASE_URL`, `ZZ2_SESSION_SECRET`,
+      `ZZ2_AZURE_STORAGE_CONNECTION_STRING`, `ZZ2_MICROSOFT_CLIENT_SECRET`.
+- [ ] `ZZ2_SESSION_SECRET` is random and at least 32 characters (48+
+      recommended); the process refuses to boot in production otherwise.
+- [ ] No `ZZ2_SUPABASE_*` variable remains set, and the old Supabase keys are
+      revoked if the project still exists.
 - [ ] The Apps Script secret has been **rotated**. The old server published
       `config.json` on request; treat the previous value as already exposed.
+- [ ] The Microsoft client secret's expiry date is on someone's calendar.
 - [ ] No secret appears in `config.json`, in git, or in any log.
 
 **Transport**
 
 - [ ] `ZZ2_ENVIRONMENT=production` and `ZZ2_PUBLIC_URL` uses `https://`.
-- [ ] TLS certificate installed and renewing (`certbot renew --dry-run`).
-- [ ] The application binds `127.0.0.1` only: `ss -tlnp | grep 8080`.
+- [ ] App Service: *HTTPS Only* on, minimum TLS 1.2, FTP/FTPS deployment
+      disabled. VPS: certificate renewing (`certbot renew --dry-run`) and the
+      application bound to `127.0.0.1` only (`ss -tlnp | grep 8080`).
+- [ ] `ZZ2_DATABASE_URL` ends in `sslmode=require` (or `verify-full`).
 - [ ] `ZZ2_TRUSTED_HOSTS` names real hostnames, not `*`.
 - [ ] `ZZ2_CORS_ORIGINS` is empty unless a different origin genuinely needs it.
 
+**Azure resources**
+
+- [ ] PostgreSQL firewall allows only the App Service's outbound IPs (and, when
+      needed, a named admin IP) — not "Allow public access from any Azure
+      service" and never `0.0.0.0–255.255.255.255`.
+- [ ] The application connects with a role that is not the server admin (see
+      *No row-level security* above).
+- [ ] The storage account has *Allow Blob anonymous access* disabled and the
+      `zz2-manuals` container is private.
+- [ ] Storage account keys are rotated after anyone outside the team has seen
+      the connection string.
+- [ ] Automated backups are enabled on the PostgreSQL server, and a restore has
+      been tested.
+
 **Identity**
 
-- [ ] Every technician exists in Supabase Auth with `app_metadata.role` set.
+- [ ] Every technician exists in `app_users` with the right `role`, or will be
+      auto-provisioned by Microsoft sign-in with the intended default role.
 - [ ] At least two accounts hold `super_admin` — the application refuses to
       remove the last one, and one is a single point of lockout.
-- [ ] Supabase Auth email confirmation and password policy are configured.
-- [ ] Row-level security is enabled on every `techSupport` table.
+- [ ] `ZZ2_SAML_ALLOWED_DOMAINS` (shared by SAML and Microsoft sign-in) names
+      only the domains meant to get in; with it empty,
+      `ZZ2_MICROSOFT_TENANT=organizations` admits any work or school tenant.
+- [ ] The Entra app registration's redirect URI is exactly
+      `<ZZ2_PUBLIC_URL>/api/auth/microsoft/callback`.
 
 **Filesystem**
 
-- [ ] `ZZ2_DATA_DIR` is `0750`, owned by the service user. The System page
-      reports whether it is world-readable.
-- [ ] The application code is **not** writable by the service user.
+- [ ] `ZZ2_DATA_DIR` is `0750`, owned by the service user (on App Service, under
+      `/home`, which is not web-served). The System page reports whether it is
+      world-readable.
+- [ ] The application code is **not** writable by the service user (VPS).
 - [ ] A backup of `ZZ2_DATA_DIR` runs off-box and has been restore-tested.
 
 **Monitoring**
 
-- [ ] `/healthz` is watched by something that will page a human.
-- [ ] `grep '"level":"WARNING"'` on the server log is checked, or shipped.
+- [ ] `/healthz` is configured as the App Service health check, or watched by
+      something that will page a human.
+- [ ] Application logs are shipped (App Service log stream / Log Analytics) and
+      `"level":"WARNING"` entries are reviewed.
 - [ ] The audit log is retained somewhere the application cannot rewrite.
 
 ---
